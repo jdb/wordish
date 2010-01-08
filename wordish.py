@@ -3,22 +3,62 @@
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile
-
-
 from StringIO import StringIO
 
-def lex ( s, shlex_object=False, com='',whi=''):
+def lex ( s, shlex_object=False, com='', whi='' ):
+    """
+    Returns the list of tokens of the input string.
+
+    The token commenters and whitespace are set to the empty string
+    and can be modified with the function arguments 'com' and
+    'whi'. 
+
+    If the argument shlex_object is set to True then it'is not the
+    list of tokens but the shlex object itself so that you can
+    experiment with the :obj:`shlex` and it multiple attribute and
+    method.
+
+    >>> lex( "Yozza 1,2" )
+    ['Yozza', ' ', '1', ',', '2']
+
+    >>> tokens = lex( "1 2", shlex_object=True )
+    >>> tokens.whitespace = ' '
+    >>> [t for t in tokens ]
+    ['1', '2']
+
+    >>>> lex( "Yozza # you dont want to see that", whi=' ', com='#' )
+    ['Yozza']
+    """
+
     tokens = shlex( StringIO( s )) 
     tokens.commenters = com         
     tokens.whitespace = whi         
+
     if shlex_object:
         return tokens
     else:
-        return [ t for t in tokens ]
+        return list( tokens )
 
-class ShellSessionParser( object ):
+class ShellSession( object ):
+    """
+    An iterator which parses a text file of a shell session and yields
+    pairs of commands and outputs
+    
+    >>> session = ShellSession( StringIO( "~$ echo coucou\ncoucou" ))
+    >>> for c,o in session: print c,o
+    ...
+    echo coucou coucou
+    """
 
-    def __init__( self, tokens ):
+    def __init__( self, f=None, s=None ):
+        """
+        The constructor takes a filename or an open file or a string
+        as the shell session.
+
+        The constructor sets the :attr:`tokens` member attribute with
+        a shlex token stream initialised with the correct options for
+        parsing comments and whitespace.
+        """
 
         self.tokens = shlex( f if hasattr(f, "read") else file( f ) )
 
@@ -34,6 +74,17 @@ class ShellSessionParser( object ):
         # output, so in just do not munge them.
 
     def has_token( self ):
+        """
+        Return True when there are token available, False if the
+        stream token is empty.
+
+        >>> session = ShellSession( s="~$ env | grep USER\nUSER=jd" ))
+        >>> session.has_token()
+        True
+        >>> for c,o in session: pass
+        >>> sesssion.has_token()
+        False
+        """
         t = self.tokens.get_token()
         return False if t==self.tokens.eof else self.tokens.push_token( t ) or True
 
@@ -43,13 +94,26 @@ class ShellSessionParser( object ):
         Returns the command i.e. everything except comments, until a
         linefeed except when the linefeed is nested in parentheses and
         brackets.
+
+        >>> session = ShellSession( s="true")
+        >>> session.get_command()
+        true
+        >>> ShellSession( s="true\n" ).get_command()
+        true
+        >>> ShellSession( s="(true\n)" ).get_command()
+        (true
+        )
+        >>> ShellSession( s="t () {\ntrue\n)" ).get_command()
+        t () {
+        true
+        }
         """
 
         c = []
 
         for t in self.tokens:
             
-            if t == '\n' or t == '#':
+            if t == '\n' or t == '#' or t==self.tokens.eof:
                 
                 if t=='#': 
                     
@@ -63,6 +127,8 @@ class ShellSessionParser( object ):
             elif t in '})': nested -= 1
 	
             c.append( t )
+
+        return ''.join(c).strip()
 	
     def get_output( self ):
         """
@@ -84,13 +150,16 @@ class ShellSessionParser( object ):
                     
             o.append( t )
 
+        return ''.join( o ).strip()
+
     def __iter__(self):
         return self
 
     def next(self):
-        session.get_output()
+        self.get_output()
         while self.has_token() :
-            yield self.get_command(), self.get_output()
+            return self.get_command(), self.get_output() 
+        raise StopIteration
 
 
 class SubShell ( object ):
@@ -187,19 +256,23 @@ Yo
 Yo
 """)
 
-    for f in files:
+    from wordish import ShellSessionParser
+    from StringIO import StringIO
 
-        session = ShellSessionParser( f )
 
-        with SubShell() as shell:
+#     for f in files:
 
-            for c,o in session:
+#         session = ShellSessionParser( f )
 
-                print( "Trying:\n\t%s\nExpecting:\n\t%s" % ( c, o ) )
+#         with SubShell() as shell:
 
-                ans = shell.call( c )
+#             for c,o in session:
 
-                print( "%s" % ( "ok" if o==ans else format_error( c, o, ans ) ) )
+#                 print( "Trying:\n\t%s\nExpecting:\n\t%s" % ( c, o ) )
+
+#                 ans = shell.call( c )
+
+#                 print( "%s" % ( "ok" if o==ans else format_error( c, o, ans ) ) )
 
                 # if ans.err != '':
                 #     print("%s\nWarning :\n\t%s\nWrote on stderr:\n\t%s\n%s" % (

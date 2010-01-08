@@ -28,7 +28,7 @@ class OutputComparisonTestCase( TestCase ):
 
     
 
-class ShellSessionParserTestCase( TestCase ):
+class ShellSessionTestCase( TestCase ):
 
     def setUp( self ):
         "before"
@@ -56,7 +56,7 @@ class ShellSessionParserTestCase( TestCase ):
 
         raise NotImplemented
 
-    def sub_process( self ):
+    def sub_processtest( self ):
         "subprocess"
 
         raise NotImplemented
@@ -71,6 +71,18 @@ class ShellSessionParserTestCase( TestCase ):
     def output_token_test(self):
         pass
         
+    def half_command(self):
+        pass
+
+    def half_output(self):
+        pass
+
+    def empty_session_test(self):
+        pass
+
+    def no_output_test(self):
+        "true false"
+
 
     def tearDown( self ):
         "after"
