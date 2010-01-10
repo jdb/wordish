@@ -1,11 +1,32 @@
 #!/usr/bin/env python
 
+"""
+Wordish allows to check the correctness of text files dpeicting on shell
+operations about correctness. Several operations are efficiently
+handled with a shell, other do not really have an alternative but have
+no easy way to be checked or tested for regression.
+
+- filesystems (formatting, raid, snapshotting)
+
+- source version control,
+
+- packaging,
+
+- network, firewall or load balancing
+
+Wordish is a project which aims at reconstructing a shell session
+composed of commands and outputs, from a text file, then execute the
+commands in a shell and compare the output of the command to the
+output parsed from the text file.
+
+"""
+
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile
 from StringIO import StringIO
 
-class ShellSession( object ):
+class ShellSessionParser( object ):
     """
     An iterator which parses a text file of a shell session and yields
     pairs of commands and outputs
@@ -117,9 +138,7 @@ class ShellSession( object ):
 
             return False
 
-
-
-    def take_until( self, terminator ):
+    def take_until( self, is_output=False ):
         """
         Returns a command or an output depending of the terminator
         provided. i.e. every token on which the terminator returns
@@ -141,6 +160,8 @@ class ShellSession( object ):
         }
         """
         
+        terminator = self.end_of_output if is_output else self.end_of_command
+
         return ''.join (
             [ t for t in self.tokens if not terminator( t ) ]
             ).strip()
@@ -152,6 +173,8 @@ class ShellSession( object ):
     def next(self):
         """
         Returns the next pair of command and output.
+
+        TODO: some unittest on the corner cases
 
         >>> session = ShellSession
         >>> sess = session( s="~# cmd\noutput\n~# true\n" )
@@ -173,7 +196,7 @@ class ShellSession( object ):
 
 def lex ( s, shlex_object=False, com='', whi='' ):
     """
-    Returns the list of tokens of the input string.
+    Debug function: returns the list of tokens of the input string.
 
     The token commenters and whitespace are set to the empty string
     and can be modified with the function arguments 'com' and
@@ -205,7 +228,7 @@ def lex ( s, shlex_object=False, com='', whi='' ):
     else:
         return list( tokens )
 
-class SubShell ( object ):
+class CommandRunner ( object ):
     """
     Implements a python "context manager", when entering the context,
     create a shell in a subprocess, the call method takes a string
@@ -224,22 +247,32 @@ class SubShell ( object ):
     # appropriate. ssh does that and bash behaves a bit differently when
     # run hooked to a pty.    
 
+    stderr_on_stdout = True
 
-    # __init__
-    # kill_on_exit=False
-    # stderr_on_stdout=False
-
-
-    def __enter__(self):
-        self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT )
+    def __enter__(self ):
+        stderr_dir = STDOUT if CommandRunner.stderr_on_stdout else PIPE
+        self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE, stderr=stderr_dir )
         self.stdout_tokens = ShellSessionParser(self.shell.stdout)
         return self
 
     def call(self, cmd):
-        """in it and sends it to the shell via
-    stdin. Then, stdout is read until a prompt following a
-    linefeed. The prompt is suppressed and the tokens read are joined
-    and returned as the"""
+        """in it and sends it to the shell via stdin. Then, stdout is
+        read until a prompt following a linefeed. The prompt is
+        suppressed and the tokens read are joined and returned as
+        the"""
+
+        # TODO: use the CommandOutput: set the returncode
+
+        self.shell.stdin.write(cmd + '\necho "~$ "\n')
+        return self.stdout_tokens.get_output()
+        
+    def __exit__(self, *arg):
+        # If the child shell is hanged, maybe self.p.send_signal(signal.SIGKILL)
+        # is more robust
+        self.p.terminate()
+
+
+class CommandOutput( object ):
 
     # should return a namedtuple out, err and returncode whose equald
     # is configurable ellipsis=...  the matching object has out, err,
@@ -248,29 +281,45 @@ class SubShell ( object ):
     # that return code is fine without bothering with the output. This
     # equald should also match against a simple string.
 
-        self.shell.stdin.write(cmd + '\necho "~$ "\n')
-        return self.stdout_tokens.get_output()
-        
-    def __exit__(self, *arg):
-        # could be more robust, and kill the subprocess on exit
-        # instead of asking the shell to terminate.
-        self.p.stdin.write("exit\n")
-        self.p.communicate()
+    # TODO: some docstrings
 
+    def __init__(self, out=None, err=None, returncode=None ):
+        self.dont_check_err = False
+        self.out, self.err, self.returncode = out, err, returncode
+        
+    def check(self,other,member):
+        if getattr(self, member) is not None and getattr(other, member) is not None:
+            return getattr(self, member)==getattr(self, member)
+        else: return None
+
+    def __eq__(self, other ):
+        
+        other=CommandOutput(other) if isinstance(other, basestring) else other
+        if not (hasattr( other, "out" ) and hasattr( other, "err" ) and hasattr( other, "returncode" )):
+            raise TypeError("equality: argument must either a string or a CommandOutput instance.")
+        
+        return all([self._check(i) for i in "out", "err", "returncode" if i is not None] )
+
+
+    def __neq__(self, other ):
+        return not self.__eq__(other)
+
+    def exited_gracefully(self):
+        return self.returncode==0
+
+# TODO: design the correct object for the report formatter
 
 def format_error(command, expected_output, output):
     return  "\n%s\nFailed example:\n\t%s\nExpected:\n\t%s\nGot:\n\t%s\n%s" % (
         '*' * 68, command, expected_output, output, '*' * 68)
 
-
 if __name__=="__main__":
 
     import sys
 
-    if len(sys.argv)>1 :
-        files = sys.argv[1:] 
-    else:
-        files = StringIO("""
+    # TODO:make a man page a README file, in the egg place the test file
+
+    files = sys.argv[1:]  if len(sys.argv)>1 else StringIO("""
 ~$ echo toto
 toto
 
@@ -303,6 +352,7 @@ Yo
     from StringIO import StringIO
 
 
+# TODO: There is no subshell anymore
 #     for f in files:
 #         session = ShellSessionParser( f )
 #         with SubShell() as shell:

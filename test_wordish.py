@@ -1,91 +1,80 @@
 
 
 from unittest import TestCase, main
-from wordish import shell
-from wordish import ShellSessionParser
-from wordish import CommandOutput
-
-class ShellTestCase( TestCase ):
-
-    def setUp():
-        "before"
-
-        # should create a file and test the file is here
-        # should test a return code of zero 
-        # should test a return code different from zero
-        # should test echoing to stdin as well as stdout
-
-    def tearDown():
-        "after"
-
-class OutputComparisonTestCase( TestCase ):
-
-    def setUp():
-        "before"
-
-    def tearDown():
-        "after"
-
-    
-
-class ShellSessionTestCase( TestCase ):
-
-    def setUp( self ):
-        "before"
-        self.tokens = [1,2,3] 
-        
-    def commenttest():
-        """comments"
-
-        comments should be stripped without consuming the
-        linefeed. Commenters are set to the empty string and the
-        comment tokenization is re=implemented"""
-
-        raise NotImplemented
-
-    def prompttest( self ):
-        """prompt in comments"
-
-        comments can contains a prompt"""
-
-        raise NotImplemented
+from wordish import ShellSessionParser as session
+from wordish import CommandRunner as run
+from wordish import OutputChecker as check
+from wordish import CommandOutput as out
+from collections import nametuple
 
 
-    def functiontest( self ):
-        "parse a function"
+class CommandOutputTestCase ( TestCase ):
 
-        raise NotImplemented
+    def correct_attributes_test( self ):
+        output = out()
+        for attr in ["out","err","returncode"]:
+            self.assertTrue(hasattr(out,attr))
 
-    def sub_processtest( self ):
-        "subprocess"
+    def equal_test( self ):
+        outs, errs, rets = ["out",None], ["err",None], [1,None]
+        cases = [ (out(o,e,r),out(o1,e1,r1)) for o in outs for e in errs for r in rets for o1 in outs for e1 in errs for r1 in rets]
 
-        raise NotImplemented
+        for parsed, actual in cases:
+            self.assertTrue(parsed==actual)
 
-    def echotest( self ):
-        """echo foobar
+    def equal_false_test( self ):
+        outs, errs, rets = ["out",None], ["err",None], [1,None]
+        outs1, errs1, rets1 =["hello",None], ["warn",None], [0,None]
 
-        the command and output should be separated"""
-        
-        raise NotImplemented
+        cases = [ (o,e,r,o1,e1,r1) for o in outs for e in errs for r in rets for o1 in outs1 for e1 in errs1 for r1 in rets1]
+        cases = [ (out(o,e,r),out(o1,e1,r1)) for (o,e,r,o1,e1,r1) in cases if (o,e,r,o1,e1,r1) != (None, None, None, None, None, None)]
 
-    def output_token_test(self):
-        pass
-        
-    def half_command(self):
-        pass
+        for parsed, actual in cases:
+            self.assertFalse(parsed==actual)
 
-    def half_output(self):
-        pass
+    def check_test( self ):
+        _ = namedtuple("_", "attr")
 
-    def empty_session_test(self):
-        pass
+        self.assertTrue( check(_(1),_(1), "attr") is True )
+        self.assertTrue( check(_(1),_(2), "attr") is False )
+        self.assertTrue( check(_(1),_(None), "attr") is None )
 
-    def no_output_test(self):
-        "true false"
+    def exit_gracefully_test( self ):
+        self.assertTrue( out( returncode=0 ).exited_gracefully() )
 
+class ShellSessionParserTestCase( TestCase ):
 
-    def tearDown( self ):
-        "after"
+    def command_test (self):
+
+        commands = (
+            ("date\nls\nid\n", "date" ),
+            ("date # comment\n", "date" ),
+            ("ls # ~$ promptlike\n", "ls" )
+            ( "hello () \n{ echo hello\n} \n some more stuff",
+              "hello () \n{ echo hello\n}" ),
+            ( "( cd \ntmp )\n", "( cd \ntmp )\n"),
+            ( "ls", "ls"),
+            ( "", "")
+            )
+
+        get_command=lambda text:session(s=text).take_until()
+        for text, parsed in commands:
+            self.assertEqual( self.get_command( text ), parsed)
+
+    def output_test (self):
+
+        outputs = (
+            ("hello world\n~$ ", "hello world" ),
+            ("hello world\n~good by\n~$ ", "hello world\n~good by" ),
+            ( "~$ ", ""),
+            ( "~# ", ""),
+            ( "", ""),
+            )
+
+        get_output=lambda text:session(s=text, is_output=True ).take_until()
+        for text, parsed in outputs:
+            self.assertEqual( self.get_output( text ), parsed)
+
 
 
 class shellTestCase():
