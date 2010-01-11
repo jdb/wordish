@@ -2,11 +2,14 @@
 
 from unittest import TestCase, main
 from wordish import ShellSessionParser as session
-from wordish import CommandRunner as run
+from wordish import CommandRunner as shell
 from wordish import OutputChecker as check
 from wordish import CommandOutput as out
-from collections import nametuple
+from collections import namedtuple
 
+
+# TODO: command runner not tested: create file check existence, check
+# enter, check exit
 
 class CommandOutputTestCase ( TestCase ):
 
@@ -35,9 +38,9 @@ class CommandOutputTestCase ( TestCase ):
     def check_test( self ):
         _ = namedtuple("_", "attr")
 
-        self.assertTrue( check(_(1),_(1), "attr") is True )
-        self.assertTrue( check(_(1),_(2), "attr") is False )
-        self.assertTrue( check(_(1),_(None), "attr") is None )
+        self.assertTrue( check( _(1), _(1),    "attr") is True  )
+        self.assertTrue( check( _(1), _(2),    "attr") is False )
+        self.assertTrue( check( _(1), _(None), "attr") is None  )
 
     def exit_gracefully_test( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
