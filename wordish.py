@@ -1,23 +1,20 @@
 #!/usr/bin/env python
 """
-Wordish allows to check the correctness of text files dpeicting on shell
-operations about correctness. Several operations are efficiently
-handled with a shell, other do not really have an alternative but have
-no easy way to be checked or tested for regression.
-
-- filesystems (formatting, raid, snapshotting)
-
-- source version control,
-
-- packaging,
-
-- network, firewall or load balancing
 
 Wordish is a project which aims at reconstructing a shell session
 composed of commands and outputs, from a text file, then execute the
 commands in a shell and compare the output of the command to the
 output parsed from the text file.
 
+Shell operations are easy to document, and with wordish, articles
+including shell operations can be easily tested for correctness,
+regression or compatibility on a particular system.
+
+Areas of interest include filesystems operations, raid setup, volume
+snapshots. Another area where wordish can be useful is in source
+version control tutorial, or software packaging. Network setup,
+firewall administration and load balancing tweaks are another examples
+of operations usually carried out with a shell.
 """
 
 
@@ -291,7 +288,7 @@ class CommandRunner ( object ):
         self.stdout_tokens = ShellSessionParser(self.shell.stdout)
         return self
 
-    def call(self, cmd):
+    def __call__(self, cmd):
         """in it and sends it to the shell via stdin. Then, stdout is
         read until a prompt following a linefeed. The prompt is
         suppressed and the tokens read are joined and returned as
@@ -311,15 +308,8 @@ class CommandRunner ( object ):
 
 class CommandOutput( object ):
 
-    # should return a namedtuple out, err and returncode whose equald
-    # is configurable ellipsis=...  the matching object has out, err,
-    # returncode and an equal method which takes in account, stderr,
-    # stdout and returncode if set. It should be possible to check
-    # that return code is fine without bothering with the output. This
-    # equald should also match against a simple string.
+    # TODO: docstrings, and ellipsis
 
-    # TODO: some docstrings
-    # stdout for __repr__ and __str__
 
     def __init__(self, out=None, err=None, returncode=None, cmd=None ):
         self.out, self.err, self.returncode = out, err, returncode
@@ -334,27 +324,68 @@ class CommandOutput( object ):
         return not self.__eq__(other)
 
     def __eq__(self, other ):
-        attrs = "out", "err", "returncode"
-        other=CommandOutput(other) if isinstance(other, basestring) else other
 
+        if isinstance(other, basestring):
+            return other==self.out
+
+        attrs = 'out', 'err', 'returncode'
         if not all( [ hasattr( other, a ) for a in attrs ]):
             raise TypeError("equality: argument must either a string or a CommandOutput instance.")
         
-        return all( [ self.check(a) for a in attrs if a is not None ] )
-
-    def check(self,other,member):
-        if getattr(self, member) is not None and getattr(other, member) is not None:
-            return getattr(self, member)==getattr(self, member)
-        else: return None
+        return all( [ getattr( self, a ) == getattr( other, a ) for a in attrs if getattr( other, a ) is not None ] )
 
     def exited_gracefully(self):
         return self.returncode==0
 
-# TODO: design the correct object for the report formatter
+    def aborted(self):
+        return self.returncode!=0
 
-def format_error(command, expected_output, output):
-    return  "\n%s\nFailed example:\n\t%s\nExpected:\n\t%s\nGot:\n\t%s\n%s" % (
-        '*' * 68, command, expected_output, output, '*' * 68)
+class OutputReporter( object):
+
+    def incrementor(self):
+        def _(self,inc=1):
+            _.count+=inc
+            return _.count
+        _.count=0
+        return _
+
+    def __init__(self ):
+        self.list = []
+        self.failed, self.passed = self.incrementor(), self.incrementor()
+
+    def append( self, output, expected):
+        if not all( [ hasattr( output, a ) for a in ('out', 'err', 'returncode') ]):
+            raise TypeError("argument must have the 'out', 'err', 'returncode' attributes.")
+
+        self.failed() if output.aborted() else self.passed()
+        self.list.append((output, expected))
+        return output
+
+    def report(self, verbose=False):
+
+        return '\n'.join( 
+            [   "Trying:\n\t%s\nExpecting:\n\t%s\n" % ( output.cmd, expected )
+                + "Failed, got:\n\t%s\n" % output if output!=expected else "ok"
+                for output, expected in self.list ] 
+            + [ self.summary() ]) 
+    
+    __call__=report
+
+    def summary( self ):
+        return '\n'.join( [ 
+                "%s test found\n%s test passed and %s test failed" % ( self.passed(0) + self.failed(0) ), 
+                "Test passed." if self.failed(0)==0 else "***Test failed*** %s failures" % self.failed(0)
+                ] )
+
+def run( f ):
+
+    report = OutputReporter()
+    with CommandRunner() as run:
+        for cmd, expected in ShellSessionParser( f ):
+            if report.append( run( cmd ), expected ).aborted():
+                print( "Something broke, I am bailing out, you get to keep both pieces.")
+                break
+    return report
 
 if __name__=="__main__":
 
@@ -391,21 +422,9 @@ Yo
 ~$ lesbronzesfontduski # ~$
 Yo
 """)
-
-    from wordish import ShellSessionParser
-    from StringIO import StringIO
-
-#     checker = OutputChecker()
-#     for f in files:
-#         with CommandRunner() as shell:
-#             for c, o in ShellSessionParser( f ):
-#                 if checker.add_output( shell.call( c ), o) == checker.crashed
-#                     print checker.report()
-#                     print( "Something broke, I am bailing out, you get to keep both pieces.")
-#                     break
-#     else:
-#         print checker.report()
-
+    
+    for f in files: print run( f ).report( verbose=False )
+        
 
 
                 
