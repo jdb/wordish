@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """
-
 Wordish is a project which aims at reconstructing a shell session
 composed of commands and outputs, from a text file, then execute the
 commands in a shell and compare the output of the command to the
@@ -33,11 +32,11 @@ of operations usually carried out with a shell.
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
-from itertools import takewhile
+from itertools import takewhile, chain
 from StringIO import StringIO
 
 class ShellSessionParser( object ):
-    """
+    r"""
     An iterator which parses a text file of a shell session and yields
     pairs of commands and outputs
     
@@ -59,10 +58,8 @@ class ShellSessionParser( object ):
         The constructor sets the :attr:`tokens` member attribute with
         a shlex token stream initialised with the correct options for
         parsing comments and whitespace.
-        """
-
-        
-        f = s if ( s is not None and f is None ) else f
+        """        
+        f = StringIO(s) if ( s is not None and f is None ) else f
 
         self.tokens = shlex( f if hasattr(f, "read") else file( f ) )
 
@@ -84,7 +81,7 @@ class ShellSessionParser( object ):
         self.nested = 0
 
     def has_token( self ):
-        """
+        r"""
         Return True when there are still tokens available, False if
         the stream token is empty.
 
@@ -98,8 +95,8 @@ class ShellSessionParser( object ):
         t = self.tokens.get_token()
         return False if t==self.tokens.eof else self.tokens.push_token( t ) or True
 
-    def end_of_output( self, token ):
-        """
+    def is_output( self, token ):
+        r"""
         Returns true if the token is after the last token of the
         output of a command, else returns false. The functions stops
         right before the prompt which can be either '~# ' or '~$ '.
@@ -107,11 +104,11 @@ class ShellSessionParser( object ):
         >>> sess = ShellSessionParser( s="youpi\n~# " )
         >>> sess.tokens.next()
         youpi
-        >>> sess.end_of_output( 'youpi' )
+        >>> sess.is_output( 'youpi' )
         False
         >>> sess.tokens.next()
         '~'
-        >>> sess.end_of_output( '~' )
+        >>> sess.is_output( '~' )
         True
         """
         # TODO: in the unittest, make sure '~' occurs in the -1, -2, and -3 position.
@@ -120,16 +117,16 @@ class ShellSessionParser( object ):
         if token=='~':
             n1, n2 = [ self.tokens.next(), self.tokens.next() ]
             if n1 in '$#' and n2 == ' ':
-                return True
-            else:
-                self.tokens.push_token( n1 ) 
-                self.tokens.push_token( n2 )
                 return False
+            else:
+                self.tokens.push_token( n2 ) 
+                self.tokens.push_token( n1 )
+                return True
         else:
-            return False
+            return True
 
-    def end_of_command( self, token ):
-        """
+    def is_command( self, token ):
+        r"""
         Returns true if the token is after the last token of a command
         in the section, else returns false. The functions stops right
         before the linefeed but only when the linefeed is not nested in
@@ -138,11 +135,11 @@ class ShellSessionParser( object ):
         >>> sess = session( s="date\n" )
         >>> sess.tokens.next()
         date
-        >>> sess.end_of_output( 'date' )
+        >>> sess.is_output( 'date' )
         False
         >>> sess.tokens.next()
         '\n'
-        >>> sess.end_of_output( '\n' )
+        >>> sess.is_output( '\n' )
         True
 
         This is the end of output, since the linefeed was not nested.
@@ -150,32 +147,31 @@ class ShellSessionParser( object ):
         >>> sess = ShellSessionParser( s="(youpi\n)\n" )
         >>> [ sess.tokens.next() for i in range(3) ]
         [ '(', 'youpi', '\n' ]
-        >>> sess.end_of_output( '\n' )
+        >>> sess.is_output( '\n' )
         False
-        >>> sess.tokens.next(); sess.end_of_output( '\n' )
+        >>> sess.tokens.next(); sess.is_output( '\n' )
         '\n'
         True
         
         The first linefeed was nested in a subshell, hence was
         not the end of a command. The second linefedd was.
         """
-
         if token == '\n' or token == '#':
             if token=='#': 
                 list( takewhile( lambda t:t!='\n', self.tokens ) )
                 token = '\n'
 	
-                if self.nested==0:
-                    return True
+            if self.nested==0:
+                return False
         else:
 
             if   token in '({': self.nested += 1
             elif token in '})': self.nested -= 1
 
-            return False
+        return True
 
-    def take_until( self, is_output=False ):
-        """
+    def takewhile( self, is_output=False ):
+        r"""
         Returns a command or an output depending of the terminator
         provided. i.e. every token on which the terminator returns
         False. The terminator is a function which take a token and
@@ -194,19 +190,14 @@ class ShellSessionParser( object ):
         >>> session( s="t () {\ncmd\n)\nhello" ).take_until()
         
         """
-        
-        terminator = self.end_of_output if is_output else self.end_of_command
-
         return ''.join (
-            [ t for t in self.tokens if not terminator( t ) ]
-            ).strip()
+            list( takewhile(
+                    self.is_output if is_output else self.is_command, 
+                    self.tokens )
+                 ) ).strip()
             
-
     def __iter__(self):
-        return self
-
-    def next(self):
-        """
+        r"""
         Returns the next pair of command and output.
 
         TODO: some unittest on the corner cases: empty file, only command, only outputs
@@ -219,18 +210,20 @@ class ShellSessionParser( object ):
         command: true
         output: 
         """
-
-        self.take_until( self.end_of_output ) 
-
+        self.takewhile( is_output=True ) 
         while self.has_token() :
-            return ( self.take_until( self.end_of_command ), 
-                     self.take_until( self.end_of_output ) ) 
-        else:
-            raise StopIteration
+            yield self.takewhile(), self.takewhile( is_output=True )
 
+
+    
+    def toscript(self):
+        commentize = lambda o: '#%s\n' % o.replace( '\n', '\n#' )
+        return "#!/bin/sh\nset -e -x\n" + '\n'.join(  
+            chain( *( ( c, commentize(o) ) for c, o in self ) ) )
+            
 
 def lex ( s, shlex_object=False, com='', whi='' ):
-    """
+    r"""
     Debug function: returns the list of tokens of the input string.
 
     The token commenters and whitespace are set to the empty string
@@ -250,8 +243,9 @@ def lex ( s, shlex_object=False, com='', whi='' ):
     >>> [t for t in tokens ]
     ['Yozza', '1', '2']
 
-    >>>> lex( "Yozza # a comment you dont want to see", whi=' ', com='#' )
+    >>> lex( "Yozza # a comment you dont want to see", whi=' ', com='#' )
     ['Yozza']
+
     """
 
     tokens = shlex( StringIO( s )) 
@@ -263,49 +257,6 @@ def lex ( s, shlex_object=False, com='', whi='' ):
     else:
         return list( tokens )
 
-
-class CommandRunner ( object ):
-    """
-    Implements a python "context manager", when entering the context,
-    create a shell in a subprocess, the call method takes a string
-    with a shell command and execute it in the shell. call ret output of the command.
-
-    >>> with CommandRunner() as sh:
-    ...    sh.call("echo coucou")
-    ...    sh.call("a=$((1+1))")
-    ...    sh.call("echo $a")
-    ...
-    coucou
-    2
-    """
-
-    stderr_on_stdout = True
-
-    def __enter__(self ):
-        self.stderr_dir = STDOUT if CommandRunner.stderr_on_stdout else PIPE
-
-        self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE, stderr=self.stderr_dir )
-        self.stdout_tokens = ShellSessionParser(self.shell.stdout)
-        return self
-
-    def __call__(self, cmd):
-        """in it and sends it to the shell via stdin. Then, stdout is
-        read until a prompt following a linefeed. The prompt is
-        suppressed and the tokens read are joined and returned as
-        the"""
-
-        # TODO: set the returncode, get stderr if needed, use the CommandOutput: 
-        # TODO: set the ellipsis
-
-        self.shell.stdin.write(cmd + '\necho "~$ "\n')
-        return self.stdout_tokens.get_output()
-        
-    def __exit__(self, *arg):
-        self.p.terminate()
-        # If the child shell is hanged, maybe self.p.send_signal( signal.SIGKILL )
-        # is more robust
-
-
 class CommandOutput( object ):
 
     # TODO: docstrings, and ellipsis
@@ -316,7 +267,7 @@ class CommandOutput( object ):
         self.cmd = cmd
 
     def __str__(self):
-        return self.out
+        return self.out or "<Empty CommandOutput>"
     
     __repr__ = __str__
         
@@ -332,7 +283,11 @@ class CommandOutput( object ):
         if not all( [ hasattr( other, a ) for a in attrs ]):
             raise TypeError("equality: argument must either a string or a CommandOutput instance.")
         
-        return all( [ getattr( self, a ) == getattr( other, a ) for a in attrs if getattr( other, a ) is not None ] )
+        return all( [ 
+                getattr( self, a ) == getattr( other, a ) 
+                for a in attrs 
+                if getattr( other, a ) is not None 
+                and getattr( self, a ) is not None ] )
 
     def exited_gracefully(self):
         return self.returncode==0
@@ -340,24 +295,69 @@ class CommandOutput( object ):
     def aborted(self):
         return self.returncode!=0
 
+
+class CommandRunner ( object ):
+    r"""
+    Implements a python "context manager", when entering the context,
+    create a shell in a subprocess, the call method takes a string
+    with a shell command and execute it in the shell. call ret output of the command.
+
+    >>> with CommandRunner() as sh:
+    ...    sh.call("echo coucou")
+    ...    sh.call("a=$((1+1))")
+    ...    sh.call("echo $a")
+    ...
+    coucou
+    2
+    """
+
+    # TODO: get the return value and the stderr
+
+    stderr_on_stdout = True
+
+    def __enter__( self ):
+        self.stderr_dir = STDOUT if CommandRunner.stderr_on_stdout else PIPE
+
+        self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE, stderr=self.stderr_dir )
+        self.stdout_tokens = ShellSessionParser(self.shell.stdout)
+        return self
+
+    def __call__( self, cmd):
+        r"""in it and sends it to the shell via stdin. Then, stdout is
+        read until a prompt following a linefeed. The prompt is
+        suppressed and the tokens read are joined and returned as
+        the"""
+
+        # TODO: set the returncode, get stderr if needed, use the CommandOutput: 
+        # TODO: set the ellipsis
+
+        self.shell.stdin.write(cmd + '\necho "~$ "\n')
+        return self.stdout_tokens.get_output()
+        
+    def __exit__( self, *arg):
+        self.shell.terminate()
+        # If the child shell is hanged, maybe self.p.send_signal( signal.SIGKILL )
+        # is more robust
+
 class OutputReporter( object):
 
-    def incrementor(self):
-        def _(self,inc=1):
-            _.count+=inc
-            return _.count
-        _.count=0
-        return _
+    def failed( self, inc=1 ):
+        self.counters[0]+=inc
+
+    def passed( self, inc=1 ):
+        self.counters[1]+=1
 
     def __init__(self ):
         self.list = []
-        self.failed, self.passed = self.incrementor(), self.incrementor()
+        self.counters = 0, 0 
 
     def append( self, output, expected):
+
         if not all( [ hasattr( output, a ) for a in ('out', 'err', 'returncode') ]):
             raise TypeError("argument must have the 'out', 'err', 'returncode' attributes.")
 
         self.failed() if output.aborted() else self.passed()
+
         self.list.append((output, expected))
         return output
 
@@ -377,7 +377,7 @@ class OutputReporter( object):
                 "Test passed." if self.failed(0)==0 else "***Test failed*** %s failures" % self.failed(0)
                 ] )
 
-def run( f ):
+def test( f ):
 
     report = OutputReporter()
     with CommandRunner() as run:
@@ -423,8 +423,11 @@ Yo
 Yo
 """)
     
-    for f in files: print run( f ).report( verbose=False )
+    # for f in files: print test( f ).report( verbose=False )
         
-
-
+    text=( "~$ ls\n"
+           "coucou\n"
+           "~$ tr\n"
+           "passwd:" )
+    print [ ( c,o) for c,o in ShellSessionParser(s=text) ]
                 

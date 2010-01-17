@@ -3,9 +3,9 @@
 from unittest import TestCase, main
 from wordish import ShellSessionParser as session
 from wordish import CommandRunner as shell
-from wordish import OutputChecker as check
 from wordish import CommandOutput as out
-from collections import namedtuple
+from wordish import OutputReporter as check
+
 
 
 # TODO: command runner not tested: create file check existence, check
@@ -13,110 +13,155 @@ from collections import namedtuple
 
 class CommandOutputTestCase ( TestCase ):
 
-    def correct_attributes_test( self ):
-        output = out()
-        for attr in ["out","err","returncode"]:
-            self.assertTrue(hasattr(out,attr))
+    def test_correct_attributes( self ):
+        [ self.assertTrue(hasattr( out(), attr)) for attr in ["out","err","returncode"] ]
 
-    def equal_test( self ):
+
+    def test_equal( self ):
+        true = self.assertTrue
+        true( out("hello world"), "hello world" )
+        true( out("hello world", "warning"), "hello world" )
+        true( out("hello world", "warning", -1 ), "hello world" )
+
+        true( out("hello world"), out("hello world") )
+        true( out("hello world", "warning"), out( "hello world", "warning" ) )
+        true( out("hello world", "warning", -1 ), out( "hello world", "warning", -1 ) )
+
+        true( out(), out() )
+        true( out(1, None, 1), out(None, 1, None) )
+        true( out(1, None, None), out(None, 1, 1) )
+        true( out(1 ), out(None, 1, 1) )
+
+    def test_all_equal( self ):
         outs, errs, rets = ["out",None], ["err",None], [1,None]
-        cases = [ (out(o,e,r),out(o1,e1,r1)) for o in outs for e in errs for r in rets for o1 in outs for e1 in errs for r1 in rets]
+        cases = [ (out(o,e,r), out(o1,e1,r1)) for o in outs for e in errs for r in rets for o1 in outs for e1 in errs for r1 in rets]
+        [ self.assertTrue(parsed==actual) for parsed, actual in cases ]
 
-        for parsed, actual in cases:
-            self.assertTrue(parsed==actual)
-
-    def equal_false_test( self ):
-        outs, errs, rets = ["out",None], ["err",None], [1,None]
+    def test_equal_false( self ):
         outs1, errs1, rets1 =["hello",None], ["warn",None], [0,None]
 
-        cases = [ (o,e,r,o1,e1,r1) for o in outs for e in errs for r in rets for o1 in outs1 for e1 in errs1 for r1 in rets1]
-        cases = [ (out(o,e,r),out(o1,e1,r1)) for (o,e,r,o1,e1,r1) in cases if (o,e,r,o1,e1,r1) != (None, None, None, None, None, None)]
+        cases = [ (o1,e1,r1) for o1 in outs1 for e1 in errs1 for r1 in rets1]
+        cases = [ (out('out','err',1), out(o1,e1,r1)) for (o1,e1,r1) in cases if (o1,e1,r1) != (None, None, None)]
 
-        for parsed, actual in cases:
-            self.assertFalse(parsed==actual)
-
-    def check_test( self ):
-        _ = namedtuple("_", "attr")
-
-        self.assertTrue( check( _(1), _(1),    "attr") is True  )
-        self.assertTrue( check( _(1), _(2),    "attr") is False )
-        self.assertTrue( check( _(1), _(None), "attr") is None  )
-
-    def exit_gracefully_test( self ):
+        [ self.assertFalse(parsed==actual) for parsed, actual in cases ]
+            
+    def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
 
 class ShellSessionParserTestCase( TestCase ):
 
-    def command_test (self):
+    def test_command (self):
 
         commands = (
             ("date\nls\nid\n", "date" ),
             ("date # comment\n", "date" ),
-            ("ls # ~$ promptlike\n", "ls" )
-            ( "hello () \n{ echo hello\n} \n some more stuff",
-              "hello () \n{ echo hello\n}" ),
-            ( "( cd \ntmp )\n", "( cd \ntmp )\n"),
+            ("ls # ~$ promptlike\n", "ls" ),
+            ( "hello () {\n echo hello\n} \n some more stuff",
+              "hello () {\n echo hello\n}" ),
+            ( "( cd \ntmp )\n", "( cd \ntmp )"),
             ( "ls", "ls"),
-            ( "", "")
-            )
+            ( "", "") )
 
-        get_command=lambda text:session(s=text).take_until()
-        for text, parsed in commands:
-            self.assertEqual( self.get_command( text ), parsed)
+        for text, expected in commands:
+            self.assertEqual( session(s=text).takewhile(), expected ) 
 
-    def output_test (self):
+
+    def test_output (self):
 
         outputs = (
             ("hello world\n~$ ", "hello world" ),
             ("hello world\n~good by\n~$ ", "hello world\n~good by" ),
             ( "~$ ", ""),
             ( "~# ", ""),
-            ( "", ""),
+            ( "", "") )
+
+        for text, expected in outputs:
+            self.assertEqual( session(s=text).takewhile(is_output=True), expected)
+
+    def test_next ( self ):
+        
+        text=( "~$ ls\n"
+               "coucou\n"
+               "~$ tr\n"
+               "passwd:" )
+
+        self.assertEqual(
+            [ (c,o) for c,o in session(s=text)],
+            [ ("ls", "coucou"), ("tr", "passwd:") ]
             )
 
-        get_output=lambda text:session(s=text, is_output=True ).take_until()
-        for text, parsed in outputs:
-            self.assertEqual( self.get_output( text ), parsed)
+    def test_toscript ( self ):
+        
+        text=( "~# ls\n"
+               "coucou\nbonjour\n"
+               "~# tr\n"
+               "passwd:" )
+
+        self.assertEqual(
+            session(s=text).toscript(),
+            ( "ls\n"
+              "#coucou\n"
+              "#bonjour\n"
+              "tr\n"
+              "#passwd:\n" )
+            )
 
 
+    def test_executablescript ( self ):
+        """make sure the script is executable """
 
-class shellTestCase():
-    """
-    """
+        text=( "~# date 2>/dev/null \n"
+               "coucou\nbonjour\n"
+               "~# ls 2>/dev/null \n"
+               "passwd:" )
+        import os
+        self.assertEqual( os.system(session(s=text).toscript()), 0)
 
-    def create_shell_test(self):
+
+class CommandRunnerTestCase():
+
+
+    def test_simple_command( self ):
+        """Create a file in /tmp"""
+        raise NotImplemented
+
+    def test_stderr( self ):
+        "use echo >&2"
+        
+        raise NotImplemented
+
+    def test_returncode( self ):
+        "use the shell true and false"
+        
+        raise NotImplemented
+
+    def test_sequence_of_command( self ):
         "the shell is created"
         
         raise NotImplemented
 
-    def long_running_shell_test(self):
-        "the shell is created"
+    def test_enter( self ):
+        """use enter(), ask for the shell pid, check with the os that
+        the process with this pid is 'sh'"""
         
         raise NotImplemented
 
-    def destroy_test(self):
-        "the shell is correctly destroyed"
+    def test_exit(self):
+        """Check that the pid of the shell does not exist anymore, or
+        is not the son of this python object"""
         
         raise NotImplemented
 
 
-class CheckerTestCase( object ):
+class ReporterTestCase( object ):
     
-    def setUp():
-        "before"
-
-    def launchtest():
-        "execute a command"
-
+    def test_append():
+        "append several outputcomamnd object with a namedtuple mock"
         raise NotImplemented
 
-    def errortest():
-        "expect an error"
-
+    def test_summary():
+        "Command outputs can't have null return code for a summary?"
         raise NotImplemented
-
-    def tearDown():
-        "after"
 
 
 if __name__ == '__main__':
