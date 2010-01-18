@@ -92,7 +92,7 @@ class ShellSessionParserTestCase( TestCase ):
 
     def test_toscript ( self ):
         
-        text=( "~# ls\n"
+        text= ( "~# ls\n"
                "coucou\nbonjour\n"
                "~# tr\n"
                "passwd:" )
@@ -123,22 +123,40 @@ class CommandRunnerTestCase():
 
     def test_simple_command( self ):
         """Create a file in /tmp"""
-        raise NotImplemented
+
+        with shell() as sh:
+            out = sh('echo coucou')
+        self.assertEqual( out.out, 'coucou' )
 
     def test_stderr( self ):
-        "use echo >&2"
-        
-        raise NotImplemented
+        with shell() as sh:
+            out = sh('echo coucou >&2')
+        self.assertEqual( out.err, 'coucou' )
 
     def test_returncode( self ):
         "use the shell true and false"
-        
-        raise NotImplemented
+
+        with shell() as sh:
+            out = sh('true')
+        self.assertEqual( out.returncode, 0 )
+
+        with shell() as sh:
+            out = sh('echo coucou >&2')
+        self.assertEqual( out.returncode, 1 )
+
+        with shell() as sh:
+            out = sh('ls $RANDOM$RANDOM$RANDOM')
+        self.assertEqual( out.returncode, 1 )
 
     def test_sequence_of_command( self ):
-        "the shell is created"
+
+        with shell() as sh:
+            zero =  sh('export coucou=1').returncode
+            zero += sh('test $coucou==1').returncode
+            zero += sh('myfunc () { echo coucou ; }').returncode
+            zero += sh('myfunc').returncode
+            zero += sh('( echo $coucou )').returncode
         
-        raise NotImplemented
 
     def test_enter( self ):
         """use enter(), ask for the shell pid, check with the os that
