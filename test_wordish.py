@@ -5,8 +5,8 @@ from wordish import ShellSessionParser as session
 from wordish import CommandOutput as out
 
 from wordish import CommandRunner as shell
-from wordish import OutputReporter as check
-
+from wordish import OutputReporter 
+from collections import namedtuple
 
 
 # TODO: command runner not tested: create file check existence, check
@@ -15,18 +15,21 @@ from wordish import OutputReporter as check
 class CommandOutputTestCase ( TestCase ):
 
     def test_correct_attributes( self ):
-        [ self.assertTrue(hasattr( out(), attr)) for attr in ["out","err","returncode"] ]
+        [ self.assertTrue(hasattr( out(), attr)) 
+          for attr in ["out","err","returncode"] ]
 
 
     def test_equal( self ):
         true = self.assertTrue
-        true( out("hello world"), "hello world" )
-        true( out("hello world", "warning"), "hello world" )
-        true( out("hello world", "warning", -1 ), "hello world" )
+        true( out( "hello world"), "hello world" )
+        true( out( "hello world", "warning"), "hello world" )
+        true( out( "hello world", "warning", -1 ), "hello world" )
 
-        true( out("hello world"), out("hello world") )
-        true( out("hello world", "warning"), out( "hello world", "warning" ) )
-        true( out("hello world", "warning", -1 ), out( "hello world", "warning", -1 ) )
+        true( out( "hello world"), out("hello world") )
+        true( out( "hello world", "warning"), 
+              out( "hello world", "warning" ) )
+        true( out( "hello world", "warning", -1 ), 
+              out( "hello world", "warning", -1 ) )
 
         true( out(), out() )
         true( out(1, None, 1), out(None, 1, None) )
@@ -35,7 +38,10 @@ class CommandOutputTestCase ( TestCase ):
 
     def test_all_equal( self ):
         outs, errs, rets = ["out",None], ["err",None], [1,None]
-        cases = [ (out(o,e,r), out(o1,e1,r1)) for o in outs for e in errs for r in rets for o1 in outs for e1 in errs for r1 in rets]
+        cases = [ (out(o,e,r), out(o1,e1,r1)) 
+                  for o  in outs for e  in errs for r  in rets 
+                  for o1 in outs for e1 in errs for r1 in rets ]
+
         [ self.assertTrue(parsed==actual) for parsed, actual in cases ]
 
     def test_equal_false( self ):
@@ -64,7 +70,7 @@ class ShellSessionParserTestCase( TestCase ):
             ( "", "") )
 
         for text, expected in commands:
-            self.assertEqual( session(s=text).takewhile(), expected ) 
+            self.assertEqual( session(text).takewhile(), expected ) 
 
 
     def test_output (self):
@@ -77,7 +83,7 @@ class ShellSessionParserTestCase( TestCase ):
             ( "", "") )
 
         for text, expected in outputs:
-            self.assertEqual( session(s=text).takewhile(is_output=True), expected)
+            self.assertEqual( session(text).takewhile(is_output=True), expected)
 
     def test_next ( self ):
         
@@ -87,7 +93,7 @@ class ShellSessionParserTestCase( TestCase ):
                "passwd:" )
 
         self.assertEqual(
-            [ (c,o) for c,o in session(s=text)],
+            list(session(text)),
             [ ("ls", "coucou"), ("tr", "passwd:") ]
             )
 
@@ -99,7 +105,7 @@ class ShellSessionParserTestCase( TestCase ):
                "passwd:" )
 
         self.assertEqual(
-            session(s=text).toscript(),
+            session(text).toscript(),
             ( "#!/bin/sh\nset -e\n#set -x\n"
               "ls\n"
               "# coucou\n"
@@ -117,37 +123,34 @@ class ShellSessionParserTestCase( TestCase ):
                "~# ls >/dev/null \n"
                "passwd:" )
         import os
-        self.assertEqual( os.system(session(s=text).toscript()), 0)
+        self.assertEqual( os.system(session(text).toscript()), 0)
 
 
 class CommandRunnerTestCase( TestCase ):
 
 
     def test_simple_command( self ):
-        """Create a file in /tmp"""
+        "sh writes on stdout"
 
         with shell() as sh:
             out = sh('echo coucou')
         self.assertEqual( out.out, 'coucou' )
 
     def test_stderr( self ):
+        "sh writes on stderr"
         with shell() as sh:
             out = sh('echo coucou >&2')
         self.assertEqual( out.err, 'coucou' )
 
     def test_returncode( self ):
-        "use the shell true and false"
+        "return codes"
 
         with shell() as sh:
             out = sh('true')
         self.assertEqual( out.returncode, 0 )
 
         with shell() as sh:
-            out = sh('echo coucou >&2')
-        self.assertEqual( out.returncode, 1 )
-
-        with shell() as sh:
-            out = sh('ls $RANDOM$RANDOM$RANDOM')
+            out = sh('false')
         self.assertEqual( out.returncode, 1 )
 
     def test_sequence_of_command( self ):
@@ -155,34 +158,38 @@ class CommandRunnerTestCase( TestCase ):
         with shell() as sh:
             zero =  sh('export coucou=1').returncode
             zero += sh('test $coucou==1').returncode
-            zero += sh('myfunc () { echo coucou ; }').returncode
+            zero += sh('myfunc () { echo coucou ; return 42 ; }').returncode
             zero += sh('myfunc').returncode
             zero += sh('( echo $coucou )').returncode
         
+        self.assertEqual( zero, 42 )
 
     def test_enter( self ):
         """use enter(), ask for the shell pid, check with the os that
         the process with this pid is 'sh'"""
         
-        raise NotImplemented
-
+        with shell() as sh:
+            self.assertTrue( sh.shell.pid > 0)
+        
     def test_exit(self):
         """Check that the pid of the shell does not exist anymore, or
         is not the son of this python object"""
         
-        raise NotImplemented
+        with shell() as sh:
+            pass
+        self.assertEqual(sh.shell.returncode, -15)
 
 
 class ReporterTestCase( TestCase ):
-    
-    def test_append():
-        "append several outputcomamnd object with a namedtuple mock"
-        raise NotImplemented
 
-    def test_summary():
-        "Command outputs can't have null return code for a summary?"
-        raise NotImplemented
+    def test_counters_and_append(self):
+        report = OutputReporter()
+        for i in range(10):
+            report.before("", out(returncode=0))
+            report.result( out(returncode=i))
 
+        self.assertEqual(report.failcount,9)
+        self.assertEqual(report.passcount,1)
 
 if __name__ == '__main__':
    main()

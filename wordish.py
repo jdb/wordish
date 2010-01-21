@@ -16,26 +16,45 @@ of operations usually carried out with a shell.
 """
 
 
+# TODO: in the egg place a test file for each use case, raid, lvm,
+# firewalling, load balancing, packaging, source version control, ssh
+# sessions
 
-        #  option -v should switch on the report, no -v should just report errors
+# option -v should switch on the report, no -v should just report errors
+# must work with jdb's lvm article
+# must be hooked to the sourcecode directive standalone, sphinx builder and docutils
+# hook the docstrings to the inittest
 
+# the website should also be an S5 presentation
+# document the possibility to have a regexp pattern in the LHS of a
+# command output comparison
 
-        #  must work with jdb's lvm article
-        #  must be hooked to the sourcecode directive standalone, sphix and docutils
+# document the method for parsing: the prompt is the end of an
+# output, linefeed ends a command (use the universal linefeed) to be
+# able to use scripted built on windows.
 
-
-        # python -m wordish --test should show something
-        # python -m wordish simple_session.txt should show something
-        # python -m unittest -v wordish test_wordish should show something
+# make a man page, a README rst page, epydoc or sphinx documentation a --help
+# python -m wordish --test should show something
+# python -m wordish simple_session.txt should show something
+# python -m unittest -v wordish test_wordish should show something
 
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile, chain
 from StringIO import StringIO
+import re
 
 
-def lex ( s, shlex_object=False, com='', whi='' ):
+def log( decorated ):
+    def f( *arg,**kwarg):
+        print decorated.__name__,arg, kwarg
+        ret = decorated(*arg,**kwarg)
+        print ret
+        return ret
+    return f
+
+def lex ( f, shlex_object=False, com='', whi='' ):
     r"""
     Debug function: returns the list of tokens of the input string.
 
@@ -61,9 +80,19 @@ def lex ( s, shlex_object=False, com='', whi='' ):
 
     """
 
-    tokens = shlex( StringIO( s )) 
-    tokens.commenters = com         
-    tokens.whitespace = whi         
+    tokens = shlex( f if hasattr(f, "read") else StringIO( f )) 
+    tokens.commenters = com 
+    # deactivate shlex comments facility which won't work for us.
+    # The terminating linefeed means two things: end of comment an
+    # end of command. As shlex consume the terminating linefeed,
+    # there is no end of command left.
+    
+    tokens.whitespace = whi
+    # deactivate shlex whitespace munging. characters cited in
+    # ``shlex.whitespace`` are not returned by get_token. If
+    # empty, whitespaces are returned as they are which is what we
+    # want: they definitely count in bash, and may count in
+    # output, so we just want to keep them as they are.
 
     if shlex_object:
         return tokens
@@ -84,9 +113,7 @@ class ShellSessionParser( object ):
     coucou
     """
 
-    # TODO: configurable prompt
-
-    def __init__( self, f=None, s=None, prompts=['~$ ','~# '] ):
+    def __init__( self, f, prompts=['~# ', '~$ '] ):
         """
         The constructor takes a filename or an open file or a string
         as the shell session.
@@ -95,28 +122,10 @@ class ShellSessionParser( object ):
         a shlex token stream initialised with the correct options for
         parsing comments and whitespace.
         """        
-        f = StringIO(s) if ( s is not None and f is None ) else f
-
-        self.tokens = shlex( f if hasattr(f, "read") else file( f ) )
-
-        self.tokens.commenters = '' 
-        # deactivate shlex comments facility which won't work for us.
-        # The terminating linefeed means two things: end of comment an
-        # end of command. As shlex consume the terminating linefeed,
-        # there is no end of command left.
-
-        self.tokens.whitespace = ''
-        # deactivate shlex whitespace munging. characters cited in
-        # ``shlex.whitespace`` are not returned by get_token. If
-        # empty, whitespaces are returned as they are which is what we
-        # want: they definitely count in bash, and may count in
-        # output, so we just want to keep them as theyr are.
-
-        # overall, I am not sure I use shlex a lot...
-        
+        self.tokens = lex( f, shlex_object=True)
         self.nested = 0
 
-        self.prompts = [ lex(p) for p in self.prompts ]
+        self.prompts = [ lex(p) for p in prompts ]
         self.max_prompt_len = max([ len(p) for p in self.prompts ])
 
     def has_token( self ):
@@ -134,6 +143,7 @@ class ShellSessionParser( object ):
         t = self.tokens.get_token()
         return False if t==self.tokens.eof else self.tokens.push_token( t ) or True
 
+    
     def is_output( self, token ):
         r"""
         Returns true if the token is after the last token of the
@@ -154,31 +164,13 @@ class ShellSessionParser( object ):
         # also  make sure it occurs in the three last position at the same time.
 
         if token in [ p[0] for p in self.prompts ]:
-            tokens = token + [ self.tokens.next() for i in xrange( self.max_prompt_len) ]
+            tokens = [token,] + [ self.tokens.next() 
+                                  for i in range( self.max_prompt_len - 1) ] 
 
-            return False if any([tokens==prompt for prompt is self.prompts ]) else (
-                [ self.tokens.push_token(t) for t in tokens.reverse() ] or True)
-            
-            # for prompt in self.prompts:
-            #     if tokens==prompt:
-            #         return False
-            #     else:
-            #         [ self.tokens.push_token(t) for t in tokens.reverse() ]       
-            #         return True
-
+            return False if any([tokens==p for p in self.prompts ]) else (
+               [ self.tokens.push_token(t) for t in reversed(tokens[1:]) ] or True)
         else:
             return True
-
-        # if token=='~':
-        #     n1, n2 = [ self.tokens.next(), self.tokens.next() ]
-        #     if n1 in '$#' and n2 == ' ':
-        #         return False
-        #     else:
-        #         self.tokens.push_token( n2 ) 
-        #         self.tokens.push_token( n1 )
-        #         return True
-        # else:
-        #     return True
 
     def is_command( self, token ):
         r"""
@@ -211,7 +203,6 @@ class ShellSessionParser( object ):
         The first linefeed was nested in a subshell, hence was
         not the end of a command. The second linefedd was.
         """
-
         if token == '\n' or token == '#':
             if token=='#': 
                 list( takewhile( lambda t:t!='\n', self.tokens ) )
@@ -276,20 +267,24 @@ class ShellSessionParser( object ):
         commentize = lambda o: '# %s' % o.replace( '\n', '\n# ' )
         return "#!/bin/sh\nset -e\n#set -x\n%s\n" % '\n'.join(  
             chain( *( ( c, commentize(o) ) for c, o in self ) ) )
+
+
             
-
-
 class CommandOutput( object ):
 
-    # TODO: docstrings, and ellipsis
+    # TODO: docstrings
 
-
-    def __init__(self, out=None, err=None, returncode=None, cmd=None ):
+    def __init__(self, out=None, err=None, returncode=None, cmd=None, match='string' ):
         self.out, self.err, self.returncode = out, err, returncode
         self.cmd = cmd
 
+        assert match in ['string', 're', 'ellipsis']
+        self.match = getattr(self, match + '_match')
+
     def __str__(self):
-        return self.out or "<Empty CommandOutput>"
+        return '\n'.join( [ str( getattr(self,a) )
+                            for a in 'out', 'err', 'returncode' 
+                            if getattr(self,a) is not None] )
     
     __repr__ = __str__
         
@@ -297,19 +292,32 @@ class CommandOutput( object ):
         return not self.__eq__(other)
 
     def __eq__(self, other ):
-        # todo: ellipsis
+
         if isinstance(other, basestring):
             return other==self.out
 
         attrs = 'out', 'err', 'returncode'
-        if not all( [ hasattr( other, a ) for a in attrs ]):
-            raise TypeError("equality: argument must either a string or a CommandOutput instance.")
+        if any( [ not hasattr( other, a ) for a in attrs ]):
+            raise TypeError( "equality: argument must either a "
+                             "string or a CommandOutput instance.")
         
         return all( [ 
-                getattr( self, a ) == getattr( other, a ) 
+                self.match( getattr( other, a ), getattr( self, a ) )
                 for a in attrs 
                 if getattr( other, a ) is not None 
                 and getattr( self, a ) is not None ] )
+
+    def ellipsis_match(self,pattern,string):
+        # the pattern should be first escaped from special characters
+        # except the three dots '...'  what are the special
+        # characters?
+        return re.match(pattern.replace('...','.*?'), string) is not None
+
+    def string_match(self,pattern,string):
+        return pattern==string
+
+    def re_match(self,pattern,string):
+        return re.match(pattern.replace('...','.*'), string) is not None
 
     def exited_gracefully(self):
         return self.returncode==0
@@ -319,10 +327,11 @@ class CommandOutput( object ):
 
 
 class CommandRunner ( object ):
-    r"""
+    r""" 
     Implements a python "context manager", when entering the context,
     create a shell in a subprocess, the call method takes a string
-    with a shell command and execute it in the shell. call ret output of the command.
+    with a shell command and execute it in the shell. call ret output
+    of the command.
 
     >>> with CommandRunner() as sh:
     ...    sh.call("echo coucou")
@@ -333,22 +342,25 @@ class CommandRunner ( object ):
     2
     """
 
-    stderr_on_its_own = True
+    # TODO: get the return value and the stderr
+
+    separate_stderr = True
 
     def __enter__( self ):
-
-        if CommandRunner.stderr_on_its_own:
-            self.terminator = '\necho "~$ " \n'
-            self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE,                            
-                                stderr=PIPE)
-            self.stdout = ShellSessionParser( self.shell.stdout )
-            self.stderr = None
-        elif:
-            self.terminator = '\necho "~$ " \n' + 'echo "~$ " >&2 \n' 
-            self.shell = Popen( "sh", shell=True, stdin=PIPE, stdout=PIPE,                            
-                                stderr=STDOUT)
+        if CommandRunner.separate_stderr:
+            self.terminator = '\necho "~$ $?" \n' + 'echo "~$ " >&2 \n' 
+            self.shell = Popen( "sh", shell=True, 
+                                stdin=PIPE, stdout=PIPE,stderr=PIPE)
+                                
             self.stdout = ShellSessionParser( self.shell.stdout )
             self.stderr = ShellSessionParser( self.shell.stderr ) 
+        else:
+            self.terminator = '\necho "~$ " \n' 
+            self.shell = Popen( "sh", shell=True, 
+                                stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+
+            self.stdout = ShellSessionParser( self.shell.stdout )
+            self.stderr = None
         return self
 
     def __call__( self, cmd):
@@ -358,77 +370,73 @@ class CommandRunner ( object ):
         the"""
 
         self.shell.stdin.write( cmd + self.terminator )
-        return CommandOutput( self.read_output(), cmd=cmd )
-
+        return CommandOutput( *self.read_output(), cmd=cmd )
+ 
     def read_output(self):
-
-        out=self.stdout.takewhile( is_output=True )
-        err=self.stderr.takewhile( True ) if CommandRunner.stderr_on_its_own else None 
-
-        self.shell.stdin.write( 'echo $?' + self.terminator )
-        return out,err, int( self.stdout.takewhile( True ) )
-
         
+        out =      self.stdout.takewhile( is_output=True )
+        ret = int( self.stdout.tokens.next() )
+        err =      self.stderr.takewhile( True ) if CommandRunner.separate_stderr else None 
+
+        return out,err, ret
+
     def __exit__( self, *arg):
         self.shell.terminate()
-        # If the child shell is hanged, maybe self.p.send_signal( signal.SIGKILL )
-        # is more robust
+        self.shell.wait()
+        
+        # If the child shell is hanged, maybe 
+        # self.p.send_signal( signal.SIGKILL ) will be needed
 
 class OutputReporter( object):
 
-    def failed( self, inc=1 ):
-        self.counters[0]+=inc
-
-    def passed( self, inc=1 ):
-        self.counters[1]+=inc
-
     def __init__( self ):
-        self.list, self.counters = [], (0, 0) 
+        self.passcount, self.failcount = 0, 0
+        self.last_expected, self.last_output = None, None
 
-    def append( self, output, expected):
+    def failed( self, output ):
+        self.failcount += 1
+        return "Failed, got:\n\t%s\n" % str( output ) 
 
-        if any( [ not hasattr( output, a ) for a in ('out', 'err', 'returncode') ]):
-            raise TypeError("argument must have the 'out', 'err', 'returncode' attributes.")
+    def passed( self, output):
+        self.passcount += 1
+        return "ok"
 
-        self.failed() if output.aborted() else self.passed()
+    def before( self, cmd, expected ):
+        self.last_expected = expected
+        return "Trying:\n\t%s\nExpecting:\n\t%s\n" % ( cmd, expected )
 
-        self.list.append((output, expected))
-        return output
-
-    def report(self, verbose=False):
-
-        return '\n'.join( 
-            [   "Trying:\n\t%s\nExpecting:\n\t%s\n" % ( output.cmd, expected )
-                + "Failed, got:\n\t%s\n" % output if output!=expected else "ok"
-                for output, expected in self.list ] 
-            + [ self.summary() ]) 
+    def result(self, output ):
+        self.last_output = output
+        return self.passed( output ) if output==self.last_expected else self.failed( output )
     
-    __call__=report
-
     def summary( self ):
-        return '\n'.join( [ 
-                "%s test found\n%s test passed and %s test failed" % ( self.passed(0) + self.failed(0) ), 
-                "Test passed." if self.failed(0)==0 else "***Test failed*** %s failures" % self.failed(0)
-                ] )
-
+        print "%s tests found. " % (self.passcount + self.failcount)
+        if self.failcount==0:
+            print "All tests passed"
+        else:
+            print "%s tests passed, %s tests failed." % (self.passcount, self.failcount)
+                
+            
 def run( f ):
 
     report = OutputReporter()
+
     with CommandRunner() as run:
         for cmd, expected in ShellSessionParser( f ):
-            if report.append( run( cmd ), expected ).aborted():
-                print( "Something broke, I am bailing out, you get to keep both pieces.")
+
+            print report.before( cmd, expected )
+            print report.result( run( cmd ) )
+
+            if report.last_output.aborted():
+                print( "Something broke, I am bailing out, "
+                       "you get to keep both pieces.")
                 break
-    return report
+    report.summary()
 
 if __name__=="__main__":
 
     import sys
-
-    # TODO: make a man page a README file, in the egg place a test file for each
-    # use case, raid, lvm, firewalling, load balancing, packaging, source version control 
-    
-    files = sys.argv[1:] if len( sys.argv ) < 1 else (StringIO("""
+    files = sys.argv[1:] if len( sys.argv ) > 0 else (StringIO("""
 ~$ echo toto
 toto
 
@@ -457,6 +465,7 @@ Yo
 Yo
 """),)
 
-    for f in files: print run( f ).report( verbose=False )
-        
-                
+    for f in files: run( file( f ) )
+      
+                    
+

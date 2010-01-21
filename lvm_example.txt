@@ -1,4 +1,4 @@
-~$ cd && sudo -s
+~$ # cd && sudo -s
 ~# dd if=/dev/zero of=loop1.raw bs=1M count=1500
 ~# losetup /dev/loop1 loop1.raw
 
