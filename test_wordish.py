@@ -2,8 +2,9 @@
 
 from unittest import TestCase, main
 from wordish import ShellSessionParser as session
-from wordish import CommandRunner as shell
 from wordish import CommandOutput as out
+
+from wordish import CommandRunner as shell
 from wordish import OutputReporter as check
 
 
@@ -99,26 +100,27 @@ class ShellSessionParserTestCase( TestCase ):
 
         self.assertEqual(
             session(s=text).toscript(),
-            ( "ls\n"
-              "#coucou\n"
-              "#bonjour\n"
+            ( "#!/bin/sh\nset -e\n#set -x\n"
+              "ls\n"
+              "# coucou\n"
+              "# bonjour\n"
               "tr\n"
-              "#passwd:\n" )
+              "# passwd:\n" )
             )
 
 
     def test_executablescript ( self ):
         """make sure the script is executable """
 
-        text=( "~# date 2>/dev/null \n"
+        text=( "~# date >/dev/null \n"
                "coucou\nbonjour\n"
-               "~# ls 2>/dev/null \n"
+               "~# ls >/dev/null \n"
                "passwd:" )
         import os
         self.assertEqual( os.system(session(s=text).toscript()), 0)
 
 
-class CommandRunnerTestCase():
+class CommandRunnerTestCase( TestCase ):
 
 
     def test_simple_command( self ):
@@ -171,7 +173,7 @@ class CommandRunnerTestCase():
         raise NotImplemented
 
 
-class ReporterTestCase( object ):
+class ReporterTestCase( TestCase ):
     
     def test_append():
         "append several outputcomamnd object with a namedtuple mock"
