@@ -1,43 +1,20 @@
 """
-Wordish is a project which aims at reconstructing a shell session
-composed of commands and outputs, from a text file, then execute the
-commands in a shell and compare the output of the command to the
-output parsed from the text file.
+For an administrator or a developer, many operations are usually
+carried out via a command line interface, or a *shell*. Such
+operations include, for example, disk partitioning, raid setup or
+volume snapshots. They can also include source version control
+tutorial, or software packaging howto. Network and firewall setup,
+remote administration or load balancing tunings are few other examples
+naturally operated with a shell.
 
-Shell operations are easy to document, and with wordish, articles
-including shell operations can be easily tested for correctness,
-regression or compatibility on a particular system.
+Wordish is a project which executes a shell session parsed from a
+documentation then tests and builds a report of the execution. The
+article contains the commands and the expected outputs, the report
+takes care of comparing the expected results with the actual output of
+the execution of the command to make sure the documentation is correct. 
 
-Areas of interest include filesystems operations, raid setup, volume
-snapshots. Another area where wordish can be useful is in source
-version control tutorial, or software packaging. Network setup,
-firewall administration and load balancing tweaks are another examples
-of operations usually carried out with a shell.
+Wordish can test wordy shell articles. 
 """
-
-
-# TODO: in the egg place a test file for each use case, raid, lvm,
-# firewalling, load balancing, packaging, source version control, ssh
-# sessions
-
-# option -v should switch on the report, no -v should just report errors
-# must work with jdb's lvm article
-# must be hooked to the sourcecode directive standalone, sphinx builder and docutils
-# hook the docstrings to the inittest
-
-# the website should also be an S5 presentation
-# document the possibility to have a regexp pattern in the LHS of a
-# command output comparison
-
-# document the method for parsing: the prompt is the end of an
-# output, linefeed ends a command (use the universal linefeed) to be
-# able to use scripted built on windows.
-
-# make a man page, a README rst page, epydoc or sphinx documentation a --help
-# python -m wordish --test should show something
-# python -m wordish simple_session.txt should show something
-# python -m unittest -v wordish test_wordish should show something
-
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
@@ -46,13 +23,14 @@ from StringIO import StringIO
 import re
 
 
-def log( decorated ):
+def trace( decorated ):
     def f( *arg,**kwarg):
-        print decorated.__name__,arg, kwarg
-        ret = decorated(*arg,**kwarg)
+        print "%s: %s, %s => " % (decorated.__name__, arg, kwarg),
+        ret = decorated( *arg,**kwarg )
         print ret
         return ret
     return f
+
 
 def lex ( f, shlex_object=False, com='', whi='' ):
     r"""
@@ -105,13 +83,15 @@ class ShellSessionParser( object ):
     An iterator which parses a text file of a shell session and yields
     pairs of commands and outputs
     
-    >>> sess = ShellSessionParser( s="~$ (echo coucou\n) # hello\ncoucou" )
+    >>> sess = ShellSessionParser( "~$ (echo coucou\n) # hello\ncoucou" )
     >>> for c,o in sess: print c,o
     ...
     (echo coucou
-    )
-    coucou
+    ) coucou
     """
+
+    # several hints could be parsed in the comments on a command:
+    # ignore, stderr/&2, maybe ask input, they should be returned
 
     def __init__( self, f, prompts=['~# ', '~$ '] ):
         """
@@ -133,11 +113,11 @@ class ShellSessionParser( object ):
         Return True when there are still tokens available, False if
         the stream token is empty.
 
-        >>> sess = ShellSessionParser( s="~$ env | grep USER\nUSER=jd" ))
+        >>> sess = ShellSessionParser( "~$ env | grep USER\nUSER=jd" )
         >>> sess.has_token()
         True
         >>> for t in sess.tokens: pass
-        >>> sesssion.has_token()
+        >>> sess.has_token()
         False
         """
         t = self.tokens.get_token()
@@ -150,15 +130,15 @@ class ShellSessionParser( object ):
         output of a command, else returns false. The functions stops
         right before the prompt which can be either '~# ' or '~$ '.
 
-        >>> sess = ShellSessionParser( s="youpi\n~# " )
+        >>> sess = ShellSessionParser( "youpi\n~# " )
         >>> sess.tokens.next()
-        youpi
+        'youpi'
         >>> sess.is_output( 'youpi' )
-        False
-        >>> sess.tokens.next()
-        '~'
-        >>> sess.is_output( '~' )
         True
+        >>> sess.tokens.next(),sess.tokens.next()
+        ('\n', '~')
+        >>> sess.is_output( '~' )
+        False
         """
         # TODO: in the unittest, make sure '~' occurs in the -1, -2, and -3 position.
         # also  make sure it occurs in the three last position at the same time.
@@ -179,26 +159,24 @@ class ShellSessionParser( object ):
         before the linefeed but only when the linefeed is not nested in
         brackets or parenthesis.
 
-        >>> sess = session( s="date\n" )
+        >>> sess = ShellSessionParser( "date\n" )
         >>> sess.tokens.next()
-        date
-        >>> sess.is_output( 'date' )
-        False
+        'date'
+        >>> sess.is_command( 'date' )
+        True
         >>> sess.tokens.next()
         '\n'
-        >>> sess.is_output( '\n' )
-        True
+        >>> sess.is_command( '\n' )
+        False
 
         This is the end of output, since the linefeed was not nested.
 
-        >>> sess = ShellSessionParser( s="(youpi\n)\n" )
-        >>> [ sess.tokens.next() for i in range(3) ]
-        [ '(', 'youpi', '\n' ]
-        >>> sess.is_output( '\n' )
-        False
-        >>> sess.tokens.next(); sess.is_output( '\n' )
-        '\n'
+        >>> sess = ShellSessionParser( "(youpi\n)\n" )
+        >>> [ sess.is_command( sess.tokens.next()) for i in range(3) ]
+        [True, True, True]
+        >>> sess.is_command( sess.tokens.next()); sess.is_command( sess.tokens.next()); 
         True
+        False
         
         The first linefeed was nested in a subshell, hence was
         not the end of a command. The second linefedd was.
@@ -221,37 +199,33 @@ class ShellSessionParser( object ):
         r"""
         Returns a command or an output depending of the terminator
         provided. i.e. every token on which the terminator returns
-        False. The terminator is a function which take a token and
+        False. The terminator is a function which takes a token and
         returns whether the stream of tokens is terminated or not.
 
         >>> session = ShellSessionParser
-        >>> session( s="cmd" ).take_until()
-        cmd
-        >>> session( s="t () {\ncmd\n)\nhello" ).take_until()
-        t () {
-        cmd
-        }
-
-        Let's see with the output of the command:
-
-        >>> session( s="t () {\ncmd\n)\nhello" ).take_until()
-        
+        >>> session( "cmd" ).takewhile()
+        'cmd'
+        >>> session( "t () {\ncmd\n}\nhello" ).takewhile()
+        't () {\ncmd\n}'
         """
         return ''.join (
             list( takewhile(
                     self.is_output if is_output else self.is_command, 
                     self.tokens )
                  ) ).strip()
-            
+
+    get_command = lambda self:self.takewhile()
+    get_output  = lambda self:self.takewhile(is_output=True)
+
     def __iter__(self):
         r"""
         Returns the next pair of command and output.
 
         TODO: some unittest on the corner cases: empty file, only command, only outputs
 
-        >>> session = ShellSession
-        >>> sess = session( s="~# cmd1\noutput1\n~# cmd2\n" )
-        >>> for c,o in sess: print "command: %s\noutput: %o" % (c,o)
+        >>> session = ShellSessionParser
+        >>> sess = session( "~# cmd\noutput\n~# true\n" )
+        >>> for c,o in sess: print "command: %s\noutput: %s" % (c,o)
         command: cmd
         output: output
         command: true
@@ -260,8 +234,6 @@ class ShellSessionParser( object ):
         self.takewhile( is_output=True ) 
         while self.has_token() :
             yield self.takewhile(), self.takewhile( is_output=True )
-
-
     
     def toscript(self):
         commentize = lambda o: '# %s' % o.replace( '\n', '\n# ' )
@@ -282,9 +254,21 @@ class CommandOutput( object ):
         self.match = getattr(self, match + '_match')
 
     def __str__(self):
-        return '\n'.join( [ str( getattr(self,a) )
+        """
+        The string representation of a CommandOutput is a comma
+        separated list of the non null value of the out, err and
+        returncode members (in this order).
+
+        >>> CommandOutput(out=1,err=2,returncode=3)
+        1, 2, 3
+
+        >>> CommandOutput(out="2010-01-22")
+        2010-01-22
+        """
+        return ', '.join( [ str( getattr(self,a) )
                             for a in 'out', 'err', 'returncode' 
-                            if getattr(self,a) is not None] )
+                            if not(getattr(self,a) in [None, ''])
+                            ] )
     
     __repr__ = __str__
         
@@ -327,23 +311,24 @@ class CommandOutput( object ):
 
 
 class CommandRunner ( object ):
-    r""" 
-    Implements a python "context manager", when entering the context,
-    create a shell in a subprocess, the call method takes a string
-    with a shell command and execute it in the shell. call ret output
-    of the command.
+    r""" Implements a python "context manager", when entering the
+    context (the *with* block ), creates a shell in a subprocess,
+    right before exiting the context (leaving the block or processing
+    an exception), the shell is assured to be terminated.
+
+    The call method takes a string meant to contain a shell command
+    and send it to the shell which executes it. call ret output of the
+    command.
 
     >>> with CommandRunner() as sh:
-    ...    sh.call("echo coucou")
-    ...    sh.call("a=$((1+1))")
-    ...    sh.call("echo $a")
+    ...    sh("echo coucou")
+    ...    sh("a=$((1+1))")
+    ...    sh("echo $a")
     ...
-    coucou
-    2
+    coucou, 0
+    0
+    2, 0
     """
-
-    # TODO: get the return value and the stderr
-
     separate_stderr = True
 
     def __enter__( self ):
@@ -395,15 +380,15 @@ class OutputReporter( object):
 
     def failed( self, output ):
         self.failcount += 1
-        return "Failed, got:\n\t%s\n" % str( output ) 
+        return "Failed, got:\t%s\n" % output 
 
     def passed( self, output):
         self.passcount += 1
-        return "ok"
+        return "ok\n"
 
     def before( self, cmd, expected ):
         self.last_expected = expected
-        return "Trying:\n\t%s\nExpecting:\n\t%s\n" % ( cmd, expected )
+        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
 
     def result(self, output ):
         self.last_output = output
@@ -433,39 +418,35 @@ def run( f ):
                 break
     report.summary()
 
+simple_example = """
+~$ echo "hello world"   # insightful comment
+hello world
+
+~$ (
+echo $((1+1)) )
+2
+
+~$ sum () {
+echo $(( $1 + $2 ))
+}
+
+~$ sum 42 58                # correct command, erroneous output
+3
+
+~$ What have the Romans ever done for us   #  command not found: will abort
+...
+aqueduct ?
+roads
+wine !
+"""
+
 if __name__=="__main__":
 
     import sys
-    files = sys.argv[1:] if len( sys.argv ) > 0 else (StringIO("""
-~$ echo toto
-toto
+    files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( simple_example ),
 
-~$ echo $((1+1))
-2
-
-~$ echo "yozzza"
-yozzza
-
-~$ echo Youpi # what's up
-Youpi
-
-~$ echo "'~$'"
-'~$'
-
-~$ echo Yo # ~$
-Yo
-
-~$ echo $((1+1))
-2
-
-~$ echo $((1+2))
-2
-
-~$ lesbronzesfontduski # ~$
-Yo
-"""),)
-
-    for f in files: run( file( f ) )
+    for f in files: 
+        run( f  if hasattr(f, 'read') else file(f) )
       
                     
 

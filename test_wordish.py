@@ -1,18 +1,18 @@
 
 
-from unittest import TestCase, main
+import unittest, doctest, wordish
+ 
 from wordish import ShellSessionParser as session
 from wordish import CommandOutput as out
-
 from wordish import CommandRunner as shell
 from wordish import OutputReporter 
-from collections import namedtuple
+
 
 
 # TODO: command runner not tested: create file check existence, check
 # enter, check exit
 
-class CommandOutputTestCase ( TestCase ):
+class CommandOutputTestCase(unittest.TestCase):
 
     def test_correct_attributes( self ):
         [ self.assertTrue(hasattr( out(), attr)) 
@@ -55,7 +55,7 @@ class CommandOutputTestCase ( TestCase ):
     def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
 
-class ShellSessionParserTestCase( TestCase ):
+class ShellSessionParserTestCase( unittest.TestCase ):
 
     def test_command (self):
 
@@ -126,7 +126,7 @@ class ShellSessionParserTestCase( TestCase ):
         self.assertEqual( os.system(session(text).toscript()), 0)
 
 
-class CommandRunnerTestCase( TestCase ):
+class CommandRunnerTestCase( unittest.TestCase ):
 
 
     def test_simple_command( self ):
@@ -180,7 +180,7 @@ class CommandRunnerTestCase( TestCase ):
         self.assertEqual(sh.shell.returncode, -15)
 
 
-class ReporterTestCase( TestCase ):
+class ReporterTestCase( unittest.TestCase ):
 
     def test_counters_and_append(self):
         report = OutputReporter()
@@ -192,4 +192,14 @@ class ReporterTestCase( TestCase ):
         self.assertEqual(report.passcount,1)
 
 if __name__ == '__main__':
-   main()
+   
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ShellSessionParserTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandOutputTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandRunnerTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ReporterTestCase))
+
+    suite.addTest(doctest.DocTestSuite(wordish))
+
+    unittest.TextTestRunner(verbosity=2).run(suite)
+   

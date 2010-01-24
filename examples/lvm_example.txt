@@ -1,5 +1,9 @@
 ~$ # cd && sudo -s
 ~# dd if=/dev/zero of=loop1.raw bs=1M count=1500
+1500+0 records in
+1500+0 records out
+1572864000 bytes (1.6 GB) copied, 29.0383 s, 54.2 MB/s
+
 ~# losetup /dev/loop1 loop1.raw
 
 ~# cat /proc/partitions
