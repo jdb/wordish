@@ -236,8 +236,8 @@ class ShellSessionParser( object ):
             yield self.takewhile(), self.takewhile( is_output=True )
     
     def toscript(self):
-        commentize = lambda o: '# %s' % o.replace( '\n', '\n# ' )
-        return "#!/bin/sh\nset -e\n#set -x\n%s\n" % '\n'.join(  
+        commentize = lambda o: '# %s\n' % o.replace( '\n', '\n# ' )
+        return "#!/bin/sh\nset -e  # -x\n\n%s\n" % '\n'.join(  
             chain( *( ( c, commentize(o) ) for c, o in self ) ) )
 
 
@@ -440,13 +440,27 @@ roads
 wine !
 """
 
-if __name__=="__main__":
 
-    import sys
+#########
+######### Console script entry points
+
+import sys
+
+def wordish():
+
     files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( simple_example ),
 
     for f in files: 
         run( f  if hasattr(f, 'read') else file(f) )
       
+def rst2sh():
+    
+    files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( simple_example ),
+
+    for f in files: 
+        print ShellSessionParser( f  if hasattr(f, 'read') else file(f) ).toscript()
+
+if __name__=='__main__':
+    rst2sh()
                     
 

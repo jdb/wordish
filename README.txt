@@ -80,11 +80,27 @@ How to write an article
 Object model and interfaces
 ===========================
 
-        overview
-        parser
-        output
-	runner
-        reporter
+Overview
+--------
+
+There is a ShellSessionParser, a output which of stdout, stderr, the
+returncode and
+
+Wordish makes use of five python modules nothing else than shlex,
+itertools, :mod:`StringIO` which adapts a character string to the
+interface open file. and and sys
+
+parser
+------
+
+output
+------
+
+runner
+------
+
+reporter
+--------
 
 Sources presentation
 ====================

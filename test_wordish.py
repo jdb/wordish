@@ -106,12 +106,12 @@ class ShellSessionParserTestCase( unittest.TestCase ):
 
         self.assertEqual(
             session(text).toscript(),
-            ( "#!/bin/sh\nset -e\n#set -x\n"
+            ( "#!/bin/sh\nset -e  # -x\n\n"
               "ls\n"
               "# coucou\n"
-              "# bonjour\n"
+              "# bonjour\n\n"
               "tr\n"
-              "# passwd:\n" )
+              "# passwd:\n\n" )
             )
 
 
