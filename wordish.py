@@ -448,8 +448,7 @@ import sys
 
 def wordish():
 
-    files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( simple_example ),
-
+    files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( simple_example ),)
     for f in files: 
         run( f  if hasattr(f, 'read') else file(f) )
       
@@ -461,7 +460,6 @@ def rst2sh():
         print ShellSessionParser( f  if hasattr(f, 'read') else file(f) ).toscript()
 
 if __name__=='__main__':
-    rst2sh()
+    wordish()
                     
 
-titi
