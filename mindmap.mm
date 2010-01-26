@@ -1,38 +1,45 @@
 <map version="0.7.1">
 <node TEXT="wordish">
-<node TEXT="What is wordish?" POSITION="right">
+<node TEXT="What is wordish?" FOLDED="true" POSITION="right">
 <node TEXT="readme"/>
 <node TEXT="man"/>
 <node TEXT="wordish --help"/>
 <node TEXT="presentation"/>
 <node TEXT="installation and verification"/>
 </node>
-<node TEXT="writing articles" POSITION="right">
+<node TEXT="writing articles" FOLDED="true" POSITION="right">
 <node TEXT="parsing method (prompts, nesting)"/>
 <node TEXT="matching methods (ignoring, ellipsis, re)"/>
 <node TEXT="one subshell for the session"/>
 <node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
 </node>
-<node TEXT="object model and interfaces" POSITION="right">
+<node TEXT="object model and interfaces" FOLDED="true" POSITION="right">
 <node TEXT="overview"/>
 <node TEXT="parser"/>
 <node TEXT="output and runner"/>
 <node TEXT="reporter"/>
 </node>
 <node TEXT="software engineering" POSITION="right">
-<node TEXT="source, branches and versions"/>
+<node TEXT="source, branches and versions">
+<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
+</node>
 <node TEXT="doctests and unit tests"/>
 <node TEXT="packaging">
-<node TEXT="facts">
-<node TEXT="scripts are placed at install in ./bin in a virtual env"/>
-<node TEXT="console script entry point requires eggs"/>
-<node TEXT="distutils.core.setup install from pristine source says &apos;running egg_info&apos;"/>
+<node TEXT="questions">
+<node TEXT="does distutils make eggs? it is talking about eggs anyway">
 <node TEXT="setup --help-commands tell nothin about eggs"/>
+<node TEXT="distutils.core.setup install from pristine source says &apos;running egg_info&apos;"/>
 </node>
-<node TEXT=""/>
-<node TEXT=""/>
-<node TEXT="does distribute make eggs? it is talking about eggs anyway"/>
-<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
+<node TEXT="is there a way to distribute man pages with distutils" FOLDED="true">
+<node TEXT="console script entry point requires eggs"/>
+</node>
+<node TEXT="where does distutils {package,} additional files go?"/>
+<node TEXT="additional vs package data in distutils? another solution in eggs? in buildout?" FOLDED="true">
+<node TEXT="scripts are placed at install in ./bin in a virtual env"/>
+</node>
+<node TEXT="MANIFEST?"/>
+<node TEXT="examples, "/>
+</node>
 <node TEXT="test package_data and data_files, where do they end up?"/>
 <node TEXT="distutils, distribute, pip"/>
 <node TEXT="content">
@@ -47,7 +54,7 @@
 </node>
 </node>
 </node>
-<node TEXT="limitations, roadmap and crazy ideas" POSITION="right">
+<node TEXT="limitations, roadmap and crazy ideas" FOLDED="true" POSITION="right">
 <node TEXT="setup.py and entry point"/>
 <node TEXT="rst builder, sphinx builder"/>
 <node TEXT="doctests to unittests"/>
