@@ -13,13 +13,25 @@
 <node TEXT="one subshell for the session"/>
 <node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
 </node>
-<node TEXT="object model and interfaces" FOLDED="true" POSITION="right">
-<node TEXT="overview"/>
-<node TEXT="parser"/>
-<node TEXT="output and runner"/>
-<node TEXT="reporter"/>
+<node TEXT="object model and interfaces" POSITION="right">
+<node TEXT="overview">
+<node TEXT="one of the attribute is an iterable"/>
+<node TEXT="a class is iterable" FOLDED="true">
+<node TEXT="fact is that there is an __iter__() yielding an iterator which has a next() function. &#xa;&#xa;Should just say this object has an __iter__ (which is a idiom) or should I say it has a next (which is more directly useful, and less a idiom)&#xa;&#xa;The bottom line is trying to express, this interface provides an iterable"/>
 </node>
-<node TEXT="software engineering" POSITION="right">
+<node TEXT="a class is callable"/>
+<node TEXT="a class is a context manager"/>
+<node TEXT="complete arguments and return code?"/>
+</node>
+<node TEXT="should the interface contains the doctest?"/>
+<node TEXT="should it contain message sequence diagram?"/>
+<node TEXT="for simplicity should the private/public distinction be made clear in the module with underscore"/>
+<node TEXT="should a sphinx doc be build cuz it is classe, there is a toc, etc"/>
+<node TEXT="should the sphinx doc syntax or the pydoctor be used? are they way clearer?"/>
+<node TEXT="dig out, undust and finish the zope.schema extensions"/>
+<node TEXT="the sphinx automodule will not be displayed by github and pypi, kiss would advise not to use sphinx, or else, the page is build in a branch and is an article on jdb.github.com ..."/>
+</node>
+<node TEXT="software engineering" FOLDED="true" POSITION="right">
 <node TEXT="source, branches and versions">
 <node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
 </node>
@@ -72,6 +84,7 @@
 </node>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
 <node TEXT="howto to place or name the test so that it is "/>
+<node TEXT="the command runner should be created the url of an ssh host"/>
 <node TEXT="refactor the tests">
 <node TEXT="some are harmful for readability"/>
 <node TEXT="name the tests"/>
