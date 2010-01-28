@@ -32,52 +32,6 @@ def trace( decorated ):
     return f
 
 
-def lex ( f, shlex_object=False, com='', whi='' ):
-    r"""
-    Debug function: returns the list of tokens of the input string.
-
-    The token commenters and whitespace are set to the empty string
-    and can be modified with the function arguments 'com' and
-    'whi'. 
-
-    If the argument shlex_object is set to True then it'is not the
-    list of tokens but the shlex object itself so that you can
-    experiment with the :obj:`shlex` and it multiple attribute and
-    method.
-
-    >>> lex( "Yozza 1 2" )
-    ['Yozza', ' ', '1', ' ', '2']
-
-    >>> tokens = lex( "Yozza 1 2", shlex_object=True )
-    >>> tokens.whitespace = ' '
-    >>> [t for t in tokens ]
-    ['Yozza', '1', '2']
-
-    >>> lex( "Yozza # a comment you dont want to see", whi=' ', com='#' )
-    ['Yozza']
-
-    """
-
-    tokens = shlex( f if hasattr(f, "read") else StringIO( f )) 
-    tokens.commenters = com 
-    # deactivate shlex comments facility which won't work for us.
-    # The terminating linefeed means two things: end of comment an
-    # end of command. As shlex consume the terminating linefeed,
-    # there is no end of command left.
-    
-    tokens.whitespace = whi
-    # deactivate shlex whitespace munging. characters cited in
-    # ``shlex.whitespace`` are not returned by get_token. If
-    # empty, whitespaces are returned as they are which is what we
-    # want: they definitely count in bash, and may count in
-    # output, so we just want to keep them as they are.
-
-    if shlex_object:
-        return tokens
-    else:
-        return list( tokens )
-
-
 class ShellSessionParser( object ):
     r"""
     An iterator which parses a text file of a shell session and yields
@@ -90,23 +44,65 @@ class ShellSessionParser( object ):
     ) coucou
     """
 
-    # several hints could be parsed in the comments on a command:
+    # TODO: several hints could be parsed in the comments on a command:
     # ignore, stderr/&2, maybe ask input, they should be returned
 
-    def __init__( self, f, prompts=['~# ', '~$ '] ):
-        """
+    def __init__( self, f, prompts=['~# ', '~$ '], com='', whi='' ):
+
+        r"""
         The constructor takes a filename or an open file or a string
         as the shell session.
 
         The constructor sets the :attr:`tokens` member attribute with
         a shlex token stream initialised with the correct options for
         parsing comments and whitespace.
-        """        
-        self.tokens = lex( f, shlex_object=True)
+        
+        The token commenters and whitespace are set to the empty string
+        and can be modified with the function arguments 'com' and
+        'whi'. 
+
+        If the argument shlex_object is set to True then it'is not the
+        list of tokens but the shlex object itself so that you can
+        experiment with the :obj:`shlex` and it multiple attribute and
+        method.
+
+        >>> list(ShellSessionParser( "Yozza 1 2" ).tokens)
+        ['Yozza', ' ', '1', ' ', '2']
+        
+        >>> tokens = ShellSessionParser( "Yozza 1 2").tokens
+        >>> tokens.whitespace = ' '
+        >>> list(tokens)
+        ['Yozza', '1', '2']
+
+        >>> list( ShellSessionParser("Yozza # a comment you dont want to see", whi=' ', com='#' ).tokens)
+        ['Yozza']
+        
+        """
+        
+        self.tokens = shlex( f if hasattr(f, "read") else StringIO( f )) 
+        self.tokens.commenters = com 
+        # deactivate shlex comments facility which won't work for us.
+        # The terminating linefeed means two things: end of comment an
+        # end of command. As shlex consume the terminating linefeed,
+        # there is no end of command left.
+    
+        self.tokens.whitespace = whi
+        # deactivate shlex whitespace munging. characters cited in
+        # ``shlex.whitespace`` are not returned by get_token. If
+        # empty, whitespaces are returned as they are which is what we
+        # want: they definitely count in bash, and may count in
+        # output, so we just want to keep them as they are.
+
         self.nested = 0
 
-        self.prompts = [ lex(p) for p in prompts ]
+        self.prompts = []
+        for p in prompts:
+            s=shlex(p)
+            s.commenters, s.whitespace = com, whi
+            self.prompts.append( list( s ) )
+
         self.max_prompt_len = max([ len(p) for p in self.prompts ])
+
 
     def has_token( self ):
         r"""
@@ -231,9 +227,11 @@ class ShellSessionParser( object ):
         command: true
         output: 
         """
-        self.takewhile( is_output=True ) 
+        self.get_output()
         while self.has_token() :
-            yield self.takewhile(), self.takewhile( is_output=True )
+            yield self.get_command(), self.get_output()
+
+
     
     def toscript(self):
         commentize = lambda o: '# %s\n' % o.replace( '\n', '\n# ' )
@@ -361,7 +359,8 @@ class CommandRunner ( object ):
         
         out =      self.stdout.takewhile( is_output=True )
         ret = int( self.stdout.tokens.next() )
-        err =      self.stderr.takewhile( True ) if CommandRunner.separate_stderr else None 
+        err =      self.stderr.takewhile( True 
+                       ) if CommandRunner.separate_stderr else None 
 
         return out,err, ret
 
@@ -372,7 +371,7 @@ class CommandRunner ( object ):
         # If the child shell is hanged, maybe 
         # self.p.send_signal( signal.SIGKILL ) will be needed
 
-class OutputReporter( object):
+class TestReporter( object):
 
     def __init__( self ):
         self.passcount, self.failcount = 0, 0
@@ -392,7 +391,8 @@ class OutputReporter( object):
 
     def result(self, output ):
         self.last_output = output
-        return self.passed( output ) if output==self.last_expected else self.failed( output )
+        return self.passed( output 
+                   ) if output==self.last_expected else self.failed( output )
     
     def summary( self ):
         print "%s tests found. " % (self.passcount + self.failcount)
@@ -404,7 +404,7 @@ class OutputReporter( object):
             
 def run( f ):
 
-    report = OutputReporter()
+    report = TestReporter()
 
     with CommandRunner() as run:
         for cmd, expected in ShellSessionParser( f ):
