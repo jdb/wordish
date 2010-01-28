@@ -5,7 +5,7 @@ import unittest, doctest, wordish
 from wordish import ShellSessionParser as session
 from wordish import CommandOutput as out
 from wordish import CommandRunner as shell
-from wordish import OutputReporter 
+from wordish import TestReporter 
 
 
 
@@ -52,6 +52,27 @@ class CommandOutputTestCase(unittest.TestCase):
 
         [ self.assertFalse(parsed==actual) for parsed, actual in cases ]
             
+    def test_match_re( self ):
+        out(match='re')
+        # creer multiple object which should be equal given the
+        # re:  use random. Use static plain strings, use the three
+        # dots makes sure it matches greedily, that the line before or
+        # after is not impacted
+
+        # find a few case which should nonetheless not match
+        raise NotImplemented
+
+    def test_match_ellipsis( self ):
+        out(match='ellipsis')
+        # creer multiple object which should be equal given the
+        # ellipsis use random. Use static plain strings, use the three
+        # dots makes sure it matches greedily, that the line before or
+        # after is not impacted
+
+        # find a few case which should nonetheless not match
+        raise NotImplemented
+
+
     def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
 
@@ -183,7 +204,7 @@ class CommandRunnerTestCase( unittest.TestCase ):
 class ReporterTestCase( unittest.TestCase ):
 
     def test_counters_and_append(self):
-        report = OutputReporter()
+        report = TestReporter()
         for i in range(10):
             report.before("", out(returncode=0))
             report.result( out(returncode=i))
