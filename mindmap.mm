@@ -66,25 +66,25 @@
 </node>
 </node>
 </node>
-<node TEXT="limitations, roadmap and crazy ideas" FOLDED="true" POSITION="right">
-<node TEXT="setup.py and entry point"/>
+<node TEXT="limitations, roadmap and crazy ideas" POSITION="right">
+<node TEXT="console_script entry point: later needs eggs, eggs can&apos;t do man"/>
 <node TEXT="rst builder, sphinx builder"/>
-<node TEXT="doctests to unittests"/>
 <node TEXT="quiet mode without output"/>
-<node TEXT="universal linefeed for commands in win articles"/>
+<node TEXT="turn to unix linefeed when parsing other linefeeds"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="at bailout, show rest to help cleanup and help debug"/>
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="executable article with #!/usr/bin/wordish"/>
 <node TEXT="other parsing format, markdown"/>
-<node TEXT="hints in a command&apos;s comments" FOLDED="true">
-<node TEXT="ignore"/>
+<node TEXT="hints in a command&apos;s comments">
+<node TEXT="ignore (stdout, stderr, ret)"/>
 <node TEXT="input"/>
+<node TEXT="the rest is clean up code executed on bailout"/>
 <node TEXT="&amp;2"/>
 </node>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
-<node TEXT="howto to place or name the test so that it is "/>
-<node TEXT="the command runner should be created the url of an ssh host"/>
+<node TEXT="&quot;something broke&quot; be clearer less fear monging"/>
+<node TEXT="the command runner should accept the url of an ssh host"/>
 <node TEXT="refactor the tests">
 <node TEXT="some are harmful for readability"/>
 <node TEXT="name the tests"/>

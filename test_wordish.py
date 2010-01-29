@@ -14,6 +14,27 @@ from wordish import TestReporter
 
 class CommandOutputTestCase(unittest.TestCase):
 
+    def ellipsis(self, *args, **kwargs):
+        return out(*args, match='ellipsis')
+    
+    def re(self, *args, **kwargs):
+        return out(*args, match='re')
+
+
+    def setUp(self):
+
+        true_examples= 1
+        true_combinatorial = 1
+        false_combinatorial = 1
+        true_ellipsis =1
+        false_ellipsis =1
+        false_re =1
+        true_re =1
+
+        # put the data available for self and for each equal methods,
+        # tests these data. create 2 new data sets specific for
+        # ellipsis and re
+
     def test_correct_attributes( self ):
         [ self.assertTrue(hasattr( out(), attr)) 
           for attr in ["out","err","returncode"] ]
@@ -54,6 +75,12 @@ class CommandOutputTestCase(unittest.TestCase):
             
     def test_match_re( self ):
         out(match='re')
+
+        true = self.assertTrue
+        true( out( "hello world", match='re'), "hello world" )
+        true( out( "hello world", "warning", match='re'), "hello world" )
+        true( out( "hello world", "warning", -1 , match='re'), "hello world" )
+
         # creer multiple object which should be equal given the
         # re:  use random. Use static plain strings, use the three
         # dots makes sure it matches greedily, that the line before or
