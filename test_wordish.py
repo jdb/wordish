@@ -14,91 +14,94 @@ from wordish import TestReporter
 
 class CommandOutputTestCase(unittest.TestCase):
 
-    def ellipsis(self, *args, **kwargs):
+    def ellipsis(self, *args):
         return out(*args, match='ellipsis')
     
-    def re(self, *args, **kwargs):
+    def re(self, *args):
         return out(*args, match='re')
 
 
     def setUp(self):
 
-        true_examples= 1
-        true_combinatorial = 1
-        false_combinatorial = 1
-        true_ellipsis =1
-        false_ellipsis =1
-        false_re =1
-        true_re =1
+        self.true_examples = ( 
+            (( "hello world", None, None),                ( "hello world", None, None)),
+            (( "hello world", "warning", None ),     ( "hello world", None, None )),
+            (( "hello world", "warning", -1 ), ( "hello world", None, None )),     
+            (( "hello world", "warning"),      ( "hello world", "warning", None )),
+            (( "hello world", "warning", -1 ), ( "hello world", "warning", -1 )),
+            (( None, None, None),              ( None, None, None)),
+            (( 1, None, 1),                    (None, 1, None) ),
+            (( 1, None, None),                 (None, 1, 1)),
+            (( 1, None, None ),                            (None, 1, 1)))
+        
+        outs, errs, rets = [ "hello", None ], [ "watchout", None ], [ 0, None ]
 
-        # put the data available for self and for each equal methods,
-        # tests these data. create 2 new data sets specific for
-        # ellipsis and re
+        self.true_combinatorial = ( 
+            ((o,e,r), (o1,e1,r1)) 
+            for o  in outs for e  in errs for r  in rets 
+            for o1 in outs for e1 in errs for r1 in rets )
+
+        self.false_combinatorial = (
+            (('bye','fail',1), (o,e,r)) for o in outs for e in errs for r in rets 
+            if (o,e,r) != (None, None, None) )
+
+        self.true_ellipsis = ( 
+            (( "random 1832345 lucky me !",), ( "random ... lucky me !",)   ),
+            (( "random foobar lucky me !",),  ( "random ... lucky me !",)   ),
+            (( "random '' lucky me !",),      ( "random '...' lucky me !",) ))
+
+        self.false_ellipsis = (
+            (( "random 832345 lucky me",), ("random  ... lucky me",)),  
+            (( "random 18345\nlucky me",), ("random ... lucky me" ,)),  
+            (( "random 1324",),            ("random ... lucky me" ,)),  
+            (( "1832345 lucky me",),       ("random ... lucky me" ,)))  
+
+        self.true_re = ( 
+            (( "random 1832345 lucky me !",), ("random .*? lucky me !"   ,)),
+            (( "random foobar lucky me !",),  ("random .*? lucky me !"   ,)),
+            (( "random '' lucky me !",),      ("random '.*?' lucky me !" ,)))
+
+        self.false_re = (
+            (( "random 832345 lucky me",),  ("random  .*? lucky me" ,)), 
+            (( "random 18345\nlucky me",),  ("random .*? lucky me"  ,)), 
+            (( "random 1324",),             ("random .*? lucky me"  ,)), 
+            (( "1832345 lucky me",),        ("random .*? lucky me"  ,))) 
+
 
     def test_correct_attributes( self ):
-        [ self.assertTrue(hasattr( out(), attr)) 
-          for attr in ["out","err","returncode"] ]
+        for attr in ["out","err","returncode"]:
+            self.assertTrue( hasattr( out(), attr) ) 
 
+    def test_equal_string( self ):
 
-    def test_equal( self ):
-        true = self.assertTrue
-        true( out( "hello world"), "hello world" )
-        true( out( "hello world", "warning"), "hello world" )
-        true( out( "hello world", "warning", -1 ), "hello world" )
+        for samples in self.true_examples, self.true_combinatorial: 
+            for parsed, actual in samples:
+                self.assertTrue( out(*parsed)==out(*actual) )
 
-        true( out( "hello world"), out("hello world") )
-        true( out( "hello world", "warning"), 
-              out( "hello world", "warning" ) )
-        true( out( "hello world", "warning", -1 ), 
-              out( "hello world", "warning", -1 ) )
-
-        true( out(), out() )
-        true( out(1, None, 1), out(None, 1, None) )
-        true( out(1, None, None), out(None, 1, 1) )
-        true( out(1 ), out(None, 1, 1) )
-
-    def test_all_equal( self ):
-        outs, errs, rets = ["out",None], ["err",None], [1,None]
-        cases = [ (out(o,e,r), out(o1,e1,r1)) 
-                  for o  in outs for e  in errs for r  in rets 
-                  for o1 in outs for e1 in errs for r1 in rets ]
-
-        [ self.assertTrue(parsed==actual) for parsed, actual in cases ]
-
-    def test_equal_false( self ):
-        outs1, errs1, rets1 =["hello",None], ["warn",None], [0,None]
-
-        cases = [ (o1,e1,r1) for o1 in outs1 for e1 in errs1 for r1 in rets1]
-        cases = [ (out('out','err',1), out(o1,e1,r1)) for (o1,e1,r1) in cases if (o1,e1,r1) != (None, None, None)]
-
-        [ self.assertFalse(parsed==actual) for parsed, actual in cases ]
+        for parsed, actual in self.false_combinatorial:
+            self.assertFalse( out(*parsed)==out(*actual) )
             
-    def test_match_re( self ):
-        out(match='re')
+    def test_equal_re( self ):
 
-        true = self.assertTrue
-        true( out( "hello world", match='re'), "hello world" )
-        true( out( "hello world", "warning", match='re'), "hello world" )
-        true( out( "hello world", "warning", -1 , match='re'), "hello world" )
+        for samples in (self.true_examples, self.true_combinatorial,
+                        self.true_re):
+            for parsed, actual in samples:
+                self.assertTrue( self.re(*parsed)==self.re(*actual) )
 
-        # creer multiple object which should be equal given the
-        # re:  use random. Use static plain strings, use the three
-        # dots makes sure it matches greedily, that the line before or
-        # after is not impacted
+        for samples in self.false_combinatorial, self.false_re:
+            for parsed, actual in samples:
+                self.assertFalse( self.re(*parsed)==self.re(*actual) )
 
-        # find a few case which should nonetheless not match
-        raise NotImplemented
+    def test_equal_ellipsis( self ):
+          
+        for samples in (self.true_examples, self.true_combinatorial,
+                        self.true_ellipsis):
+            for parsed, actual in samples:
+                self.assertTrue( self.ellipsis(*parsed)==self.ellipsis(*actual) )
 
-    def test_match_ellipsis( self ):
-        out(match='ellipsis')
-        # creer multiple object which should be equal given the
-        # ellipsis use random. Use static plain strings, use the three
-        # dots makes sure it matches greedily, that the line before or
-        # after is not impacted
-
-        # find a few case which should nonetheless not match
-        raise NotImplemented
-
+        for samples in self.false_combinatorial, self.false_ellipsis:
+            for parsed, actual in samples:
+                self.assertFalse( self.ellipsis(*parsed)==self.ellipsis(*actual) )
 
     def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )

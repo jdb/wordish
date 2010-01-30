@@ -244,7 +244,7 @@ class CommandOutput( object ):
 
     # TODO: docstrings
 
-    def __init__(self, out=None, err=None, returncode=None, cmd=None, match='string' ):
+    def __init__(self, out=None, err=None, returncode=None, cmd=None, match='ellipsis' ):
         self.out, self.err, self.returncode = out, err, returncode
         self.cmd = cmd
 
@@ -276,7 +276,7 @@ class CommandOutput( object ):
     def __eq__(self, other ):
 
         if isinstance(other, basestring):
-            return other==self.out
+            return self.match( other, self.out )
 
         attrs = 'out', 'err', 'returncode'
         if any( [ not hasattr( other, a ) for a in attrs ]):
@@ -284,7 +284,7 @@ class CommandOutput( object ):
                              "string or a CommandOutput instance.")
         
         return all( [ 
-                self.match( getattr( other, a ), getattr( self, a ) )
+                self.match( str( getattr( other, a )) , str( getattr( self, a )))
                 for a in attrs 
                 if getattr( other, a ) is not None 
                 and getattr( self, a ) is not None ] )
@@ -293,13 +293,17 @@ class CommandOutput( object ):
         # the pattern should be first escaped from special characters
         # except the three dots '...'  what are the special
         # characters?
-        return re.match(pattern.replace('...','.*?'), string) is not None
+        if '...' in pattern:
+            start, end = pattern.split('...')
+            return string.startswith(start) and string.endswith(end)
+        else:
+            return pattern==string
 
     def string_match(self,pattern,string):
         return pattern==string
 
     def re_match(self,pattern,string):
-        return re.match(pattern.replace('...','.*'), string) is not None
+        return re.match(pattern, string) is not None
 
     def exited_gracefully(self):
         return self.returncode==0
@@ -405,16 +409,21 @@ class TestReporter( object):
 def run( f ):
 
     report = TestReporter()
-
+    session = ShellSessionParser( f )
     with CommandRunner() as run:
-        for cmd, expected in ShellSessionParser( f ):
+        for cmd, expected in session:
 
             print report.before( cmd, expected )
             print report.result( run( cmd ) )
 
             if report.last_output.aborted():
-                print( "Something broke, I am bailing out, "
-                       "you get to keep both pieces.")
+                print( "Command aborted, bailing out")
+                remaining_cmds = [ cmd for cmd, _ in session ]
+                if len( remaining_cmds )==0:
+                    print( "There was no remaining command" )
+                else:
+                    print( "The remaining commands were:\n\t" + '\n\t'.join(
+                            remaining_cmds ))
                 break
     report.summary()
 
@@ -433,8 +442,10 @@ echo $(( $1 + $2 ))
 ~$ sum 42 58                # correct command, erroneous output
 3
 
-~$ What have the Romans ever done for us   #  command not found: will abort
+~$ echo $((RANDOM))
 ...
+
+~$ What have the Romans ever done for us   #  command not found: will abort
 aqueduct ?
 roads
 wine !
@@ -451,6 +462,7 @@ def wordish():
     files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( simple_example ),)
     for f in files: 
         run( f  if hasattr(f, 'read') else file(f) )
+    
       
 def rst2sh():
     
