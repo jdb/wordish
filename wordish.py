@@ -377,6 +377,8 @@ class CommandRunner ( object ):
 
 class TestReporter( object):
 
+    # should clearly present aborted from failed, and also not tested
+    # will need a crazy dot graph to sort this mess
     def __init__( self ):
         self.passcount, self.failcount = 0, 0
         self.last_expected, self.last_output = None, None
@@ -403,28 +405,37 @@ class TestReporter( object):
         if self.failcount==0:
             print "All tests passed"
         else:
-            print "%s tests passed, %s tests failed." % (self.passcount, self.failcount)
+            print "%s tests passed, %s tests failed." % (
+                self.passcount, self.failcount)
                 
             
 def run( f ):
 
     report = TestReporter()
-    session = ShellSessionParser( f )
+    session = iter( ShellSessionParser( f ))
+
     with CommandRunner() as run:
         for cmd, expected in session:
 
             print report.before( cmd, expected )
             print report.result( run( cmd ) )
 
-            if report.last_output.aborted():
+            if report.last_output.aborted(): 
+
+                # sole condition if expected.returncode is None if
+                # expected returncode is not None and expected!=actual
+                # output should bailout. Test and errors should be
+                # different.
+
                 print( "Command aborted, bailing out")
                 remaining_cmds = [ cmd for cmd, _ in session ]
                 if len( remaining_cmds )==0:
-                    print( "There was no remaining command" )
+                    print( "No remaining command" )
                 else:
-                    print( "The remaining commands were:\n\t" + '\n\t'.join(
-                            remaining_cmds ))
-                break
+                    print "Untested command%s:\n\t" % (
+                        "s" if len( remaining_cmds )>1 else ""  ),
+                    print( "\n\t".join( remaining_cmds ))
+
     report.summary()
 
 simple_example = """
@@ -446,9 +457,10 @@ echo $(( $1 + $2 ))
 ...
 
 ~$ What have the Romans ever done for us   #  command not found: will abort
-aqueduct ?
-roads
-wine !
+aqueduct? roads? wine !
+
+~$ exit
+
 """
 
 
@@ -460,6 +472,9 @@ import sys
 def wordish():
 
     files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( simple_example ),)
+    
+    files = [ f if f!="-" else sys.stdin for f in files ] 
+
     for f in files: 
         run( f  if hasattr(f, 'read') else file(f) )
     
