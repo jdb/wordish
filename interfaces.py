@@ -52,6 +52,47 @@ class ISessionParser( Interface ):
         next *output*.
         """
 
+class IArticleParser( Interface ):
+"""
+Takes a restructured text document and yields tuples of output and
+commands.
+
+Also has methods for manipulating a list of articles.
+"""
+
+    def next():
+        """" 
+        Returns a tuple whose first element is a command, and second
+        element is an output, having shaved the restructured text
+        result of ISessionParser.next(). 
+
+        Because it knows about the snippets, it
+        """
+
+    def cleanup():
+        """
+        Yields the tuple to clean the article.
+
+        Needs a restructured directive to signal the cleanup code.
+        
+        Logs should be chewable, what about a symbolikc link toward
+        the latest log in /tmp?
+        """
+    def script():
+        """
+        Writes the script and the cleanup script, named after the
+        name of the article.
+        """
+
+    def articles():
+        """
+        Returns an iterable of IArticleParser, making it possible to
+        test and report separately different manipulations.
+
+        Needs a restructured directive to group snippets together and
+        give them a title.
+        """
+
 class ICommandRunner( Interface ):
     """
     The ICommandRunner is a context manager which runs a shell created
