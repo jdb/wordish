@@ -1,6 +1,6 @@
 
-.. An upgrade safety net with the logical volume manager
-.. =====================================================
+An upgrade safety net with the logical volume manager
+=====================================================
 
 It is the story of a website with files and a database which gets into
 production and then, after a while, needs to have its schema corrected
@@ -30,8 +30,11 @@ the snapshot is attached. *Make sure the snapshot partition is big
 enough to contain the updates to the original partition or suppress
 the snapshot partition before it gets full*.
 
-.. A trick for fake physical partitions
-.. ------------------------------------
+Note that the operation needs to be done from the administrator
+account.
+
+A trick for fake physical partitions
+------------------------------------
 
 Before showing how to setup a logical partition with lvm, let's first
 present a cool trick to create *virtual physical partitions*: it is
@@ -45,17 +48,12 @@ current directory, and make it available under */dev/loop1*
 
 .. sourcecode:: sh
 
-   ~$ cd && sudo -s
-   ~# dd if=/dev/zero of=loop1.raw bs=1M count=1500
+   ~# dd if=/dev/zero of=loop1.raw bs=1M count=40
    ~# losetup /dev/loop1 loop1.raw
  
-   ~# cat /proc/partitions 
-    major minor  #blocks  name
- 
-    7        1     153600 loop1
-    8        0  117220824 sda
-    8        1     104391 sda1
-    8        2   22964917 sda2
+   ~# grep loop /proc/partitions 
+    7        1     ... loop1
+
 
 There was no partitions available called *loop1* and it appeared after
 the *losetup command*. We will set up the partition to use with lvm in
@@ -89,7 +87,6 @@ use with lvm
 
 .. sourcecode:: sh
 
-   ~# aptitude install lvm2
    ~# pvcreate /dev/loop1
      Physical volume "/dev/loop1" successfully created
   
@@ -108,21 +105,16 @@ can now be created, it has a *name* and a *size* parameter and is inside a
 
 .. sourcecode:: sh
 
-   ~# lvcreate -n website -L 1000M datadisks
+   ~# lvcreate -n website -L 12M datadisks
      Logical volume "website" created
  
-   ~# lvs && cat /proc/partitions && ls /dev/datadisks/website
-     LV      VG        Attr   LSize   Origin Snap%  Move Log Copy%  Convert
-     website datadisks -wi-a- 100.00M                                      
- 
-     major minor  #blocks  name
- 
-       7      1    1536000 loop1
-       8      0  117220824 sda
-       8      1     204800 sda1
-     252      0     102400 dm-0
- 
-    /dev/datadisks/website
+   ~# lvs
+   LV      VG        Attr   LSize  Origin Snap%  Move Log Copy%  Convert
+     website datadisks -wi-a...M
+
+   ~# grep dm /proc/partitions && ls /dev/datadisks/website
+    252 ... dm-0
+   /dev/datadisks/website
 
 Among the partitions, a new *dm* entry is shown (I'll bet it
 stands for *device mapper*), the device is available in */dev*
@@ -133,7 +125,7 @@ to the filesystem
 
 .. sourcecode:: sh
 
-   ~# mkfs.ext4 /dev/datadisks/website
+   ~# mkfs.ext4 /dev/datadisks/website > /dev/null
    ~# mkdir /mnt/website && mount /dev/datadisks/website /mnt/website
 
 
@@ -145,7 +137,8 @@ upgrade, corrupt, rollback, etc
 
 .. sourcecode:: sh
 
-   ~# touch /mnt/website/{database,index.html}
+   ~# touch /mnt/website/database
+   ~# touch /mnt/website/index.html
    ~# add_new_user () { 
           echo "name:$1,age:$2" >> /mnt/website/database ; } 
 
@@ -162,9 +155,7 @@ torrents of new users line up to subscribe
    name:bob,age:18
 
 *Sparky the architect* have realised that the database schema must be
-upgraded to include an *id* for each user. It should end up look like this
-
-.. sourcecode:: sh
+upgraded to include an *id* for each user. It should end up look like this::
 
    id=001,name:alice,age:29
    id=002,name:bob,age:18
@@ -173,22 +164,25 @@ Also, the website in production is not web2.0 enough, so a designer
 has done a great job beautifying a new prototype, which is added to
 the upgrade procedure. So the upgrade procedure is
 
+..          # Web changes
+..    # API upgrade: now there is an id
+..       # For the db schema, you don't want to know ... 
+
 .. sourcecode:: sh
 
-   upgrade_schema_and_website () {
+   ~# upgrade_schema_and_website () {
+         w=/mnt/website
+         touch $w/social-caramels.js
+	 touch $w/ponies.js
+	 touch $w/eye-candy.css
   
-    # Web changes
-    touch /mnt/website/{social-caramels.js,ponies.js,eye-candy.css}
-  
-    # API upgrade: now there is an id
-    add_new_user () { 
-      echo "id:$RANDOM,name:$1,age:$2" >> /mnt/website/database ; }
-  
-    # For the db schema, you don't want to know ... 
-    nl -n rz -w 5 /mnt/website/database \
-       | sed 's/\t/,/; s/^/if:/' > /mnt/website/database.new
-    mv /mnt/website/database{.new,} 
-    } 
+         add_new_user () { 
+            echo "id:$RANDOM,name:$1,age:$2" >> $w/database ; }
+
+         nl -n rz -w 3 /mnt/website/database \
+            | sed 's/\t/,/; s/^/if:/' > $w/database.new
+         mv $w/database.new $w/database 
+         } 
 
 Rollback of a failed upgrade
 ----------------------------
@@ -204,17 +198,24 @@ The transaction functions are built on top of the LVM snapshot
 .. sourcecode:: sh
 
    ~# transaction () {
-         lvcreate -s -n backup -L 300M  /dev/datadisks/website ; }
+         lvcreate -s -n backup -L 24M  /dev/datadisks/website ; }
  
    ~# abort () {
          mkdir /mnt/backup
-         mount /dev/datadisks/website /mnt/backup
-         # tar cf - -C /mnt/backup . | tar  x -C /mnt/website
- 	rsync --del -a /mnt/{backup,website}/ ; }
+         mount /dev/datadisks/backup /mnt/backup
+
+ 	 rsync --del -a /mnt/backup/ /mnt/website/ ; 
+
+	 add_new_user () { 
+              echo "name:$1,age:$2" >> /mnt/website/database ; } 
+         }
  	
    ~# remove_snapshot () {
          umount /dev/datadisks/backup
-         lvremove /dev/datadisks/backup ; }
+         lvremove -f /dev/datadisks/backup ; }
+
+..         # tar cf - -C /mnt/backup . | tar  x -C /mnt/website
+.. the non interactive shell and the comments bugs are a pita
 
 .. what happens whenyou copy back the data from the backup which
 .. records the modification from the original. Does the backup
@@ -232,6 +233,10 @@ users can be created. Comes the night of the upgrade
 .. sourcecode:: sh
 
    ~# transaction
+   Logical volume "backup" created
+
+.. sourcecode:: sh
+
    ~# upgrade_schema_and_website
 
 At dawn, the db looks like
@@ -239,8 +244,8 @@ At dawn, the db looks like
 .. sourcecode:: sh
 
    ~# cat /mnt/website/database
-   if=001,name:alice,age:29
-   if=002;name:bob,age:18
+   if:001,name:alice,age:29
+   if:002,name:bob,age:18
 
 Ouuuch man! it is corrupted, there is no 'id' column instead it is
 written 'if' everywhere now and we have no clue why. We need to go
@@ -261,8 +266,8 @@ core of this article. Now, to control that the rollback went fine
    name:alice,age:29
    name:bob,age:18
 
-   ~# ls /mnt/website/ponies.js
-   ls: No such file or directory
+   ~# ls /mnt/website/ponies.js 2>&1 || true
+   ls: cannot access /mnt/website/ponies.js: No such file or directory
 
 Ok, the situation is similar as before the upgrade. The service can be
 restored. 
@@ -286,32 +291,38 @@ Three weeks later, many more users have been created
 
 .. sourcecode:: sh
 
+   ~# add_new_user robwilco 35
+   ~# add_new_user DuncanMacLeod 539
+
    ~# cat /mnt/website/database
    name:alice,age:29
    name:bob,age:18
    name:robwilco,age:35
-   name:DuncanMcLeod,age:539
+   name:DuncanMacLeod,age:539
 
 R&D has come up with a *complete* re-design of the upgrade procedure:
 a snapshot and some *correct* database mangling commands. Only the
 schema upgrade was modified
 
+..       # Same as before ...
+..        # Same as before ...
+.. 	  # Correction added: substituted 'if' by 'id'
+
 .. sourcecode:: sh
 
    ~# upgrade_schema_and_website () {
 
-       # Same as before ...
-       touch /mnt/website/{social-caramels.js,ponies.js,eye-candy.css}
+       touch /mnt/website/social-caramels.js
+       touch /mnt/website/ponies.js
+       touch /mnt/website/eye-candy.css
 
-       # Same as before ...
        add_new_user () { 
          echo "id:$RANDOM,name:$1,age:$2" >> /mnt/website/database ; }
 
-	  # Correction added: substituted 'if' by 'id'
        nl -n rz -w 5 /mnt/website/database \
           | sed 's/\t/,/; s/^/id:/' > /mnt/website/database.new
-       mv /mnt/website/database{.new,} ;} 
-
+       mv /mnt/website/database.new /mnt/website/database
+       } 
 
    ~# upgrade_schema_and_website
 
@@ -319,7 +330,7 @@ schema upgrade was modified
    id:00001,name:alice,age:29
    id:00002,name:bob,age:18
    id:00003,name:robwilco,age:35
-   id:00004,name:duncanmacleod,age:539
+   id:00004,name:DuncanMacLeod,age:539
 
 At dawn, the database is correct, the snapshot safety net was
 thankfully not used. It is possible to confirm the upgrade by removing
@@ -328,6 +339,7 @@ the snapshot
 .. sourcecode:: sh
 
    ~# remove_snapshot
+   Logical volume "backup" successfully removed
 
 Obviously, removing the snapshot does not impact the original partition
 
@@ -337,17 +349,24 @@ Obviously, removing the snapshot does not impact the original partition
    id:00001,name:alice,age:29
    id:00002,name:bob,age:18
    id:00003,name:robwilco,age:35
-   id:00004,name:duncanmacleod,age:539
+   id:00004,name:DuncanMacLeod,age:539
 
 We are done with this howto, to clean up after this exercice
 
 .. sourcecode:: sh
 
    ~# umount /mnt/website
-   ~# lvremove /dev/datadisks/website
+   ~# lvremove -f /dev/datadisks/backup 2> /dev/null || true
+   ~# lvremove -f /dev/datadisks/website
+   Logical volume "website" successfully removed
 
    ~# vgremove datadisks 
-   ~# pvremove /dev/loop1
-   ~# losetup -d /dev/loop1
-   ~# rm -r /mnt/{backup,website} loop1.raw
+   Volume group "datadisks" successfully removed
 
+   ~# pvremove /dev/loop1
+   Labels on physical volume "/dev/loop1" successfully wiped
+
+   ~# losetup -d /dev/loop1
+   ~# rm -r /mnt/backup /mnt/website loop1.raw
+
+.. should mount in the local dir not in the real mount

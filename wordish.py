@@ -450,7 +450,7 @@ echo $((1+1)) )
 echo $(( $1 + $2 ))
 }
 
-~$ sum 42 58                # correct command, erroneous output
+~$ sum 42 58            # correct command, erroneous output
 3
 
 ~$ echo $((RANDOM))

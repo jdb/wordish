@@ -1,35 +1,27 @@
 <map version="0.7.1">
 <node TEXT="wordish">
-<node TEXT="What is wordish?" FOLDED="true" POSITION="right">
-<node TEXT="readme"/>
-<node TEXT="man"/>
-<node TEXT="wordish --help"/>
-<node TEXT="presentation"/>
-<node TEXT="installation and verification"/>
-</node>
-<node TEXT="writing articles" FOLDED="true" POSITION="right">
+<node TEXT="What is wordish? installation verification" POSITION="right"/>
+<node TEXT="writing and testing articles" POSITION="right">
 <node TEXT="parsing method (prompts, nesting)"/>
 <node TEXT="matching methods (ignoring, ellipsis, re)"/>
 <node TEXT="one subshell for the session"/>
 <node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
+<node TEXT="false"/>
+<node TEXT="log"/>
+<node TEXT="clean up code"/>
+<node TEXT="sphinx integration, how to to reuse sourcecode"/>
 </node>
-<node TEXT="object model and interfaces" POSITION="right">
-<node TEXT="overview">
-<node TEXT="one of the attribute is an iterable"/>
-<node TEXT="a class is iterable" FOLDED="true">
-<node TEXT="fact is that there is an __iter__() yielding an iterator which has a next() function. &#xa;&#xa;Should just say this object has an __iter__ (which is a idiom) or should I say it has a next (which is more directly useful, and less a idiom)&#xa;&#xa;The bottom line is trying to express, this interface provides an iterable"/>
+<node TEXT="interfaces and object model" FOLDED="true" POSITION="right">
+<node TEXT="overview simple run"/>
+<node TEXT="two parsers"/>
+<node TEXT="output and runner"/>
+<node TEXT="reporter"/>
 </node>
-<node TEXT="a class is callable"/>
-<node TEXT="a class is a context manager"/>
-<node TEXT="complete arguments and return code?"/>
-</node>
-<node TEXT="should the interface contains the doctest?"/>
-<node TEXT="should it contain message sequence diagram?"/>
-<node TEXT="for simplicity should the private/public distinction be made clear in the module with underscore"/>
-<node TEXT="should a sphinx doc be build cuz it is classe, there is a toc, etc"/>
-<node TEXT="should the sphinx doc syntax or the pydoctor be used? are they way clearer?"/>
-<node TEXT="dig out, undust and finish the zope.schema extensions"/>
-<node TEXT="the sphinx automodule will not be displayed by github and pypi, kiss would advise not to use sphinx, or else, the page is build in a branch and is an article on jdb.github.com ..."/>
+<node TEXT="the Python sources" FOLDED="true" POSITION="right">
+<node TEXT="overview simple run"/>
+<node TEXT="two parsers"/>
+<node TEXT="output and runner"/>
+<node TEXT="reporter"/>
 </node>
 <node TEXT="software engineering" FOLDED="true" POSITION="right">
 <node TEXT="source, branches and versions">
@@ -54,6 +46,8 @@
 </node>
 <node TEXT="test package_data and data_files, where do they end up?"/>
 <node TEXT="distutils, distribute, pip"/>
+<node TEXT="include the readme in the long description"/>
+<node TEXT="which license"/>
 <node TEXT="content">
 <node TEXT="one module"/>
 <node TEXT="one test file"/>
@@ -66,25 +60,34 @@
 </node>
 </node>
 </node>
-<node TEXT="limitations, roadmap and crazy ideas" POSITION="right">
-<node TEXT="console_script entry point: later needs eggs, eggs can&apos;t do man"/>
+<node TEXT="making of" FOLDED="true" POSITION="right">
+<node TEXT="modelisation"/>
+<node TEXT="parser du text, des tokens nexts"/>
+<node TEXT="executer des commandes"/>
+<node TEXT="packaging"/>
+<node TEXT="testing"/>
+<node TEXT="sphinx/rst extensions"/>
+<node TEXT="making it easy to use for other people than me"/>
+<node TEXT="correcting the most annoying bugs"/>
+</node>
+<node TEXT="limitations, roadmap and crazy ideas" FOLDED="true" POSITION="right">
+<node TEXT="setup.py and entry point"/>
 <node TEXT="rst builder, sphinx builder"/>
-<node TEXT="quiet mode without output"/>
-<node TEXT="turn to unix linefeed when parsing other linefeeds"/>
+<node TEXT="quiet mode without output only summary"/>
+<node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="at bailout, show rest to help cleanup and help debug"/>
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="executable article with #!/usr/bin/wordish"/>
 <node TEXT="other parsing format, markdown"/>
 <node TEXT="hints in a command&apos;s comments">
-<node TEXT="ignore (stdout, stderr, ret)"/>
+<node TEXT="ignore"/>
 <node TEXT="input"/>
-<node TEXT="the rest is clean up code executed on bailout"/>
 <node TEXT="&amp;2"/>
+<node TEXT="returncode=3"/>
 </node>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
-<node TEXT="&quot;something broke&quot; be clearer less fear monging"/>
-<node TEXT="the command runner should accept the url of an ssh host"/>
+<node TEXT="howto to place or name the test so that it is "/>
 <node TEXT="refactor the tests">
 <node TEXT="some are harmful for readability"/>
 <node TEXT="name the tests"/>
@@ -97,6 +100,54 @@
 <node TEXT="am i white box or black box"/>
 <node TEXT="how to put the simple session and the git howto in the test_wordish"/>
 </node>
+<node TEXT="man"/>
+<node TEXT="wordish --help"/>
+<node TEXT="give the option to attach a cleanup script"/>
+<node TEXT="let him figure out the cleanup code on its own with comment hints"/>
+<node TEXT="when bailing out, all tests did not passed"/>
+<node TEXT="only one ellipsis per output, this is not enough"/>
+<node TEXT="the sourcecode command should have the ignore all output command "/>
+<node TEXT="for each snippet the tokens should no be in command anymore"/>
+<node TEXT="lancer bash en mode interactif sinon les accolade sont mal interpretes or tty"/>
+</node>
+<node TEXT="bugs" POSITION="right">
+<node TEXT="problem with the way comments in functions are parsed, bad linefeed"/>
+<node TEXT="I get regularly bitten by , 0"/>
+<node TEXT="really sometimes you just want to execute stuff and not care about the output"/>
+<node TEXT="really sometimes just check aborted is enough"/>
+<node TEXT="ignore from :argument:, comment"/>
+</node>
+<node TEXT="integration with sphinx" POSITION="left">
+<node TEXT="overloading source code to add the snippet to "/>
+</node>
+<node TEXT="extension wich cat sourcecode blocks" POSITION="left"/>
+<node TEXT="in the wodish sources but another python module called sphinx.ext.wordish" POSITION="left"/>
+<node TEXT="config" FOLDED="true" POSITION="left">
+<node TEXT="bailout_on_abort"/>
+<node TEXT="match=string,re,ellipsis"/>
+<node TEXT="prompts"/>
+<node TEXT="ignore_stderr"/>
+</node>
+<node TEXT="directive source code" POSITION="left">
+<node TEXT="argument sh"/>
+<node TEXT="no options"/>
+<node TEXT="creates a node "/>
+</node>
+<node TEXT="pr plan" POSITION="left">
+<node TEXT="shunit"/>
+<node TEXT="lo lange"/>
+<node TEXT="ubuntu"/>
+<node TEXT="sphinx"/>
+<node TEXT="docutils"/>
+<node TEXT="lvs"/>
+<node TEXT="guy from redhat"/>
+<node TEXT="debian administration"/>
+<node TEXT="python planet"/>
+<node TEXT="debian planet"/>
+<node TEXT="debian ml"/>
+<node TEXT="anevia"/>
+<node TEXT="roming"/>
+<node TEXT="imil"/>
 </node>
 </node>
 </map>
