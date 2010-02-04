@@ -104,16 +104,16 @@ class ShellSessionParser( object ):
         self.max_prompt_len = max([ len(p) for p in self.prompts ])
 
 
-    def has_token( self ):
+    def _has_token( self ):
         r"""
-        Return True when there are still tokens available, False if
-        the stream token is empty.
+        Returns False if the token list is empty (which usually means
+        the end of file has been reached). Returns True otherwise.
 
         >>> sess = ShellSessionParser( "~$ env | grep USER\nUSER=jd" )
-        >>> sess.has_token()
+        >>> sess._has_token()
         True
         >>> for t in sess.tokens: pass
-        >>> sess.has_token()
+        >>> sess._has_token()
         False
         """
         t = self.tokens.get_token()
@@ -191,7 +191,7 @@ class ShellSessionParser( object ):
 
         return True
 
-    def takewhile( self, is_output=False ):
+    def _takewhile( self, is_output=False ):
         r"""
         Returns a command or an output depending of the terminator
         provided. i.e. every token on which the terminator returns
@@ -199,9 +199,9 @@ class ShellSessionParser( object ):
         returns whether the stream of tokens is terminated or not.
 
         >>> session = ShellSessionParser
-        >>> session( "cmd" ).takewhile()
+        >>> session( "cmd" )._takewhile()
         'cmd'
-        >>> session( "t () {\ncmd\n}\nhello" ).takewhile()
+        >>> session( "t () {\ncmd\n}\nhello" )._takewhile()
         't () {\ncmd\n}'
         """
         return ''.join (
@@ -210,8 +210,24 @@ class ShellSessionParser( object ):
                     self.tokens )
                  ) ).strip()
 
-    get_command = lambda self:self.takewhile()
-    get_output  = lambda self:self.takewhile(is_output=True)
+    def _get_command(self):
+        """
+        Returns a string from the current token to the end of the
+        next *command*.
+
+        Maybe be confused about what is the end of a command when called
+        in the middle of an output.
+        """
+
+        return self._takewhile(is_output=False)
+
+    def _get_output(self):
+        """
+        Returns a string from the current token to the end of the
+        next *output*.
+        """
+
+        return self._takewhile(is_output=True)
 
     def __iter__(self):
         r"""
@@ -227,9 +243,9 @@ class ShellSessionParser( object ):
         command: true
         output: 
         """
-        self.get_output()
-        while self.has_token() :
-            yield self.get_command(), self.get_output()
+        self._get_output()
+        while self._has_token() :
+            yield self._get_command(), self._get_output()
 
 
     
@@ -361,9 +377,9 @@ class CommandRunner ( object ):
  
     def read_output(self):
         
-        out =      self.stdout.takewhile( is_output=True )
+        out =      self.stdout._takewhile( is_output=True )
         ret = int( self.stdout.tokens.next() )
-        err =      self.stderr.takewhile( True 
+        err =      self.stderr._takewhile( True 
                        ) if CommandRunner.separate_stderr else None 
 
         return out,err, ret
@@ -395,7 +411,7 @@ class TestReporter( object):
         self.last_expected = expected
         return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
 
-    def result(self, output ):
+    def after(self, output ):
         self.last_output = output
         return self.passed( output 
                    ) if output==self.last_expected else self.failed( output )
@@ -418,7 +434,7 @@ def run( f ):
         for cmd, expected in session:
 
             print report.before( cmd, expected )
-            print report.result( run( cmd ) )
+            print report.after( run( cmd ) )
 
             if report.last_output.aborted(): 
 

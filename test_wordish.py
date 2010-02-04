@@ -121,7 +121,7 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "", "") )
 
         for text, expected in commands:
-            self.assertEqual( session(text).takewhile(), expected ) 
+            self.assertEqual( session(text)._takewhile(), expected ) 
 
 
     def test_output (self):
@@ -134,7 +134,7 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "", "") )
 
         for text, expected in outputs:
-            self.assertEqual( session(text).takewhile(is_output=True), expected)
+            self.assertEqual( session(text)._takewhile(is_output=True), expected)
 
     def test_next ( self ):
         
@@ -237,7 +237,7 @@ class ReporterTestCase( unittest.TestCase ):
         report = TestReporter()
         for i in range(10):
             report.before("", out(returncode=0))
-            report.result( out(returncode=i))
+            report.after( out(returncode=i))
 
         self.assertEqual(report.failcount,9)
         self.assertEqual(report.passcount,1)

@@ -7,13 +7,15 @@ from zope.schema import Int, Text
 
 class ISessionParser( Interface ):
     """
-    Created with an opened file argument containing a session. The
+    Created with an opened file argument containing a session, the
     constructor should accept a list of *prompts* for the second
     argument.
 
-    For this class, a session begins with a prompt, then the command
-    follows until the end of the command (usually a newline), then
-    follows the output which ends with a newline and a prompt.
+    For the session parser, a session begins with a prompt, then the
+    command follows until the end of the command which is usually a
+    newline, except when the newline is nested in curl brackets or
+    parentheses, then follows the output which ends with a newline and
+    a prompt.
     
     This object is meant to be called as part of a for loop or a
     generator expression, the next() method returns iteratively a list
@@ -31,67 +33,43 @@ class ISessionParser( Interface ):
         second element is an output.
         """
 
-    def has_token():
-        """
-        Returns False if the token list is empty (which usually means
-        the end of file has been reached). Returns True otherwise.
-        """
-
-    def get_command():
-        """
-        Returns a string from the current token to the end of the
-        next *command*.
-
-        Maybe be confused about what is the end of a command when called
-        in the middle of an output.
-        """
-
-    def get_output():
-        """
-        Returns a string from the current token to the end of the
-        next *output*.
-        """
-
-class IArticleParser( Interface ):
-"""
-Takes a restructured text document and yields tuples of output and
-commands.
-
-Also has methods for manipulating a list of articles.
-"""
-
-    def next():
-        """" 
-        Returns a tuple whose first element is a command, and second
-        element is an output, having shaved the restructured text
-        result of ISessionParser.next(). 
-
-        Because it knows about the snippets, it
-        """
-
-    def cleanup():
-        """
-        Yields the tuple to clean the article.
-
-        Needs a restructured directive to signal the cleanup code.
-        
-        Logs should be chewable, what about a symbolikc link toward
-        the latest log in /tmp?
-        """
     def script():
         """
         Writes the script and the cleanup script, named after the
         name of the article.
         """
 
-    def articles():
-        """
-        Returns an iterable of IArticleParser, making it possible to
-        test and report separately different manipulations.
+class INodeMatch( Interface ):
 
-        Needs a restructured directive to group snippets together and
-        give them a title.
+    directive = Text()
+    arguments = List( Text() )
+    options   = Dict( Text():Text() )
+    
+    def __call__( doctreeelement ):
         """
+        Given a doctree element, for example given as part of a
+        doctree.traverse(), returns True if matches the constraints.
+        """
+
+# Un node match pour la directive article
+# un node match pour la directive cleanup
+# un node match pour la directive sourcecode
+
+
+# essence = [ n for n in doctree.traverse() if is_article(n) or is_cleanup(n) or is_shell(n) ]
+# snippets = [ split(a, cleanup ) for a in split(essence(doctree.traverse()), directive article) ]
+
+# si script alors pour chaque tuple de snippets: format a script with the ri
+
+#
+
+# si il y a des directives articles, alors double boucle, sinon,
+# splitter directement en 
+
+# articles separes par la directive article, compose de sequence de
+# essence puis de cleanup snippets: la liste de noeuds a tester
+# split le doctree sur la directive article, ou sur l'option cleanup
+
 
 class ICommandRunner( Interface ):
     """
@@ -152,7 +130,7 @@ class IReporter( Interface ):
     """
 
     """The expected output is presented and set by before(). It is
-    stored to be later compared to the actual output by result()"""
+    stored to be later compared to the actual output by after()"""
     expected = ICommandOutput()
 
     def before( cmd, expected ):
@@ -162,7 +140,7 @@ class IReporter( Interface ):
         desirable to let the user know what is happening beforehand.
         """
 
-    def result( output):
+    def after( output ):
         """
         Process and present the result.
         """

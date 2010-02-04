@@ -1,5 +1,6 @@
 <map version="0.7.1">
 <node TEXT="wordish">
+<font NAME="SansSerif" SIZE="17"/>
 <node TEXT="What is wordish? installation verification" POSITION="right"/>
 <node TEXT="writing and testing articles" POSITION="right">
 <node TEXT="parsing method (prompts, nesting)"/>
