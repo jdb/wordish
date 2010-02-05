@@ -506,3 +506,15 @@ if __name__=='__main__':
     wordish()
                     
 
+# Un node match pour la directive article
+# un node match pour la directive cleanup
+# un node match pour la directive sourcecode
+
+# essence = [ n 
+#             for n in doctree.traverse() 
+#             if is_article(n) or is_cleanup(n) or is_shell(n) ]
+
+# snippets = [ split(a, is_cleanup ) for a in split( essence, is_article ) ]
+
+# transforms the doctree element into long strings ready to be either
+# executed by a command runner or tranformed into script.

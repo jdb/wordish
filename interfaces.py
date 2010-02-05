@@ -33,7 +33,7 @@ class ISessionParser( Interface ):
         second element is an output.
         """
 
-    def script():
+    def script( header=True ):
         """
         Writes the script and the cleanup script, named after the
         name of the article.
@@ -50,26 +50,6 @@ class INodeMatch( Interface ):
         Given a doctree element, for example given as part of a
         doctree.traverse(), returns True if matches the constraints.
         """
-
-# Un node match pour la directive article
-# un node match pour la directive cleanup
-# un node match pour la directive sourcecode
-
-
-# essence = [ n for n in doctree.traverse() if is_article(n) or is_cleanup(n) or is_shell(n) ]
-# snippets = [ split(a, cleanup ) for a in split(essence(doctree.traverse()), directive article) ]
-
-# si script alors pour chaque tuple de snippets: format a script with the ri
-
-#
-
-# si il y a des directives articles, alors double boucle, sinon,
-# splitter directement en 
-
-# articles separes par la directive article, compose de sequence de
-# essence puis de cleanup snippets: la liste de noeuds a tester
-# split le doctree sur la directive article, ou sur l'option cleanup
-
 
 class ICommandRunner( Interface ):
     """
