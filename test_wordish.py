@@ -242,6 +242,36 @@ class ReporterTestCase( unittest.TestCase ):
         self.assertEqual(report.failcount,9)
         self.assertEqual(report.passcount,1)
 
+class NodeSelectorTestCase( unittest.TestCase ):
+
+    def test_positive_match():
+        is_A=NodeSelector(directive='sourcecode', arg=['sh'], options={'hidden':true})
+        is_B=NodeSelector(directive='gloubi')
+
+        text="""
+Foo
+
+.. comment
+
+   >>> 1+1
+   2
+   >>> print "hello"
+   hello
+
+.. sourcecode:: sh
+   :hidden: true
+
+.. gloubi::
+
+   boulga
+
+Bar
+"""
+        self.assertEqual(
+            len([ n for n in core.publish_doctree(text).traverse() 
+                  if is_A(n) or is_B(n) ],
+                2))
+
 if __name__ == '__main__':
    
     suite = unittest.TestSuite()
@@ -249,8 +279,11 @@ if __name__ == '__main__':
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandOutputTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandRunnerTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ReporterTestCase))
-
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(NodeSelectorTestCase))
     suite.addTest(doctest.DocTestSuite(wordish))
+
+    # ce qui aurait pu etre completement possible au lieu de parser
+    # deux fois, c'est que la directive source code 
 
     unittest.TextTestRunner(verbosity=2).run(suite)
    

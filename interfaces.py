@@ -7,48 +7,40 @@ from zope.schema import Int, Text
 
 class ISessionParser( Interface ):
     """
-    Created with an opened file argument containing a session, the
-    constructor should accept a list of *prompts* for the second
-    argument.
+    The first argument should an opened file argument containing a
+    *session*, the constructor should accept a list of *session
+    prompts* strings for the second argument.
 
-    For the session parser, a session begins with a prompt, then the
-    command follows until the end of the command which is usually a
-    newline, except when the newline is nested in curl brackets or
-    parentheses, then follows the output which ends with a newline and
+    A *session* begins with a prompt, then a *command* follows until a
+    newline, except when the newline is nested in curly brackets or
+    parentheses. Then follows the output which ends with a newline and
     a prompt.
     
-    This object is meant to be called as part of a for loop or a
-    generator expression, the next() method returns iteratively a list
-    of two elements: a command and an output. 
+    This object is an iterable, and can be called with a for loop or a
+    generator expression: the next() method yields lists of two
+    strings: a command and an output.
 
-    For each command and output, it is expected that the command will
-    be executed by a *ICommandRunner* and the output given for a
-    *IReporter* object in charge of comparing the output to the actual
-    result of the application.
+    The parsed commands can be sent to a *ICommandRunner* and the
+    parsed output, to a *IReporter* in charge of comparing the output
+    to the actual result of the application. Also, The ICommandRunner has
+    two ISessionParser set to its shell  XXXXXXXXXX
     """
 
     def next():
-        """" 
-        Returns a tuple whose first element is a command, and
-        second element is an output.
+        """
+        Returns a tuple whose first element is a command, and second
+        element is an output.
         """
 
-    def script( header=True ):
+    def script( header=True, name= ):
         """
-        Writes the script and the cleanup script, named after the
-        name of the article.
+        Writes the script and the cleanup script, named after the name
+        of the article.
         """
 
-class INodeMatch( Interface ):
-
-    directive = Text()
-    arguments = List( Text() )
-    options   = Dict( Text():Text() )
-    
-    def __call__( doctreeelement ):
+    def takewhile( is_output ):
         """
-        Given a doctree element, for example given as part of a
-        doctree.traverse(), returns True if matches the constraints.
+        Low level functions useful in a XXXXXXXXXXXXXX
         """
 
 class ICommandRunner( Interface ):
@@ -61,20 +53,19 @@ class ICommandRunner( Interface ):
     the command is structured and returned as an *OutputCommand*.
     """
     
-
     def __enter__():
         """
-        Setup the ressource which is meant to be sent commands.
+        Setup the ressource (the shell) executing the  commands.
         """
 
     def __exit__():
         """
-        Release the ressource.
+        Terminate the shell.
         """
 
     def __call__( cmd ):
         """
-        Send the command to the ressource, parses the output to return
+        Send the command to the shell, parses the output to return
         an ICommandOutput instance.
         """
 
@@ -129,4 +120,16 @@ class IReporter( Interface ):
         """
         Conclude the operations with, for instance, the number of
         actions, the number of success, the number of failure.
+        """
+
+class IDocutilsNodeMatch( Interface ):
+
+    directive = Text()
+    arguments = List( Text() )
+    options   = Dict( Text():Text() )
+    
+    def __call__( doctreeelement ):
+        """
+        Given a doctree element, for example given as part of a
+        doctree.traverse(), returns True if matches the constraints.
         """
