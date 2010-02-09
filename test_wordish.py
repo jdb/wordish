@@ -20,7 +20,6 @@ class CommandOutputTestCase(unittest.TestCase):
     def re(self, *args):
         return out(*args, match='re')
 
-
     def setUp(self):
 
         self.true_examples = ( 
@@ -112,8 +111,8 @@ class ShellSessionParserTestCase( unittest.TestCase ):
 
         commands = (
             ("date\nls\nid\n", "date" ),
-            ("date # comment\n", "date" ),
-            ("ls # ~$ promptlike\n", "ls" ),
+            ("date # comment\n", "date # comment" ),
+            ("ls # ~$ promptlike\n", "ls # ~$ promptlike" ),
             ( "hello () {\n echo hello\n} \n some more stuff",
               "hello () {\n echo hello\n}" ),
             ( "( cd \ntmp )\n", "( cd \ntmp )"),
@@ -279,8 +278,8 @@ if __name__ == '__main__':
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandOutputTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandRunnerTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ReporterTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(NodeSelectorTestCase))
-    suite.addTest(doctest.DocTestSuite(wordish))
+    # suite.addTest(unittest.TestLoader().loadTestsFromTestCase(NodeSelectorTestCase))
+    #suite.addTest(doctest.DocTestSuite(wordish))
 
     # ce qui aurait pu etre completement possible au lieu de parser
     # deux fois, c'est que la directive source code 

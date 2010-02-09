@@ -177,17 +177,11 @@ class ShellSessionParser( object ):
         The first linefeed was nested in a subshell, hence was
         not the end of a command. The second linefedd was.
         """
-        if token == '\n' or token == '#':
-            if token=='#': 
-                list( takewhile( lambda t:t!='\n', self.tokens ) )
-                token = '\n'
-	
-            if self.nested==0:
-                return False
-        else:
+        if token == '\n' and self.nested==0:
+            return False
 
-            if   token in '({': self.nested += 1
-            elif token in '})': self.nested -= 1
+        elif token in '({': self.nested += 1
+        elif token in '})': self.nested -= 1
 
         return True
 

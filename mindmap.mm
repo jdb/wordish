@@ -67,16 +67,7 @@
 <node TEXT="correcting the most annoying bugs"/>
 </node>
 </node>
-<node TEXT="bugs" FOLDED="true" POSITION="right">
-<node TEXT="linefeed consumed after a comment when nested, should be left as is"/>
-<node TEXT="I get regularly bitten by , 0 in the report"/>
-</node>
-<node TEXT="git" FOLDED="true" POSITION="right">
-<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
-<node TEXT="gitignore"/>
-<node TEXT="git pre-commit relaunch the tests, rebuild the package, the manpage"/>
-</node>
-<node TEXT="objects" FOLDED="true" POSITION="right">
+<node TEXT="objects" POSITION="right">
 <node TEXT="ISessionParser" FOLDED="true">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
@@ -92,8 +83,9 @@
 <node TEXT="at bailout, show rest to help cleanup and help debug"/>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
 <node TEXT="when bailing out, all tests did not passed"/>
+<node TEXT="I get regularly bitten by , 0 in the report"/>
 </node>
-<node TEXT="ICommandRunner" FOLDED="true">
+<node TEXT="ICommandRunner">
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="lancer bash en mode interactif sinon les accolade sont mal interpretes or tty"/>
 <node TEXT="really sometimes you just want to execute stuff and not care about the output"/>
@@ -104,6 +96,11 @@
 <node TEXT="only one ellipsis per output, this is not enough"/>
 </node>
 <node TEXT="IDocutilsNodeMatch"/>
+</node>
+<node TEXT="git" FOLDED="true" POSITION="right">
+<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
+<node TEXT="gitignore"/>
+<node TEXT="git pre-commit relaunch the tests, rebuild the package, the manpage"/>
 </node>
 <node TEXT="wordish module" FOLDED="true" POSITION="right">
 <node TEXT="#!/usr/bin/env wordish"/>

@@ -164,21 +164,21 @@ Also, the website in production is not web2.0 enough, so a designer
 has done a great job beautifying a new prototype, which is added to
 the upgrade procedure. So the upgrade procedure is
 
-..          # Web changes
-..    # API upgrade: now there is an id
-..       # For the db schema, you don't want to know ... 
-
 .. sourcecode:: sh
 
    ~# upgrade_schema_and_website () {
+
+         # Web changes
          w=/mnt/website
          touch $w/social-caramels.js
 	 touch $w/ponies.js
 	 touch $w/eye-candy.css
-  
+
+         # API upgrade: now there is an id  
          add_new_user () { 
             echo "id:$RANDOM,name:$1,age:$2" >> $w/database ; }
 
+         # For the "db schema", you don't want to know ... 
          nl -n rz -w 3 /mnt/website/database \
             | sed 's/\t/,/; s/^/if:/' > $w/database.new
          mv $w/database.new $w/database 
