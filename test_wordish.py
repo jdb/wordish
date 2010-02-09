@@ -192,6 +192,13 @@ class CommandRunnerTestCase( unittest.TestCase ):
             out = sh('echo coucou >&2')
         self.assertEqual( out.err, 'coucou' )
 
+    def test_bashism( self ):
+        "handy bash curly brackets"
+        with shell() as sh:
+            out = sh('echo a{b,c}')
+        self.assertEqual( out.out, 'ab ac' )
+
+
     def test_returncode( self ):
         "return codes"
 

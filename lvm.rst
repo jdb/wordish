@@ -126,7 +126,7 @@ to the filesystem
 .. sourcecode:: sh
 
    ~# mkfs.ext4 /dev/datadisks/website > /dev/null
-   ~# mkdir /mnt/website && mount /dev/datadisks/website /mnt/website
+   ~# mkdir -p ./mnt/website && mount /dev/datadisks/website ./mnt/website
 
 
 Design of an upgrade plan
@@ -137,10 +137,10 @@ upgrade, corrupt, rollback, etc
 
 .. sourcecode:: sh
 
-   ~# touch /mnt/website/database
-   ~# touch /mnt/website/index.html
+   ~# touch ./mnt/website/database
+   ~# touch ./mnt/website/index.html
    ~# add_new_user () { 
-          echo "name:$1,age:$2" >> /mnt/website/database ; } 
+          echo "name:$1,age:$2" >> ./mnt/website/database ; } 
 
 With the adapted amount of marketing and public relation, the website
 is put in production and made available to the public. Everyday,
@@ -150,7 +150,7 @@ torrents of new users line up to subscribe
 
    ~# add_new_user alice 29
    ~# add_new_user bob 18
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    name:alice,age:29
    name:bob,age:18
 
@@ -169,19 +169,16 @@ the upgrade procedure. So the upgrade procedure is
    ~# upgrade_schema_and_website () {
 
          # Web changes
-         w=/mnt/website
-         touch $w/social-caramels.js
-	 touch $w/ponies.js
-	 touch $w/eye-candy.css
+         touch ./mnt/website/{social-caramels.js,ponies.js,eye-candy.css}
 
          # API upgrade: now there is an id  
          add_new_user () { 
-            echo "id:$RANDOM,name:$1,age:$2" >> $w/database ; }
+            echo "id:$RANDOM,name:$1,age:$2" >> ./mnt/website/database ; }
 
          # For the "db schema", you don't want to know ... 
-         nl -n rz -w 3 /mnt/website/database \
-            | sed 's/\t/,/; s/^/if:/' > $w/database.new
-         mv $w/database.new $w/database 
+         nl -n rz -w 3 ./mnt/website/database \
+            | sed 's/\t/,/; s/^/if:/' > ./mnt/website/database.new
+         mv ./mnt/website/database{.new,}
          } 
 
 Rollback of a failed upgrade
@@ -201,23 +198,21 @@ The transaction functions are built on top of the LVM snapshot
          lvcreate -s -n backup -L 24M  /dev/datadisks/website ; }
  
    ~# abort () {
-         mkdir /mnt/backup
-         mount /dev/datadisks/backup /mnt/backup
+         mkdir ./mnt/backup
+         mount /dev/datadisks/backup ./mnt/backup
 
- 	 rsync --del -a /mnt/backup/ /mnt/website/ ; 
+	 # tar cf - -C ./mnt/backup . | tar  x -C ./mnt/website
+ 	 rsync --del -a ./mnt/backup/ ./mnt/website/ ; 
 
 	 add_new_user () { 
-              echo "name:$1,age:$2" >> /mnt/website/database ; } 
+              echo "name:$1,age:$2" >> ./mnt/website/database ; } 
          }
  	
    ~# remove_snapshot () {
          umount /dev/datadisks/backup
          lvremove -f /dev/datadisks/backup ; }
 
-..         # tar cf - -C /mnt/backup . | tar  x -C /mnt/website
-.. the non interactive shell and the comments bugs are a pita
-
-.. what happens whenyou copy back the data from the backup which
+.. what happens when you copy back the data from the backup which
 .. records the modification from the original. Does the backup
 .. partition size grows or shrink?
 
@@ -243,7 +238,7 @@ At dawn, the db looks like
 
 .. sourcecode:: sh
 
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    if:001,name:alice,age:29
    if:002,name:bob,age:18
 
@@ -262,12 +257,12 @@ core of this article. Now, to control that the rollback went fine
 
 .. sourcecode:: sh
 
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    name:alice,age:29
    name:bob,age:18
 
-   ~# ls /mnt/website/ponies.js 2>&1 || true
-   ls: cannot access /mnt/website/ponies.js: No such file or directory
+   ~# ls ./mnt/website/ponies.js 2>&1 || true
+   ls: cannot access ./mnt/website/ponies.js: No such file or directory
 
 Ok, the situation is similar as before the upgrade. The service can be
 restored. 
@@ -294,7 +289,7 @@ Three weeks later, many more users have been created
    ~# add_new_user robwilco 35
    ~# add_new_user DuncanMacLeod 539
 
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    name:alice,age:29
    name:bob,age:18
    name:robwilco,age:35
@@ -304,29 +299,26 @@ R&D has come up with a *complete* re-design of the upgrade procedure:
 a snapshot and some *correct* database mangling commands. Only the
 schema upgrade was modified
 
-..       # Same as before ...
-..        # Same as before ...
-.. 	  # Correction added: substituted 'if' by 'id'
-
 .. sourcecode:: sh
 
    ~# upgrade_schema_and_website () {
 
-       touch /mnt/website/social-caramels.js
-       touch /mnt/website/ponies.js
-       touch /mnt/website/eye-candy.css
+       # Same as before ...
+       touch ./mnt/website/{social-caramels.js,ponies.js,eye-candy.css}
 
+       # Same as before ...
        add_new_user () { 
-         echo "id:$RANDOM,name:$1,age:$2" >> /mnt/website/database ; }
+         echo "id:$RANDOM,name:$1,age:$2" >> ./mnt/website/database ; }
 
-       nl -n rz -w 5 /mnt/website/database \
-          | sed 's/\t/,/; s/^/id:/' > /mnt/website/database.new
-       mv /mnt/website/database.new /mnt/website/database
+       # Correction added here: substituted 'if' by 'id'
+       nl -n rz -w 5 ./mnt/website/database \
+          | sed 's/\t/,/; s/^/id:/' > ./mnt/website/database.new
+       mv ./mnt/website/database.new ./mnt/website/database
        } 
 
    ~# upgrade_schema_and_website
 
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    id:00001,name:alice,age:29
    id:00002,name:bob,age:18
    id:00003,name:robwilco,age:35
@@ -345,7 +337,7 @@ Obviously, removing the snapshot does not impact the original partition
 
 .. sourcecode:: sh
 
-   ~# cat /mnt/website/database
+   ~# cat ./mnt/website/database
    id:00001,name:alice,age:29
    id:00002,name:bob,age:18
    id:00003,name:robwilco,age:35
@@ -355,7 +347,7 @@ We are done with this howto, to clean up after this exercice
 
 .. sourcecode:: sh
 
-   ~# umount /mnt/website
+   ~# umount ./mnt/website
    ~# lvremove -f /dev/datadisks/backup 2> /dev/null || true
    ~# lvremove -f /dev/datadisks/website
    Logical volume "website" successfully removed
@@ -367,6 +359,6 @@ We are done with this howto, to clean up after this exercice
    Labels on physical volume "/dev/loop1" successfully wiped
 
    ~# losetup -d /dev/loop1
-   ~# rm -r /mnt/backup /mnt/website loop1.raw
+   ~# rm -r ./mnt/backup ./mnt/website loop1.raw
 
-.. should mount in the local dir not in the real mount
+

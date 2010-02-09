@@ -346,8 +346,9 @@ class CommandRunner ( object ):
     def __enter__( self ):
         if CommandRunner.separate_stderr:
             self.terminator = '\necho "~$ $?" \n' + 'echo "~$ " >&2 \n' 
-            self.shell = Popen( "sh", shell=True, 
-                                stdin=PIPE, stdout=PIPE,stderr=PIPE)
+            self.shell = Popen( "/bin/bash", shell=True, 
+                                stdin=PIPE, stdout=PIPE,stderr=PIPE, 
+                                universal_newlines=True)
                                 
             self.stdout = ShellSessionParser( self.shell.stdout )
             self.stderr = ShellSessionParser( self.shell.stderr ) 
