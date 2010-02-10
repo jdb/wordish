@@ -69,7 +69,6 @@
 </node>
 <node TEXT="objects" POSITION="right">
 <node TEXT="ISessionParser" FOLDED="true">
-<node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="hints in a command&apos;s comments">
 <node TEXT="ignore"/>
@@ -91,6 +90,7 @@
 <node TEXT="really sometimes you just want to execute stuff and not care about the output"/>
 <node TEXT="really sometimes just check aborted is enough"/>
 <node TEXT="ignore from :argument:, comment"/>
+<node TEXT="offers bash by default but configurable to use sh"/>
 </node>
 <node TEXT="ICommandOutput" FOLDED="true">
 <node TEXT="only one ellipsis per output, this is not enough"/>
@@ -143,6 +143,7 @@
 <node TEXT="match=string,re,ellipsis"/>
 <node TEXT="prompts"/>
 <node TEXT="ignore_stderr"/>
+<node TEXT="use sh instead of bash"/>
 </node>
 <node TEXT="interfaces" FOLDED="true" POSITION="right">
 <node TEXT="context manager"/>
