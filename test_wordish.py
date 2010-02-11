@@ -252,14 +252,14 @@ class BlockSelectorTestCase( unittest.TestCase ):
     def test( self ):
 
         article=StringIO("""
-Wazzzaaa
+This article is going to get me to the Pulitzer prize.
 
 .. codesource:: blabi
 
    ~$ echo coucou
    coucou
 
-Supercalifragilidoculocious
+supercalifragilisticexpialidocious
 
 """)
 

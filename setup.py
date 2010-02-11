@@ -7,7 +7,7 @@ setup(
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = '0.0.6',
+    version = '0.0.7',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
@@ -48,7 +48,7 @@ The report will show::
 
 *Wordish can test wordy shell articles*
 """,
-    classifiers = [ 'Development Status :: 3 - Alpha',
+    classifiers = [ 'Development Status :: 4 - Beta',
                     'Environment :: Console',
                     'Intended Audience :: Developers',
                     'Intended Audience :: Education',
@@ -56,13 +56,12 @@ The report will show::
                     'License :: OSI Approved :: GNU General Public License (GPL)',
                     'Operating System :: Unix',
                     'Programming Language :: Python :: 2',
-                    'Programming Language :: Python :: 3',
                     'Programming Language :: Unix Shell',
                     'Topic :: Documentation',
                     'Topic :: Education',
                     'Topic :: Software Development :: Testing',
                     'Topic :: Utilities'],
 
-    license = 'GPL'
-
+    license = 'GPL',
+    requires = [ 'docutils (>=0.5)' ]
     )

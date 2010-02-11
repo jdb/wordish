@@ -359,6 +359,6 @@ We are done with this howto, to clean up after this exercice
    Labels on physical volume "/dev/loop1" successfully wiped
 
    ~# losetup -d /dev/loop1
-   ~# rm -r ./mnt/backup ./mnt/website loop1.raw
+   ~# rm -r ./mnt/backup ./mnt/website loop1.raw ./mnt
 
 
