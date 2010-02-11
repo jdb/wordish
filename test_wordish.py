@@ -6,7 +6,7 @@ from wordish import CommandOutput as out
 from wordish import CommandRunner as shell
 from wordish import TestReporter 
 from wordish import BlockSelector
-
+import sys
 
 # TODO: command runner not tested: create file check existence, check
 # enter, check exit
@@ -282,5 +282,7 @@ if __name__ == '__main__':
     # ce qui aurait pu etre completement possible au lieu de parser
     # deux fois, c'est que la directive source code 
 
-    unittest.TextTestRunner(verbosity=2).run(suite)
-   
+    run = unittest.TextTestRunner(verbosity=2).run(suite)
+
+    if len(run.errors)!=0 or len(run.failures)!=0:
+        sys.exit(1)
