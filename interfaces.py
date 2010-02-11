@@ -1,4 +1,39 @@
 
+"""
+
+
+    filter = RstBlockSelector( directive='sourcecode', arg=['sh'] )
+    with Shell() as run:
+        for cmd, expected in ShellSessionParser( filter(f) ):
+            if run( cmd ) != expected:
+                print "unexpected command %s 's output"
+
+
+    report = TestReporter()
+
+    filter = BlockSelector( directive='sourcecode', arg=['sh'] )
+
+    with CommandRunner() as run:
+
+        for cmd, expected in ShellSessionParser( filter(f) ):
+
+            print report.before( cmd, expected )
+            
+            output = run( cmd )
+            
+            if output == expected :
+                print report.success( output )
+            else
+                print report.failure( output )
+
+                if report.last_output.aborted(): 
+                    print("there was a serious error: bailing out")
+                    break
+
+# I would rather have the output command manipulated explicitly the
+# branching into failed or success also done explicitly.
+
+"""
 
 from zope.interface import Interface
 from zope.schema import Int, Text
@@ -32,7 +67,7 @@ class ISessionParser( Interface ):
         element is an output.
         """
 
-    def script( header=True, name= ):
+    def script( header=True, name=filename ):
         """
         Writes the script and the cleanup script, named after the name
         of the article.

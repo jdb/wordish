@@ -21,6 +21,8 @@ from shlex import shlex
 from itertools import takewhile, chain
 from StringIO import StringIO
 import re
+from docutils import core
+from docutils.parsers import rst
 
 
 def trace( decorated ):
@@ -41,7 +43,7 @@ class ShellSessionParser( object ):
     >>> for c,o in sess: print c,o
     ...
     (echo coucou
-    ) coucou
+    ) # hello coucou
     """
 
     # TODO: several hints could be parsed in the comments on a command:
@@ -419,11 +421,53 @@ class TestReporter( object):
             print "%s tests passed, %s tests failed." % (
                 self.passcount, self.failcount)
                 
+
+class BlockSelector( object):
+    # this object could be a function after all, the prototype would
+    # be a little more complex.
+
+    # to build more complex node matching, cleanup, articles, it may
+    # be easier to work on the doctree directly. Or the cleanup and
+    # articles separators could be inlined in comments. Need to
+    # clearify the ins and outs of both solutions. A shared instance
+    # of this object is not thread safe. A function would be thread
+    # safe but the class Directive would be redefined whenever called
+    # which might not be a problem in our case, but is unneeded in the
+    # general case.
+
+    def __init__( self, directive='sourcecode', arg=['sh'] ):
+        self.f = StringIO()
+
+        class Directive( rst.Directive ):
+            has_content = True
+            def run( this ):
+                this.assert_has_content()
+                if this.content[0].split()==arg:
+                    self.f.write( '\n'.join(this.content[2:])+'\n' )
+
+                # The content could also be returned but it is not the
+                # point, the point of this function is the side effect
+                # of writing into self.f, which is done by now.
+                return []
+
+        rst.directives.register_directive( directive, Directive )
+
+    def __call__( self, f ):
+        # The following line is only good for its side effect of
+        # filling self.f with the filtered content, that is why there
+        # is no storage of the doctree.
+        self.f.seek(0)
+        self.f.truncate()
+        core.publish_doctree(f.read()).traverse()
+        self.f.seek(0)
+        return self.f
+
             
 def run( f ):
 
     report = TestReporter()
-    session = iter( ShellSessionParser( f ))
+    filter = BlockSelector( directive='sourcecode', arg=['sh'])
+    session = iter( ShellSessionParser( filter( f ) ))
 
     with CommandRunner() as run:
         for cmd, expected in session:
@@ -450,27 +494,52 @@ def run( f ):
     report.summary()
 
 simple_example = """
-~$ echo "hello world"   # insightful comment
-hello world
 
-~$ (
-echo $((1+1)) )
-2
+Let's begin with a simple hello world:
 
-~$ sum () {
-echo $(( $1 + $2 ))
-}
+.. sourcecode:: sh
 
-~$ sum 42 58            # correct command, erroneous output
-3
+   ~$ echo "hello world"   # Mmmh, insightful comment...
+   hello world
 
-~$ echo $((RANDOM))
-...
+On to a more complicated example, a *shell subprocess*:
 
-~$ What have the Romans ever done for us   #  command not found: will abort
-aqueduct? roads? wine !
+.. sourcecode:: sh
 
-~$ exit
+   ~$ (
+   echo $((1+1)) )
+   2
+
+Also, defining functions sometimes clarify the message:
+
+.. sourcecode:: sh
+
+   ~$ sum () {
+   echo $(( $1 + $2 ))
+   }
+
+Let's introduce an discrepancy between the article'output and the
+actual output:
+
+.. sourcecode:: sh
+
+   ~$ sum 42 58
+   3
+
+If the output is difficult to predict, the ellipsis ('...') can help
+us matchi anyway:
+
+.. sourcecode:: sh
+
+   ~$ echo "a random number: " $RANDOM
+   ...
+
+**Warning**! if a command does not exits, wordish abort
+
+.. sourcecode:: sh
+
+   ~$ What have the Romans ever done for us
+   aqueduct? roads? wine !
 
 """
 

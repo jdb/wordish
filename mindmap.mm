@@ -67,8 +67,14 @@
 <node TEXT="correcting the most annoying bugs"/>
 </node>
 </node>
+<node TEXT="git" FOLDED="true" POSITION="right">
+<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
+<node TEXT="gitignore"/>
+<node TEXT="git pre-commit relaunch the tests, rebuild the package, the manpage"/>
+</node>
 <node TEXT="objects" POSITION="right">
 <node TEXT="ISessionParser" FOLDED="true">
+<node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="hints in a command&apos;s comments">
 <node TEXT="ignore"/>
@@ -78,32 +84,34 @@
 </node>
 <node TEXT="let him figure out the cleanup code on its own with comment hints"/>
 </node>
-<node TEXT="IReporter" FOLDED="true">
-<node TEXT="at bailout, show rest to help cleanup and help debug"/>
+<node TEXT="IReporter">
+<node COLOR="#ff0000" TEXT="explicit output manipulation outisde the reporter at bailout, show rest to help cleanup and help debug"/>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
 <node TEXT="when bailing out, all tests did not passed"/>
 <node TEXT="I get regularly bitten by , 0 in the report"/>
+<node TEXT="report knows less about command output"/>
 </node>
 <node TEXT="ICommandRunner">
+<node COLOR="#ff0000" TEXT="renamed to shell or sub shell"/>
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="lancer bash en mode interactif sinon les accolade sont mal interpretes or tty"/>
 <node TEXT="really sometimes you just want to execute stuff and not care about the output"/>
 <node TEXT="really sometimes just check aborted is enough"/>
 <node TEXT="ignore from :argument:, comment"/>
-<node TEXT="offers bash by default but configurable to use sh"/>
 </node>
 <node TEXT="ICommandOutput" FOLDED="true">
 <node TEXT="only one ellipsis per output, this is not enough"/>
+<node TEXT="how does doctest do the ellipsis. Is it limited to one like us?"/>
 </node>
-<node TEXT="IDocutilsNodeMatch"/>
+<node TEXT="IBlockSelector" FOLDED="true">
+<edge WIDTH="thin"/>
+<font NAME="SansSerif" SIZE="12"/>
+<node TEXT="prototype: ( directive, arg )(f) -&gt; f&apos;"/>
 </node>
-<node TEXT="git" FOLDED="true" POSITION="right">
-<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
-<node TEXT="gitignore"/>
-<node TEXT="git pre-commit relaunch the tests, rebuild the package, the manpage"/>
+<node TEXT="INodeSelector( node ) -&gt; true | false"/>
 </node>
-<node TEXT="wordish module" FOLDED="true" POSITION="right">
-<node TEXT="#!/usr/bin/env wordish"/>
+<node TEXT="wordish module" POSITION="right">
+<node TEXT="doit utiliser docutils par default, no mentions of sphinx"/>
 </node>
 <node TEXT="packaging python" FOLDED="true" POSITION="right">
 <node TEXT="does distutils make eggs?">
@@ -122,28 +130,11 @@
 <node TEXT="docutils" FOLDED="true" POSITION="right">
 <node TEXT="directive source code">
 <node TEXT="argument sh"/>
-<node TEXT="no options"/>
+<node TEXT=" option test which can be false or cleanup"/>
 <node TEXT="creates a node literal-block with a language sh"/>
 </node>
 <node TEXT="the sourcecode command should have the ignore all output command "/>
-</node>
-<node TEXT="sphinx" FOLDED="true" POSITION="right">
-<node TEXT="overloading source code to add the snippet to "/>
-<node TEXT="sphinx integration, how to to reuse sourcecode"/>
-<node TEXT="extension wich cat sourcecode blocks"/>
-<node TEXT="in the wodish sources but another python module called sphinx.ext.wordish"/>
-<node TEXT="rst builder, sphinx builder"/>
-<node TEXT="quiet mode without output only summary"/>
-<node TEXT="other parsing format, markdown"/>
-<node TEXT="for each snippet the tokens should no be in command anymore"/>
-<node TEXT="la directive source code appele le session parser et inserer des noeuds dans le doctree, le report pourrait etre dans le doctree, en latex ou html"/>
-</node>
-<node TEXT="config" FOLDED="true" POSITION="right">
-<node TEXT="bailout_on_abort"/>
-<node TEXT="match=string,re,ellipsis"/>
-<node TEXT="prompts"/>
-<node TEXT="ignore_stderr"/>
-<node TEXT="use sh instead of bash"/>
+<node TEXT="la creation de la directive source prend le renvoie une queue sous la forme d&apos;une stringio, la directive source code &#xe9;crit dans cette stringio que le session parser consomme. &#xa;&#xa;Le doctree g&#xe9;n&#xe9;r&#xe9; est jet&#xe9;, on s&apos;en sert juste pour lancer la directive sourcecode, tout en effet de bord. (on evite peut etre aussi la latence au d&#xe9;marrage)&#xa;&#xa;Ca ne sert pas a grand chose d&apos;utiliser le session parser pour r&#xe9;inserer des noeuds command et output sous la forme de literal block dans la mesure ou il seront disjoint dans le doc final. Sauf si un r&#xe9;&#xe8;l builder html/latex impl&#xe9;mnte un IReporter"/>
 </node>
 <node TEXT="interfaces" FOLDED="true" POSITION="right">
 <node TEXT="context manager"/>
@@ -188,6 +179,23 @@
 <node TEXT="anevia"/>
 <node TEXT="roming"/>
 <node TEXT="imil"/>
+</node>
+<node TEXT="sphinx" FOLDED="true" POSITION="right">
+<node TEXT="overloading source code to add the snippet to "/>
+<node TEXT="sphinx integration, how to to reuse sourcecode"/>
+<node TEXT="extension wich cat sourcecode blocks"/>
+<node TEXT="in the wodish sources but another python module called sphinx.ext.wordish"/>
+<node TEXT="rst builder, sphinx builder"/>
+<node TEXT="quiet mode without output only summary"/>
+<node TEXT="other parsing format, markdown"/>
+<node TEXT="for each snippet the tokens should no be in command anymore"/>
+<node TEXT="completely on top of wordish, use the isession parser, the icommnad runner and reimplemente the ireporter for a directive test-report"/>
+</node>
+<node TEXT="config" FOLDED="true" POSITION="right">
+<node TEXT="bailout_on_abort"/>
+<node TEXT="match=string,re,ellipsis"/>
+<node TEXT="prompts"/>
+<node TEXT="ignore_stderr"/>
 </node>
 </node>
 </map>
