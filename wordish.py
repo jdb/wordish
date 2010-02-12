@@ -13,7 +13,54 @@ article contains the commands and the expected outputs, the report
 takes care of comparing the expected results with the actual output of
 the execution of the command to make sure the documentation is correct. 
 
-Wordish can test wordy shell articles. 
+*Wordish can test wordy shell articles*. 
+
+Let's begin with a simple hello world:
+
+.. sourcecode:: sh
+
+   ~$ echo "hello world"   # Mmmh, insightful comment...
+   hello world
+
+On to a more complicated example, a *shell subprocess*:
+
+.. sourcecode:: sh
+
+   ~$ (
+   echo $((1+1)) )
+   2
+
+Also, defining functions sometimes clarify the message:
+
+.. sourcecode:: sh
+
+   ~$ sum () {
+   echo $(( $1 + $2 ))
+   }
+
+Let's introduce an discrepancy between the article'output and the
+actual output:
+
+.. sourcecode:: sh
+
+   ~$ sum 42 58
+   3
+
+If the output is difficult to predict, the ellipsis ('...') can help
+us matchi anyway:
+
+.. sourcecode:: sh
+
+   ~$ echo "a random number: " $RANDOM
+   ...
+
+**Warning**! if a command does not exits, wordish abort
+
+.. sourcecode:: sh
+
+   ~$ What have the Romans ever done for us
+   aqueduct? roads? wine !
+
 """
 
 from subprocess import Popen, STDOUT, PIPE
@@ -493,56 +540,6 @@ def run( f ):
 
     report.summary()
 
-simple_example = """
-
-Let's begin with a simple hello world:
-
-.. sourcecode:: sh
-
-   ~$ echo "hello world"   # Mmmh, insightful comment...
-   hello world
-
-On to a more complicated example, a *shell subprocess*:
-
-.. sourcecode:: sh
-
-   ~$ (
-   echo $((1+1)) )
-   2
-
-Also, defining functions sometimes clarify the message:
-
-.. sourcecode:: sh
-
-   ~$ sum () {
-   echo $(( $1 + $2 ))
-   }
-
-Let's introduce an discrepancy between the article'output and the
-actual output:
-
-.. sourcecode:: sh
-
-   ~$ sum 42 58
-   3
-
-If the output is difficult to predict, the ellipsis ('...') can help
-us matchi anyway:
-
-.. sourcecode:: sh
-
-   ~$ echo "a random number: " $RANDOM
-   ...
-
-**Warning**! if a command does not exits, wordish abort
-
-.. sourcecode:: sh
-
-   ~$ What have the Romans ever done for us
-   aqueduct? roads? wine !
-
-"""
-
 
 #########
 ######### Console script entry points
@@ -551,7 +548,7 @@ import sys
 
 def wordish():
 
-    files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( simple_example ),)
+    files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( __doc__ ),)
     
     files = [ f if f!="-" else sys.stdin for f in files ] 
 
@@ -561,24 +558,13 @@ def wordish():
       
 def rst2sh():
     
-    files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( simple_example ),
-
+    files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( __doc__ ),
+    filter = BlockSelector( directive='sourcecode', arg=['sh'])
     for f in files: 
-        print ShellSessionParser( f  if hasattr(f, 'read') else file(f) ).toscript()
+        print ShellSessionParser( 
+            filter ( f  if hasattr(f, 'read') else file(f) )
+            ).toscript()
 
 if __name__=='__main__':
     wordish()
                     
-
-# Un node match pour la directive article
-# un node match pour la directive cleanup
-# un node match pour la directive sourcecode
-
-# essence = [ n 
-#             for n in doctree.traverse() 
-#             if is_article(n) or is_cleanup(n) or is_shell(n) ]
-
-# snippets = [ split(a, is_cleanup ) for a in split( essence, is_article ) ]
-
-# transforms the doctree element into long strings ready to be either
-# executed by a command runner or tranformed into script.

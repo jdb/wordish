@@ -1,53 +1,25 @@
 
 
 from distutils.core import setup
+import wordish
 
 setup(
 
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = '0.0.7',
+    version = '0.1.0',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
-    description = ("Parses a shell session, test the "
-                   "commands compare the outputs"),
+    description = ("Parses a shell session, execute the "
+                   "commands, compare the outputs, build a report"),
 
-    long_description = """
-Shells are applications often used by administrators or developers
-to carry out very diverse type of operations: the list is virtually
-boundless and includes, for example, disk management, network
-administration, source code version control, or application packaging
-and deployment. Documentation of shell operations are eased by the
-fact that a shell session is composed of text commands and outputs,
-which is easy to copy and paste, or to present orderly.
+    long_description = wordish.__doc__,
 
-Wordish is a project which parses a shell session from a documentation
-which contains the commands and the expected output, and verifies that
-they work exactly as shown, to make sure the documentation is
-correct. 
+    license = 'GPL',
 
-For example, if the file hello.txt is laid out like::
+    requires = [ 'docutils (>=0.5)' ]
 
-  ~$ cat hello.txt
-  echo "Hello World"
-  Hello World
-
-The shell session can be test with::
-
-  ~$ python -m wordish hello.txt
-
-The report will show::
-
-  Trying:       echo "hello world"
-  Expecting:    hello world
-  ok
-
-  1 tests found. 
-  All tests passed
-
-*Wordish can test wordy shell articles*
-""",
     classifiers = [ 'Development Status :: 4 - Beta',
                     'Environment :: Console',
                     'Intended Audience :: Developers',
@@ -60,8 +32,5 @@ The report will show::
                     'Topic :: Documentation',
                     'Topic :: Education',
                     'Topic :: Software Development :: Testing',
-                    'Topic :: Utilities'],
-
-    license = 'GPL',
-    requires = [ 'docutils (>=0.5)' ]
+                    'Topic :: Utilities']
     )
