@@ -1,25 +1,28 @@
 """
-For an administrator or a developer, many operations are carried out
-via a command line interface, as known as a *shell*. Such operations
-include, for example:
 
-- source version control tutorial, or software deployment, 
+*Wordish can test wordy shell articles*. 
+
+For an administrator or a developer, many operations are carried out
+via a command line interface, also known as a *shell*. The list of
+examples is endless and include, for example:
+
+- source version control, or software packaging and deployment, 
 
 - disk partitioning, raid setup or volume snapshots, 
 
 - network and firewall setup, remote administration or load balancing
-  tunings are few other examples naturally operated with a shell.
+  tunings. 
 
-*Wordish* is a project which executes a shell session parsed from a
-documentation then tests and builds a report of the execution. The
-documentation should contain the commands and the expected outputs,
-the report takes care of comparing the expected results with the
-actual output of the execution of the command to make sure the
-documentation is correct.
+*Wordish* is a script which executes a shell session parsed from a
+documentation in the restructured text format, then tests and builds a
+report of the execution. The documentation should contain the commands
+and the expected outputs, *Wordish* takes care of comparing the
+expected results with the actual output of the execution of the
+command to make sure the documentation is correct.
 
-*Wordish can test wordy shell articles*. 
-
-Let's begin with a simple hello world:
+How does such documentation looks like? This introduction is itself an
+example of testable documentation with wordish. Let's begin with a
+simple hello world:
 
 .. sourcecode:: sh
 
@@ -34,7 +37,7 @@ On to a more complicated example, a *shell subprocess*:
    echo $((1+1)) )
    2
 
-Also, defining functions sometimes clarify the message:
+Also, defining functions sometimes clarify the intent of a command:
 
 .. sourcecode:: sh
 
@@ -70,41 +73,46 @@ displays the unexecuted commands.
    ~$ echo "Bye bye"
    Bye bye
 
-This introduction is itself a documentation which can be tested with
-wordish, here is the resulting report::
+This introduction is embedded in the wordish module as the
+docstring. Just run *wordish* with no argument to get the example
+report of this article:
 
-  Trying:		echo "hello world"   # Mmmh, insightful comment...
-  Expecting:	hello world
-  ok
-  
-  Trying:		(
-  echo $((1+1)) )
-  Expecting:	2
-  ok
-  
-  Trying:		sum () {
-  echo $(( $1 + $2 ))
-  }
-  Expecting:	
-  ok
-  
-  Trying:		sum 42 58
-  Expecting:	3
-  Failed, got:	100, 0
-  
-  Trying:		echo "a random number: " $RANDOM
-  Expecting:	...
-  ok
-  
-  Trying:		What have the Romans ever done for us
-  Expecting:	aqueduct? roads? wine !
-  Failed, got:	/bin/bash: line 19: What: command not found, 127
-  
-  Command aborted, bailing out
-  Untested command:
-  	echo "Bye bye"
-  6 tests found. 
-  4 tests passed, 2 tests failed.
+.. sourcecode:: sh
+
+   ~$ python -m wordish
+   Trying:	echo "hello world"   # Mmmh, insightful comment...
+   Expecting:	hello world
+   ok
+   
+   Trying:	(
+   echo $((1+1)) )
+   Expecting:	2
+   ok
+   
+   Trying:	sum () {
+   echo $(( $1 + $2 ))
+   }
+   Expecting:	
+   ok
+   
+   Trying:	sum 42 58
+   Expecting:	3
+   Failed, got:	100, 0
+   
+   Trying:	echo "a random number: " $RANDOM
+   Expecting:	...
+   ok
+   
+   Trying:	What have the Romans ever done for us
+   Expecting:	aqueduct? roads? wine !
+   Failed, got:	/bin/bash: line 19: What: command not found, 127
+   
+   Command aborted, bailing out
+   Untested command:
+   	echo "Bye bye"
+        python -m wordish
+   6 tests found. 
+   4 tests passed, 2 tests failed.
 
 """
 

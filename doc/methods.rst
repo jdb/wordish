@@ -1,6 +1,14 @@
-tests
-=====
 
+.. _testsuite:
+
+Test suites (no page yet)
+==========================
+
+
+.. _testsuitequestions:
+
+Questions
+---------
 
         refactor the tests
             some are harmful for readability
@@ -13,10 +21,25 @@ tests
             am i white box or black box
             how to put the simple session and the git howto in the test_wordish
 
+.. _buildchain:
 
-Versions and packaging
-======================
+From sources to packaging and deployment  (no page yet)
+========================================================
 
         source, branches and versions
         packaging
 	documentation
+
+.. _testbuildchain:
+
+Questions
+---------
+
+Yo yes
+
+
+
+Wordish's documentation on its documentation (no page yet)
+===========================================================
+
+

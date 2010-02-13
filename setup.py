@@ -8,7 +8,7 @@ setup(
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = '0.1.0',
+    version = '1.0.0beta',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, execute the "
@@ -18,7 +18,7 @@ setup(
 
     license = 'GPL',
 
-    requires = [ 'docutils (>=0.5)' ]
+    requires = [ 'docutils (>=0.5)' ],
 
     classifiers = [ 'Development Status :: 4 - Beta',
                     'Environment :: Console',

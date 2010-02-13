@@ -1,28 +1,32 @@
 
 
-Wordish tests wordy shell articles
-==================================
+Wordish documentation
+=====================
 
 .. automodule:: wordish
 
-To guide the Administrators will found more details in the *How to test an article*
-and in *How to write an article* paragraphs.
+Reader's guide
+--------------
 
-Anyone curious of how this is designed may be interested the *Object
-model and interfaces*. 
+#. Administrators will find more details in the pages :ref:`write` and
+   :ref:`test`,
 
-For the brave Python developper which is impatient to propose a
-feature patch, a bug report and fix, the *Source presentation*,
-*Test suite* and the *Wordish versions and packages* may be
-helpful. 
+#. Anyone curious of how *Wordish* is designed may be interested in the
+   :ref:`interfaces`.
 
-The author of these lines must say that he finds that *unit testing*
-and *packaging* are still black magic and would be grateful for the
-reader's advice and response to the many existential questions listed
-*here* and *there*
+#. For the brave Python developper impatient to propose a feature
+   patch, a bug report and a fix, the page :ref:`sources`, and the
+   page describing the :ref:`testsuite` and the :ref:`buildchain` will
+   be helpful.
+
+   The author of these lines must say that he found there are many
+   ways to do *unit testing* and *packaging* and he would be grateful
+   for the reader's advice and response to the many existential
+   questions listed :ref:`here <testsuitequestions>` and
+   :ref:`here <testbuildchain>`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    write
    test
@@ -30,7 +34,8 @@ reader's advice and response to the many existential questions listed
    interfaces
    sources
    methods
-   doc
+   changelog
+
 
 .. Indices and tables
 .. ==================

@@ -1,5 +1,8 @@
-Object model and interfaces
-===========================
+
+.. _interfaces:
+
+Interfaces and objects description (no page yet)
+=================================================
 
 Overview
 --------

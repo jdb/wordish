@@ -1,4 +1,6 @@
 
+.. _test:
+
 How to test an article
 ======================
 

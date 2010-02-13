@@ -1,8 +1,8 @@
 
 
 
-Roadmap: current limitations and crazy ideas
-============================================
+Roadmap: current limitations and crazy ideas (no page yet)
+===========================================================
 
 setup.py and entry point
 rst builder, sphinx builder
