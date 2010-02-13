@@ -1,17 +1,21 @@
 """
-For an administrator or a developer, many operations are usually
-carried out via a command line interface, or a *shell*. Such
-operations include, for example, disk partitioning, raid setup or
-volume snapshots. They can also include source version control
-tutorial, or software packaging howto. Network and firewall setup,
-remote administration or load balancing tunings are few other examples
-naturally operated with a shell.
+For an administrator or a developer, many operations are carried out
+via a command line interface, as known as a *shell*. Such operations
+include, for example:
 
-Wordish is a project which executes a shell session parsed from a
+- source version control tutorial, or software deployment, 
+
+- disk partitioning, raid setup or volume snapshots, 
+
+- network and firewall setup, remote administration or load balancing
+  tunings are few other examples naturally operated with a shell.
+
+*Wordish* is a project which executes a shell session parsed from a
 documentation then tests and builds a report of the execution. The
-article contains the commands and the expected outputs, the report
-takes care of comparing the expected results with the actual output of
-the execution of the command to make sure the documentation is correct. 
+documentation should contain the commands and the expected outputs,
+the report takes care of comparing the expected results with the
+actual output of the execution of the command to make sure the
+documentation is correct.
 
 *Wordish can test wordy shell articles*. 
 
@@ -38,28 +42,69 @@ Also, defining functions sometimes clarify the message:
    echo $(( $1 + $2 ))
    }
 
-Let's introduce an discrepancy between the article'output and the
-actual output:
+The previously defined function is available for further
+snippets. Let's introduce an discrepancy between the article'output
+and the actual output:
 
 .. sourcecode:: sh
 
    ~$ sum 42 58
    3
 
-If the output is difficult to predict, the ellipsis ('...') can help
-us matchi anyway:
+If the output is difficult to predict, the ellipsis ('...') helps
+matching anyway:
 
 .. sourcecode:: sh
 
    ~$ echo "a random number: " $RANDOM
    ...
 
-**Warning**! if a command does not exits, wordish abort
+*Warning*! if a command does not exit gracefully, wordish aborts, and
+displays the unexecuted commands.
 
 .. sourcecode:: sh
 
    ~$ What have the Romans ever done for us
    aqueduct? roads? wine !
+
+   ~$ echo "Bye bye"
+   Bye bye
+
+This introduction is itself a documentation which can be tested with
+wordish, here is the resulting report::
+
+  Trying:		echo "hello world"   # Mmmh, insightful comment...
+  Expecting:	hello world
+  ok
+  
+  Trying:		(
+  echo $((1+1)) )
+  Expecting:	2
+  ok
+  
+  Trying:		sum () {
+  echo $(( $1 + $2 ))
+  }
+  Expecting:	
+  ok
+  
+  Trying:		sum 42 58
+  Expecting:	3
+  Failed, got:	100, 0
+  
+  Trying:		echo "a random number: " $RANDOM
+  Expecting:	...
+  ok
+  
+  Trying:		What have the Romans ever done for us
+  Expecting:	aqueduct? roads? wine !
+  Failed, got:	/bin/bash: line 19: What: command not found, 127
+  
+  Command aborted, bailing out
+  Untested command:
+  	echo "Bye bye"
+  6 tests found. 
+  4 tests passed, 2 tests failed.
 
 """
 
@@ -86,15 +131,12 @@ class ShellSessionParser( object ):
     An iterator which parses a text file of a shell session and yields
     pairs of commands and outputs
     
-    >>> sess = ShellSessionParser( "~$ (echo coucou\n) # hello\ncoucou" )
-    >>> for c,o in sess: print c,o
+    >>> sess = ShellSessionParser( "~$ (echo coucou) # hello\ncoucou" )
+    >>> for c,o in sess: print "command : %s\noutput  : %s" % (c,o)
     ...
-    (echo coucou
-    ) # hello coucou
+    command : (echo coucou) # hello
+    output  : coucou
     """
-
-    # TODO: several hints could be parsed in the comments on a command:
-    # ignore, stderr/&2, maybe ask input, they should be returned
 
     def __init__( self, f, prompts=['~# ', '~$ '], com='', whi='' ):
 
@@ -349,9 +391,7 @@ class CommandOutput( object ):
                 and getattr( self, a ) is not None ] )
 
     def ellipsis_match(self,pattern,string):
-        # the pattern should be first escaped from special characters
-        # except the three dots '...'  what are the special
-        # characters?
+
         if '...' in pattern:
             start, end = pattern.split('...')
             return string.startswith(start) and string.endswith(end)
@@ -467,6 +507,8 @@ class TestReporter( object):
         else:
             print "%s tests passed, %s tests failed." % (
                 self.passcount, self.failcount)
+
+        return self.failcount
                 
 
 class BlockSelector( object):
@@ -509,37 +551,6 @@ class BlockSelector( object):
         self.f.seek(0)
         return self.f
 
-            
-def run( f ):
-
-    report = TestReporter()
-    filter = BlockSelector( directive='sourcecode', arg=['sh'])
-    session = iter( ShellSessionParser( filter( f ) ))
-
-    with CommandRunner() as run:
-        for cmd, expected in session:
-
-            print report.before( cmd, expected )
-            print report.after( run( cmd ) )
-
-            if report.last_output.aborted(): 
-
-                # sole condition if expected.returncode is None if
-                # expected returncode is not None and expected!=actual
-                # output should bailout. Test and errors should be
-                # different.
-
-                print( "Command aborted, bailing out")
-                remaining_cmds = [ cmd for cmd, _ in session ]
-                if len( remaining_cmds )==0:
-                    print( "No remaining command" )
-                else:
-                    print "Untested command%s:\n\t" % (
-                        "s" if len( remaining_cmds )>1 else ""  ),
-                    print( "\n\t".join( remaining_cmds ))
-
-    report.summary()
-
 
 #########
 ######### Console script entry points
@@ -549,13 +560,42 @@ import sys
 def wordish():
 
     files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( __doc__ ),)
-    
     files = [ f if f!="-" else sys.stdin for f in files ] 
+    files = [ f if hasattr(f, 'read') else file(f) for f in files ]
 
-    for f in files: 
-        run( f  if hasattr(f, 'read') else file(f) )
-    
-      
+    ret = 0
+
+    for f in files:
+
+        report = TestReporter()
+        filter = BlockSelector( directive='sourcecode', arg=['sh'])
+        session = iter( ShellSessionParser( filter( f ) ))
+
+        with CommandRunner() as run:
+            for cmd, expected in session:
+
+                print report.before( cmd, expected )
+                print report.after( run( cmd ) )
+
+                if report.last_output.aborted(): 
+
+                    # sole condition if expected.returncode is None if
+                    # expected returncode is not None and expected!=actual
+                    # output should bailout. Test and errors should be
+                    # different.
+
+                    print( "Command aborted, bailing out")
+                    remaining_cmds = [ cmd for cmd, _ in session ]
+                    if len( remaining_cmds )==0:
+                        print( "No remaining command" )
+                    else:
+                        print "Untested command%s:\n\t" % (
+                            "s" if len( remaining_cmds )>1 else ""  ),
+                        print( "\n\t".join( remaining_cmds ))
+
+        ret += report.summary()
+    return ret
+
 def rst2sh():
     
     files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( __doc__ ),
@@ -566,5 +606,6 @@ def rst2sh():
             ).toscript()
 
 if __name__=='__main__':
-    wordish()
+    sys.exit( wordish() )
+    
                     
