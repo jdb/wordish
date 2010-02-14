@@ -2,17 +2,19 @@
 <node TEXT="wordish">
 <font NAME="SansSerif" SIZE="12"/>
 <node TEXT="doc" POSITION="left">
-<node TEXT="What is wordish? installation verification"/>
-<node TEXT="writing and testing articles" FOLDED="true">
+<node TEXT="writing">
 <node TEXT="parsing method (prompts, nesting)"/>
+<node TEXT="the doc string should be the beginning of the write section"/>
 <node TEXT="matching methods (ignoring, ellipsis, re)"/>
 <node TEXT="one subshell for the session"/>
 <node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
-<node TEXT="debug" FOLDED="true">
+<node TEXT="debug"/>
+<node TEXT="What is wordish? installation verification"/>
+</node>
+<node TEXT="testing">
 <node TEXT="false"/>
 <node TEXT="log file"/>
 <node TEXT="clean up code"/>
-</node>
 </node>
 <node TEXT="roadmap" FOLDED="true">
 <node TEXT="get a blessing from the sphinx project"/>
@@ -49,12 +51,7 @@
 </node>
 </node>
 <node TEXT="some organization with freemind"/>
-</node>
-<node TEXT="documentation" FOLDED="true">
-<node TEXT="partial literalincludes of the interfaces"/>
-<node TEXT="readme is also partially include"/>
-<node TEXT="readme, setup.py and sphinx doc share paragraphs"/>
-<node TEXT="git commit rebuilds the docs, the readme, the setup.py"/>
+<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
 </node>
 <node TEXT="making of" FOLDED="true">
 <node TEXT="modelisation"/>
@@ -62,17 +59,21 @@
 <node TEXT="executer des commandes"/>
 <node TEXT="packaging"/>
 <node TEXT="testing"/>
-<node TEXT="sphinx/rst extensions"/>
+<node TEXT="docutils"/>
 <node TEXT="making it easy to use for other people than me"/>
-<node TEXT="correcting the most annoying bugs"/>
+<node TEXT="sphinx"/>
+<node TEXT="debian package"/>
+<node TEXT="documentation">
+<node TEXT="partial literalincludes of the interfaces"/>
+<node TEXT="readme is also partially include"/>
+<node TEXT="readme, setup.py and sphinx doc share paragraphs"/>
+<node TEXT="git commit rebuilds the docs, the readme, the setup.py"/>
+<node TEXT="include .. in the beginning of the sys.path"/>
 </node>
 </node>
-<node TEXT="git" FOLDED="true" POSITION="right">
-<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
-<node TEXT="gitignore"/>
-<node TEXT="git pre-commit relaunch the tests, rebuild the package, the manpage"/>
+<node TEXT="changelog"/>
 </node>
-<node TEXT="objects" POSITION="right">
+<node TEXT="objects" FOLDED="true" POSITION="right">
 <node TEXT="ISessionParser" FOLDED="true">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
@@ -83,49 +84,43 @@
 <node TEXT="returncode=3"/>
 </node>
 <node TEXT="let him figure out the cleanup code on its own with comment hints"/>
+<node TEXT="get rid of get_command and get output,  make takewhile private"/>
 </node>
-<node TEXT="IReporter">
+<node TEXT="IReporter" FOLDED="true">
 <node COLOR="#ff0000" TEXT="explicit output manipulation outisde the reporter at bailout, show rest to help cleanup and help debug"/>
 <node TEXT="differentiate the error and failure in the report, do not bail out on failure"/>
 <node TEXT="when bailing out, all tests did not passed"/>
 <node TEXT="I get regularly bitten by , 0 in the report"/>
 <node TEXT="report knows less about command output"/>
 </node>
-<node TEXT="ICommandRunner">
-<node COLOR="#ff0000" TEXT="renamed to shell or sub shell"/>
+<node TEXT="ICommandRunner" FOLDED="true">
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
-<node TEXT="lancer bash en mode interactif sinon les accolade sont mal interpretes or tty"/>
-<node TEXT="really sometimes you just want to execute stuff and not care about the output"/>
-<node TEXT="really sometimes just check aborted is enough"/>
+<node TEXT="some command are not meant to be executed, others not identical, others not aborted"/>
 <node TEXT="ignore from :argument:, comment"/>
 </node>
 <node TEXT="ICommandOutput" FOLDED="true">
 <node TEXT="only one ellipsis per output, this is not enough"/>
 <node TEXT="how does doctest do the ellipsis. Is it limited to one like us?"/>
 </node>
-<node TEXT="IBlockSelector" FOLDED="true">
+<node TEXT="IBlockSelector">
 <edge WIDTH="thin"/>
 <font NAME="SansSerif" SIZE="12"/>
-<node TEXT="prototype: ( directive, arg )(f) -&gt; f&apos;"/>
 </node>
-<node TEXT="INodeSelector( node ) -&gt; true | false"/>
 </node>
-<node TEXT="wordish module" POSITION="right">
-<node TEXT="doit utiliser docutils par default, no mentions of sphinx"/>
+<node TEXT="wordish module" FOLDED="true" POSITION="right">
+<node TEXT="wordish --help"/>
+<node TEXT="wordish --prompt &apos;&gt;&gt;&gt;&apos;"/>
+<node TEXT="--match &apos;exact|ellipsis|regexp&apos;"/>
+<node TEXT="give the option to attach a cleanup script"/>
 </node>
 <node TEXT="packaging python" FOLDED="true" POSITION="right">
-<node TEXT="does distutils make eggs?">
-<node TEXT="setup --help-commands tell nothin about eggs"/>
-<node TEXT="distutils.core.setup install from pristine source says &apos;running egg_info&apos;"/>
-</node>
-<node TEXT="distribute offers eggs which I am not sure I need, but haz console scripts"/>
-<node TEXT="does distutils install manpages? and rehash the mandb"/>
+<node COLOR="#ff0000" TEXT="just use distribute to have eggs which have dependencies which will install docutils..."/>
+<node COLOR="#ff0000" TEXT="use distutils to generate console scripts"/>
+<node TEXT="where can distutils install the manpages? rehash the db?"/>
 <node TEXT="can the scripts be installed in /usr/bin"/>
 <node TEXT="what should be the interface between the python sources and deb/rpm on the other side"/>
 <node TEXT="where does distutils {package,} additional files go?"/>
 <node TEXT="additional vs package data in distutils? another solution in eggs? in buildout? MANIFEST?"/>
-<node TEXT="wordish --help"/>
-<node TEXT="give the option to attach a cleanup script"/>
 </node>
 <node TEXT="docutils" FOLDED="true" POSITION="right">
 <node TEXT="directive source code">
@@ -152,17 +147,13 @@
 <node TEXT="article examples found by the module"/>
 </node>
 <node TEXT="tests" FOLDED="true" POSITION="right">
-<node TEXT="howto to place or name the test so that it is "/>
-<node TEXT="some are harmful for readability"/>
-<node TEXT="name the tests"/>
-<node TEXT="some are not useful"/>
+<node TEXT="some impede readability"/>
+<node TEXT="some may be redundant"/>
 <node TEXT="some pertinent tests are missing"/>
-<node TEXT="some should doctest instead of unittest and vice versa"/>
-<node TEXT="distinction should be made between testing the public api and the rest"/>
-<node TEXT="have I used backdoors?"/>
-<node TEXT="are interface tested?"/>
-<node TEXT="am i white box or black box"/>
-<node TEXT="how to put the simple session and the git howto in the test_wordish"/>
+<node TEXT="some doctest would better be unit test and vice versa"/>
+<node TEXT="clear distinction between public (black box) and private api (white box) (test the public at least)"/>
+<node TEXT="some use backdoors"/>
+<node TEXT="functional_tests should be launched as root and be run on every file in example"/>
 </node>
 <node TEXT="pr plan" FOLDED="true" POSITION="right">
 <node TEXT="shunit"/>
@@ -181,7 +172,6 @@
 <node TEXT="imil"/>
 </node>
 <node TEXT="sphinx" FOLDED="true" POSITION="right">
-<node TEXT="overloading source code to add the snippet to "/>
 <node TEXT="sphinx integration, how to to reuse sourcecode"/>
 <node TEXT="extension wich cat sourcecode blocks"/>
 <node TEXT="in the wodish sources but another python module called sphinx.ext.wordish"/>
@@ -190,12 +180,31 @@
 <node TEXT="other parsing format, markdown"/>
 <node TEXT="for each snippet the tokens should no be in command anymore"/>
 <node TEXT="completely on top of wordish, use the isession parser, the icommnad runner and reimplemente the ireporter for a directive test-report"/>
+<node COLOR="#338800" TEXT="ask sphinx howto extend sourcecode to include :options: such as no_run, no_check, can_abort">
+<font NAME="Dialog" SIZE="12"/>
 </node>
-<node TEXT="config" FOLDED="true" POSITION="right">
+<node TEXT="extend sourcecode directive and propose a patch"/>
+<node TEXT="INodeSelector( node ) -&gt; true | false"/>
+<node TEXT="config" FOLDED="true">
 <node TEXT="bailout_on_abort"/>
 <node TEXT="match=string,re,ellipsis"/>
 <node TEXT="prompts"/>
 <node TEXT="ignore_stderr"/>
+</node>
+<node TEXT="need a node selector for article, clenaupm sourcecode"/>
+<node TEXT="# Un node match pour la directive article &#xa;# un node match pour la directive cleanup &#xa;# un node match pour la directive sourcecode  &#xa;# essence = [ n  &#xa;#             for n in doctree.traverse()  &#xa;#             if is_article(n) or is_cleanup(n) or is_shell(n) ]  &#xa;# snippets = [ split(a, is_cleanup ) for a in split( essence, is_article ) ]"/>
+<node TEXT="need a directive .. test_report::"/>
+<node TEXT="need a directive wordish with an argument telling the name of the article, and with an option to configure the list of prompts"/>
+<node TEXT="the sphinx builder can generate scripts with a cleanup section"/>
+</node>
+<node TEXT="a bug in python?" FOLDED="true" POSITION="right">
+<node TEXT="cd doc"/>
+<node TEXT="python"/>
+<node TEXT="import sys"/>
+<node TEXT="import test_wordish -&gt; except"/>
+<node TEXT="sys.path.append(&apos;..&apos;)"/>
+<node TEXT="import test_wordish"/>
+<node TEXT="can&apos;t import TestMachin (why, and why this one)"/>
 </node>
 </node>
 </map>

@@ -1,4 +1,3 @@
-
 """
 
 
@@ -35,7 +34,7 @@
 
 """
 
-from zope.interface import Interface
+from zope.interface import Interface, Attribute
 from zope.schema import Int, Text
 
 # todo, doctest the public API
@@ -67,7 +66,7 @@ class ISessionParser( Interface ):
         element is an output.
         """
 
-    def script( header=True, name=filename ):
+    def script( header=True, name="filename" ):
         """
         Writes the script and the cleanup script, named after the name
         of the article.
@@ -137,7 +136,7 @@ class IReporter( Interface ):
 
     """The expected output is presented and set by before(). It is
     stored to be later compared to the actual output by after()"""
-    expected = ICommandOutput()
+    expected = Attribute("an ICommandOutput()")
 
     def before( cmd, expected ):
         """
@@ -160,8 +159,8 @@ class IReporter( Interface ):
 class IDocutilsNodeMatch( Interface ):
 
     directive = Text()
-    arguments = List( Text() )
-    options   = Dict( Text():Text() )
+    arguments = Attribute( "a list of arguments") 
+    options   = Attribute( "a dictionary of options:values") 
     
     def __call__( doctreeelement ):
         """

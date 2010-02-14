@@ -25,7 +25,7 @@ pygments_style = 'sphinx'
 
 
 # -- Options for HTML output ---------------------------------------------------
-html_theme = 'default'
+html_theme = 'sphinxdoc'
 
 # further.  For a list of options available for each theme, see the
 # documentation.

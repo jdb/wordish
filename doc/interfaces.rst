@@ -1,28 +1,33 @@
 
 .. _interfaces:
 
-Interfaces and objects description (no page yet)
-=================================================
+Interfaces and objects description
+==================================
 
-Overview
---------
+.. Overview
+.. --------
 
-There is a ShellSessionParser, a output which of stdout, stderr, the
-returncode and
+.. parser
+.. ------
 
-Wordish makes use of five python modules nothing else than shlex,
-itertools, :mod:`StringIO` which adapts a character string to the
-interface open file. and and sys
+.. output
+.. ------
 
-parser
-------
+.. runner
+.. ------
 
-output
-------
+.. reporter
+.. --------
 
-runner
-------
+Wordish makes use of five python modules from the standard library:
+:mod:`shlex` offers to tokenize text, :mod:`itertools` offers
+:func:`takewhile` functions and others functional tools,
+:mod:`StringIO` adapts a character string to the interface open
+file. :mod:`re` is the regular expression module, and :mod:`docutils`
+offers the tools to filter text in the *restructured text*
+format. :mod:`sys`, among others, gives access to the command line
+arguments.
 
-reporter
---------
 
+.. include:: ../interfaces.py
+   :literal:
