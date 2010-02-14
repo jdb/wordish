@@ -1,80 +1,240 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-	<title>jdb/wordish @ GitHub</title>
-	
-	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
-  		background-color: #5e3321;
-		  font-family: "Helvetica,Arial,FreeSans"; 
-  		color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-		h1 { font-size: 3.8em; color: #a1ccde; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #a1ccde; }
-    h3 { text-align: center; color: #a1ccde; }
-    a { color: #a1ccde; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-	</style>
-	
-</head>
-
-<body>
-  <a href="http://github.com/jdb/wordish"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-  
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/jdb/wordish/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/jdb/wordish/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-      
-    <h1><a href="http://github.com/jdb/wordish">wordish</a> 
-      <span class="small">by <a href="http://github.com/jdb">jdb</a></span></h1>
-
-    <div class="description">
-      Parse a recorded interactive shell session, execute the commands and compare the outputs.
-    </div>
-
-    <h2>Authors</h2>
-<p>Jean Daniel Browne (jeandaniel.browne@gmail.com)<br/><br/>      </p>
-<h2>Contact</h2>
-<p> (jeandaniel.browne@gmail.com)<br/>      </p>
-
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/jdb/wordish/zipball/master">zip</a> or
-      <a href="http://github.com/jdb/wordish/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/jdb/wordish</pre>
-    </p>
-      
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/jdb/wordish">jdb/wordish</a>
-    </div>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-  </div>
+    <title>Wordish documentation &mdash; Wordish v1.0.0beta documentation</title>
+    <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1.0.0beta',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="Wordish v1.0.0beta documentation" href="#" />
+    <link rel="next" title="How to write an article" href="write.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="write.html" title="How to write an article"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Wordish v1.0.0beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="#">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Wordish documentation</a><ul>
+<li><a class="reference external" href="#reader-s-guide">Reader&#8217;s guide</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
-  
-</body>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="write.html"
+                                  title="next chapter">How to write an article</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="sources/index.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-wordish">
+<h1>Wordish documentation<a class="headerlink" href="#module-wordish" title="Permalink to this headline">¶</a></h1>
+<p><em>Wordish can test wordy shell articles</em>.</p>
+<p>For an administrator or a developer, many operations are carried out
+via a command line interface, also known as a <em>shell</em>. The list of
+examples is endless and include, for example:</p>
+<ul class="simple">
+<li>source version control, or software packaging and deployment,</li>
+<li>disk partitioning, raid setup or volume snapshots,</li>
+<li>network and firewall setup, remote administration or load balancing
+tunings.</li>
+</ul>
+<p><em>Wordish</em> is a script which executes a shell session parsed from a
+documentation in the restructured text format, then tests and builds a
+report of the execution. The documentation should contain the commands
+and the expected outputs, <em>Wordish</em> takes care of comparing the
+expected results with the actual output of the execution of the
+command to make sure the documentation is correct.</p>
+<p>How does such documentation looks like? This introduction is itself an
+example of testable documentation with wordish. Let&#8217;s begin with a
+simple hello world:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span><span class="nb">echo</span> <span class="s2">&quot;hello world&quot;</span>   <span class="c"># Mmmh, insightful comment...</span>
+hello world
+</pre></div>
+</div>
+<p>On to a more complicated example, a <em>shell subprocess</em>:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span><span class="o">(</span>
+<span class="nb">echo</span> <span class="k">$((</span><span class="m">1</span><span class="o">+</span><span class="m">1</span><span class="k">))</span> <span class="o">)</span>
+2
+</pre></div>
+</div>
+<p>Also, defining functions sometimes clarify the intent of a command:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span>sum <span class="o">()</span> <span class="o">{</span>
+<span class="nb">echo</span> <span class="k">$((</span> <span class="nv">$1</span> <span class="o">+</span> <span class="nv">$2</span> <span class="k">))</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The previously defined function is available for further
+snippets. Let&#8217;s introduce an discrepancy between the article&#8217;output
+and the actual output:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span>sum 42 58
+3
+</pre></div>
+</div>
+<p>If the output is difficult to predict, the ellipsis (&#8216;...&#8217;) helps
+matching anyway:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span><span class="nb">echo</span> <span class="s2">&quot;a random number: &quot;</span> <span class="nv">$RANDOM</span>
+...
+</pre></div>
+</div>
+<p><em>Warning</em>! if a command does not exit gracefully, wordish aborts, and
+displays the unexecuted commands.</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span>What have the Romans ever <span class="k">done for </span>us
+aqueduct? roads? wine !
+
+~<span class="nv">$ </span><span class="nb">echo</span> <span class="s2">&quot;Bye bye&quot;</span>
+Bye bye
+</pre></div>
+</div>
+<p>This introduction is embedded in the wordish module as the
+docstring. Just run <em>wordish</em> with no argument to get the example
+report of this article:</p>
+<div class="highlight-sh"><div class="highlight"><pre>~<span class="nv">$ </span>python -m wordish
+Trying:      <span class="nb">echo</span> <span class="s2">&quot;hello world&quot;</span>   <span class="c"># Mmmh, insightful comment...</span>
+Expecting:   hello world
+ok
+
+Trying:      <span class="o">(</span>
+<span class="nb">echo</span> <span class="k">$((</span><span class="m">1</span><span class="o">+</span><span class="m">1</span><span class="k">))</span> <span class="o">)</span>
+Expecting:   2
+ok
+
+Trying:      sum <span class="o">()</span> <span class="o">{</span>
+<span class="nb">echo</span> <span class="k">$((</span> <span class="nv">$1</span> <span class="o">+</span> <span class="nv">$2</span> <span class="k">))</span>
+<span class="o">}</span>
+Expecting:   
+ok
+
+Trying:      sum 42 58
+Expecting:   3
+Failed, got: 100, 0
+
+Trying:      <span class="nb">echo</span> <span class="s2">&quot;a random number: &quot;</span> <span class="nv">$RANDOM</span>
+Expecting:   ...
+ok
+
+Trying:      What have the Romans ever <span class="k">done for </span>us
+Expecting:   aqueduct? roads? wine !
+Failed, got: /bin/bash: line 19: What: <span class="nb">command </span>not found, 127
+
+Command aborted, bailing out
+Untested <span class="nb">command</span>:
+     <span class="nb">echo</span> <span class="s2">&quot;Bye bye&quot;</span>
+     python -m wordish
+6 tests found. 
+4 tests passed, 2 tests failed.
+</pre></div>
+</div>
+<div class="section" id="reader-s-guide">
+<h2>Reader&#8217;s guide<a class="headerlink" href="#reader-s-guide" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Administrators will find more details in the pages <a class="reference external" href="write.html#write"><em>How to write an article</em></a> and
+<a class="reference external" href="test.html#test"><em>How to test an article</em></a>,</p>
+</li>
+<li><p class="first">Anyone curious of how <em>Wordish</em> is designed may be interested in the
+<a class="reference external" href="interfaces.html#interfaces"><em>Interfaces and objects description (no page yet)</em></a>.</p>
+</li>
+<li><p class="first">For the brave Python developper impatient to propose a feature
+patch, a bug report and a fix, the page <a class="reference external" href="sources.html#sources"><em>Sources presentation  (no page yet)</em></a>, and the
+page describing the <a class="reference external" href="methods.html#testsuite"><em>Test suites (no page yet)</em></a> and the <a class="reference external" href="methods.html#buildchain"><em>From sources to packaging and deployment  (no page yet)</em></a> will
+be helpful.</p>
+<p>The author of these lines must say that he found there are many
+ways to do <em>unit testing</em> and <em>packaging</em> and he would be grateful
+for the reader&#8217;s advice and response to the many existential
+questions listed <a class="reference external" href="methods.html#testsuitequestions"><em>here</em></a> and
+<a class="reference external" href="methods.html#testbuildchain"><em>here</em></a></p>
+</li>
+</ol>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="write.html">How to write an article</a></li>
+<li class="toctree-l1"><a class="reference external" href="test.html">How to test an article</a></li>
+<li class="toctree-l1"><a class="reference external" href="roadmap.html">Roadmap: current limitations and crazy ideas (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="interfaces.html">Interfaces and objects description (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="sources.html">Sources presentation  (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="methods.html">Test suites (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="methods.html#from-sources-to-packaging-and-deployment-no-page-yet">From sources to packaging and deployment  (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="methods.html#wordish-s-documentation-on-its-documentation-no-page-yet">Wordish&#8217;s documentation on its documentation (no page yet)</a></li>
+<li class="toctree-l1"><a class="reference external" href="changelog.html">What&#8217;s new? (no page yet)</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="write.html" title="How to write an article"
+             >next</a> |</li>
+        <li><a href="#">Wordish v1.0.0beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2010, Jean Daniel Browne.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+    </div>
+  </body>
 </html>
