@@ -1,2 +1,4 @@
 .buildinfo
 .doctrees/
+doc/
+wordish.py*
