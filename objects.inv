@@ -1,4 +1,4 @@
 # Sphinx inventory version 1
 # Project: Wordish
 # Version: 1.0
-wordish mod index.html
+wordish mod write.html

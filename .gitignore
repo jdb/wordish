@@ -2,3 +2,5 @@
 .doctrees/
 doc/
 wordish.py*
+doc/
+dist/

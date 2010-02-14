@@ -1,8 +1,8 @@
 
 .. _test:
 
-How to test an article
-======================
+How to test an article (no page yet)
+====================================
 
 Installation
 ------------
@@ -18,7 +18,7 @@ The python module is copied in the Python path ( in sites-packages/ on
 Debian), and the ``wordish`` command is copied in the path, in
 ``/usr/local/bin``.
 
-Debian packages and RPM will be available.
+.. Debian packages and RPM will be available.
 
 
 the ``wordish`` command and options

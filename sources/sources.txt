@@ -4,8 +4,8 @@
 Sources presentation  (no page yet)
 ====================================
 
-        parser
-        output
-	runner
-        reporter
+        .. parser
+        .. output
+	.. runner
+        .. reporter
 
