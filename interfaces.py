@@ -1,7 +1,7 @@
 """
 
 
-    filter = RstBlockSelector( directive='sourcecode', arg=['sh'] )
+    filter = BlockSelector( directive='sourcecode', arg=['sh'] )
     with Shell() as run:
         for cmd, expected in ShellSessionParser( filter(f) ):
             if run( cmd ) != expected:
