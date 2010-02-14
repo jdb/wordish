@@ -1,11 +1,9 @@
 """
 Wordish is a script which executes a shell session parsed from a
-documentation in the restructured text format, then tests and builds a
-report of the execution. 
-
-To mark up shell code in an article, *wordish* uses the custom
-directive ``sourcecode``, with the rquired argument ``sh``. When
-presented with an article:
+documentation in the restructured text [#]_ format, then tests and builds a
+report of the execution. To mark up shell code in an article,
+*wordish* uses the custom directive ``sourcecode``, with the rquired
+argument ``sh``. When presented with an article:
 
 #. *wordish* filters out the text which is not marked with
    ``sourcecode``,
@@ -14,9 +12,9 @@ presented with an article:
    *outputs*: 
 
    #. *wordish* consumes the prompt, parses for the newline which ends
-      command and for
+      command,
 
-   #. the prompt which end output 
+   #. then parses for the prompt which ends the output, 
 
 Example::
 
@@ -25,69 +23,67 @@ Example::
      ~$ echo "hello world"   # Mmmh, insightful comment
      hello world
 
-The first newline in the source code block, is found just after the
-word comment: it delimites the command which started after the
-prompt. The output is the text block found until the next prompt.
-There are two possible prompts: ``~$``, and ``~#``. Both are required
-to be followed by space.
+This simply renders like:
 
+.. sourcecode:: sh
+
+   ~$ echo "hello world"   # Mmmh, insightful comment
+   hello world
+
+The *command* starts after the prompt ("~$ ") and continues until the
+first newline is found in the source code block. Here, it is just
+after the word ``comment``. The command is ``echo "hello world" # Mmmh,
+insightful comment`` The output is the text block found until the next
+prompt: this is ``hello world``. There are **two** possible prompts:
+``~$``, and ``~#``. Both are required to be followed by a space are are
+treated the same.
 
 Note: the newlines which are nested in curly brackets or parentheses are
-not interpreted and an *end of command* character. Shell do the same,
+**not** interpreted as an *end of command* character. Shells do the same:
 curly brackets are used to define functions and parentheses makes the
-nested command to be interpreted in a sub process shell. The two
-following examples from the introduction make it clear::
+nested command to be interpreted in a subprocess shell. The two
+following examples from the introduction make it clear:
 
+.. sourcecode:: sh
 
-   .. sourcecode:: sh
+   ~$ (
+   echo $((1+1)) )
+   2
 
-      ~$ (
-      echo $((1+1)) )
-      2
-
-      ~$ sum () {
-      echo $(( $1 + $2 ))
-      }
+   ~$ sum () {
+   echo $(( $1 + $2 ))
+   }
 
 The first command is ``echo $((1+1))`` in a subproces, and it's output
 is ``2``. The second command is the definition of a function named
-``sum`` and has no output. Also, defining functions sometimes clarify
-the intent of a command:
-
-
-The state of the shell is kept between each snippets. This means, for
-instance, that when declaring a function in a snippet like ``sum``
-above, can be used in the subsequent snippets of an article [#]_.
-
-The previously defined function is available for further
-snippets. Let's introduce an discrepancy between the article'output
-and the actual output:
+``sum`` and has no output. Defining functions sometimes clarify the
+intent in subsequent uses of the function. For functions to be re-used,
+the state of the shell must be kept between each snippets. *wordish*
+keep a connection with the same *shell* subprocess (*bash* is used)
+for the duration of the article.
 
 .. sourcecode:: sh
 
    ~$ sum 42 58
    3
 
+See how the output is obviously incorrect? we will see later how this
+is reported.
 
 When the output can not be completely predicted, such as when
-displaying ``$RANDOM`` as in the introduction, or displaying the
-content of the partitions file in */proc*, there is a handy wildcard
-pattern which can be used: ``...``. It matches everything like ``.*``
-in regexp [#]_.
-
-
-
-
-If the output is difficult to predict, the ellipsis ('...') helps
-matching anyway:
+displaying ``$RANDOM``, or displaying the size of a partitions in
+bytes, there is a handy wildcard pattern which can be used:
+``...``. It matches everything like ``.*`` in regexp [#]_.
 
 .. sourcecode:: sh
 
    ~$ echo "a random number: " $RANDOM
    ...
 
-*Error handling*! if a command does not exit gracefully, wordish
-aborts, and displays the unexecuted commands.
+One last thing, if a command does not exit gracefully, *wordish*
+precautiously aborts, refusing to execute commands on the system under
+test which is in an undefined state. *wordish* displays the remaining
+unexecuted commands.
 
 .. sourcecode:: sh
 
@@ -96,7 +92,6 @@ aborts, and displays the unexecuted commands.
 
    ~$ echo "Bye bye"
    Bye bye
-
 
 This introduction is embedded in the wordish module as the
 docstring. Just run *wordish* with no argument to get the example
@@ -139,9 +134,9 @@ report of this article:
    6 tests found. 
    4 tests passed, 2 tests failed.
 
-There is another example article_, also included in the sources
-distribution, and tested before each release. This is the article
-which prompted the need for the development of *wordish*.
+   There is another example real world article_ which is also included in
+the sources distribution, and tested before each release. This is the
+article which prompted the need for the development of *wordish*.
 
 .. _article: http://jdb.github.com/sources/lvm.txt
 
@@ -155,12 +150,7 @@ which prompted the need for the development of *wordish*.
        .. _here: http://docutils.sourceforge.net/rst.html#user-documentation
 
 .. [#] Regexp are not directly used so that the various special regexp
-       characters do not need to be escaped
-       
-.. [#] A naive way to execute command is is to use :func:`system` to
-       execute a shell command, *wordish* does not do this and keep a
-       connection with a shell subprocess for the duration of the
-       article
+       characters do not need to be escaped.
 
 """
 

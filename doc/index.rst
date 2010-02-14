@@ -34,30 +34,41 @@ Table of content
    test
    roadmap
    interfaces
-   sources
-   methods
+
+..   sources
+..   methods
+..   changelog
 
 Reader's guide
 --------------
 
-#. administrators will find the few rules and advise in the pages
+#. administrators will find the few rules and advises in the pages
    :ref:`write` and :ref:`test`. The page :ref:`roadmap` shows the
    direction of the project.
 
 #. anyone curious of how *Wordish* is designed may be interested in
    the :ref:`interfaces`,
 
-#. for the brave Python developper impatient to propose a feature
-   patch, a bug report and a fix, the page :ref:`sources`, and the
-   page describing the :ref:`methods` will be helpful.
+Wordish uses github_ for source control, documentation_ and
+bugs_. Deployment is done via the `Python package index`_.
 
-   The author of these lines must say that he found there are many
-   ways to do *testing* and *packaging* and he would be grateful for
-   any reader's advice and response to the existential questions
-   listed :ref:`here <testsuitequestions>` and :ref:`here
-   <testbuildchain>`
+.. _github: http://github.com/jdb/wordish/
 
-..   changelog
+.. _documentation: http://jdb.github.com/wordish/
+
+.. _bugs: http://github.com/jdb/wordish/issues
+
+.. _`Python package index`: http://pypi.python.org/pypi/wordish
+
+
+.. #. for the brave Python developper impatient to propose a feature
+..    patch, a bug report and a fix, the page :ref:`sources`, and the
+..    page describing the :ref:`methods` will be helpful.
+
+..    The author of these lines must say that he found there are many
+..    ways to do *testing* and *packaging* and he would be grateful for
+..    any reader's advices on the existential questions listed :ref:`here
+..    <testsuitequestions>` and :ref:`here <testbuildchain>`
 
 
 .. Indices and tables
