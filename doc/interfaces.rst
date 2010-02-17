@@ -4,6 +4,8 @@
 Interfaces and objects description
 ==================================
 
+.. automodule:: interfaces
+
 .. Overview
 .. --------
 
@@ -31,3 +33,6 @@ arguments.
 
 .. include:: ../interfaces.py
    :literal:
+
+
+

@@ -42,12 +42,18 @@ Table of content
 Reader's guide
 --------------
 
+The same pages as above, but presented by audiences.
+
 #. administrators will find the few rules and advises in the pages
    :ref:`write` and :ref:`test`. The page :ref:`roadmap` shows the
    direction of the project.
 
 #. anyone curious of how *Wordish* is designed may be interested in
    the :ref:`interfaces`,
+
+
+Project ressources
+------------------
 
 Wordish uses github_ for source control, documentation_ and
 bugs_. Deployment is done via the `Python package index`_.

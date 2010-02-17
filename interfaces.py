@@ -1,37 +1,60 @@
 """
+The *Wordish* modules declares three central classes: 
 
+- the :class:`BlockSelector` which, given a directive, filters restructured text, 
 
-    filter = RstBlockSelector( directive='sourcecode', arg=['sh'] )
-    with Shell() as run:
-        for cmd, expected in ShellSessionParser( filter(f) ):
-            if run( cmd ) != expected:
-                print "unexpected command %s 's output"
+- the :class:`ShellSessionParser` which split a shell session log into
+  commands and outputs,
 
+- and the :class:`CommandRunner` which spawns a shell subprocess, and
+  to which it sends the parsed the parsed commands for execution,
+
+The :func:`wordish`, which is the main entry point of the script,
+requires a file descriptor *f* argument describing a shell session in
+a restructured text article. It boils down to::
+
+  filter = BlockSelector( directive='sourcecode', arg=['sh'] )
+  with CommandRunner() as run:
+      for cmd, expected in ShellSessionParser( filter( f) ):
+          if run( cmd ) != expected:
+              print "Warning: unexpected command %s 's output"
+
+*Wordish* also declares two additional classes:
+
+- The :class:`Reporter` formats the parsed commands and output,
+  accumulates the success and failures, and formats a report in the
+  end.
+
+- The :class:`CommandOutput` is used to model the ouput of a command
+  which is composed of the message printed on stdout, the message
+  printed on stderr, and the return code. The
+  :meth:`CommandRunner.__call__` method output instances of this class.
+
+  A *CommandOutput* can be compared to a simple string, as in the
+  example above, in which case, only the stdout message is taken in
+  account.
+
+The five classes articulate, in the :func:`wordish` module: 
+
+.. sourcecode:: python
 
     report = TestReporter()
-
     filter = BlockSelector( directive='sourcecode', arg=['sh'] )
-
+    
     with CommandRunner() as run:
-
         for cmd, expected in ShellSessionParser( filter(f) ):
-
+    
             print report.before( cmd, expected )
-            
             output = run( cmd )
             
             if output == expected :
                 print report.success( output )
             else
                 print report.failure( output )
-
+    
                 if report.last_output.aborted(): 
                     print("there was a serious error: bailing out")
                     break
-
-# I would rather have the output command manipulated explicitly the
-# branching into failed or success also done explicitly.
-
 """
 
 from zope.interface import Interface, Attribute
