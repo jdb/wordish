@@ -1,21 +1,23 @@
 """
 The *Wordish* modules declares three central classes: 
 
-- the :class:`BlockSelector` which, given a directive, filters restructured text, 
+- the :class:`BlockFilter` which, given a directive, filters
+  restructured text marked with the directive,
 
-- the :class:`ShellSessionParser` which split a shell session log into
+- the :class:`ShellSessionParser` which splits a shell session log into
   commands and outputs,
 
 - and the :class:`CommandRunner` which spawns a shell subprocess, and
-  to which it sends the parsed the parsed commands for execution,
+  to which the parsed commands are sent for execution,
 
-The :func:`wordish`, which is the main entry point of the script,
+The :func:`wordish` function, which is the main entry point of the script,
 requires a file descriptor *f* argument describing a shell session in
-a restructured text article. It boils down to::
+a restructured text article. A simplified version of :func:`wordish`
+boils down to::
 
-  filter = BlockSelector( directive='sourcecode', arg=['sh'] )
+  filter = BlockFilter( directive='sourcecode', arg=['sh'] )
   with CommandRunner() as run:
-      for cmd, expected in ShellSessionParser( filter( f) ):
+      for cmd, expected in ShellSessionParser( filter( f ) ):
           if run( cmd ) != expected:
               print "Warning: unexpected command %s 's output"
 
@@ -25,168 +27,156 @@ a restructured text article. It boils down to::
   accumulates the success and failures, and formats a report in the
   end.
 
-- The :class:`CommandOutput` is used to model the ouput of a command
-  which is composed of the message printed on stdout, the message
-  printed on stderr, and the return code. The
-  :meth:`CommandRunner.__call__` method output instances of this class.
+- The :class:`CommandOutput` is used to model the ouput of a shell
+  command: the message printed on stdout, the message printed on
+  stderr, and the return code. The :meth:`CommandRunner.__call__`
+  method output instances of this class.
 
-  A *CommandOutput* can be compared to a simple string, as in the
-  example above, in which case, only the stdout message is taken in
-  account.
+  A *CommandOutput* can be compared to a simple string, with the '=='
+  syntax (as in the example above), in which case, only the stdout
+  message is used for the comparison.
 
-The five classes articulate, in the :func:`wordish` module: 
-
-.. sourcecode:: python
+The :func:`wordish` function articulates the five classes::
 
     report = TestReporter()
-    filter = BlockSelector( directive='sourcecode', arg=['sh'] )
-    
+    filter = BlockFilter(directive='sourcecode', arg=['sh'])
+
     with CommandRunner() as run:
         for cmd, expected in ShellSessionParser( filter(f) ):
-    
-            print report.before( cmd, expected )
-            output = run( cmd )
-            
-            if output == expected :
-                print report.success( output )
-            else
-                print report.failure( output )
-    
-                if report.last_output.aborted(): 
-                    print("there was a serious error: bailing out")
-                    break
+            print report.before(cmd, expected)
+
+            out = run(cmd)
+
+            print report.success(out) if out == expected else report.failure(out)
+
+            if out.aborted(): 
+                print("there was a serious error: bailing out")
+                break
 """
 
-from zope.interface import Interface, Attribute
-from zope.schema import Int, Text
 
-# todo, doctest the public API
-
-class ISessionParser( Interface ):
-    """
-    The first argument should an opened file argument containing a
-    *session*, the constructor should accept a list of *session
-    prompts* strings for the second argument.
-
-    A *session* begins with a prompt, then a *command* follows until a
-    newline, except when the newline is nested in curly brackets or
-    parentheses. Then follows the output which ends with a newline and
-    a prompt.
+class ShellSessionParser( object ):
+    """A *session* begins with a prompt, then a *command* follows
+    until a newline, except when the newline is nested in curly
+    brackets or parentheses. Then follows the output which ends with a
+    newline and a prompt.
     
-    This object is an iterable, and can be called with a for loop or a
+    This object is an iterable, and can be called in a for loop or a
     generator expression: the next() method yields lists of two
     strings: a command and an output.
 
     The parsed commands can be sent to a *ICommandRunner* and the
-    parsed output, to a *IReporter* in charge of comparing the output
-    to the actual result of the application. Also, The ICommandRunner has
-    two ISessionParser set to its shell  XXXXXXXXXX
-    """
+    parsed output can be compared to the CommandOutput instance
+    returned by the *ICommandRunner* 
 
-    def next():
-        """
-        Returns a tuple whose first element is a command, and second
-        element is an output.
-        """
+    Also, The SessionParser is instantiated twice in the command
+    runner, connected to the stdout and stderr files of the shell
+    subprocess."""
 
-    def script( header=True, name="filename" ):
-        """
-        Writes the script and the cleanup script, named after the name
-        of the article.
-        """
+    f = None
+    "An open file containing a shell text *session*"
 
-    def takewhile( is_output ):
-        """
-        Low level functions useful in a XXXXXXXXXXXXXX
-        """
+    prompts = None
+    "The list of prompts, potentially in the session"
 
-class ICommandRunner( Interface ):
-    """
-    The ICommandRunner is a context manager which runs a shell created
-    only for the duration of a *with* python code block. 
+    def next(self):
+        """Returns a tuple whose first element is a command, and second
+        element is an output."""
 
-    The class instance is callable and is given by the
-    *ISessionParser* the shell command to be executed, the result of
-    the command is structured and returned as an *OutputCommand*.
-    """
-    
-    def __enter__():
-        """
-        Setup the ressource (the shell) executing the  commands.
-        """
+    def takewhile(self, is_output):
+        """Returns a string composed of the tokens until a specific
+        token: either an un-nested linefeed if the argument *is_output*
+        is false, or a prompt if *is_output* is true."""
 
-    def __exit__():
-        """
-        Terminate the shell.
-        """
-
-    def __call__( cmd ):
-        """
-        Send the command to the shell, parses the output to return
-        an ICommandOutput instance.
-        """
-
-class ICommandOutput( Interface ):
-    """
-    This class structures the output of a standard shell command with
-    the two strings stdout and stderr plus the returncode.
+class CommandRunner( object ):
+    """The CommandRunner is a context manager which runs a shell created
+    only for the duration of a *with* python code block. A context
+    manager is an object which can be called from a with statement.
+ 
+    The instance is a callable, which takes, as first argument, a
+    shell command to be executed, the stdin, stdout and returncode of
+    the command is returned as an *OutputCommand*.
     """
     
+    def __enter__(self):
+        "Setup the ressource (the shell) executing the  commands."
+        
+
+    def __exit__(self):
+        "Terminate the shell."
+
+    def __call__(self, cmd ):
+        """Send the command to the shell, parses the output to return
+        an CommandOutput instance."""
+
+class CommandOutput( object ):
+    """Structures the output of a standard shell command with the two
+    strings read on stdout and stderr plus the returncode."""
+    
+    out = None
     "the standard output channel"
-    out = Text()
 
+    err = None
     "the standard error channel"
-    err = Text()
 
-    returncode = Int( min=0 )
+    returncode = None
+    "the return code"
 
-    def __eq__( other ):
-        """
-        The current output object can be compared with another object
-        for equality.
+    def __eq__( self, other ):
+        """The equality operator expects either a string or a
+        CommandOuput as a right hand side. The right hand side can
+        contain the three dots pattern '...' to match anything.
 
-        Depending on the needs, only the standard output is taken in
-        account, or for instance, the standard output is a second
-        check provided the returncode is zero.
-        """
+        When matching against another CommandOutput, only the non null
+        attributes are matched: output == CommandOutput(out=None,
+        err=None, returncode=None) is always True."""
+        
 
     
-class IReporter( Interface ):
-    """
-    The IReporter methods are introduced between the calls to the
-    ISessionParser and the ICommandRunner
-    """
-
-    """The expected output is presented and set by before(). It is
-    stored to be later compared to the actual output by after()"""
-    expected = Attribute("an ICommandOutput()")
-
-    def before( cmd, expected ):
-        """
-        Annonce the action to come. For example, the test to be done,
-        the expected result. In case, the test takes time, it is
-        desirable to let the user know what is happening beforehand.
-        """
-
-    def after( output ):
-        """
-        Process and present the result.
-        """
-
-    def summary():
-        """
-        Conclude the operations with, for instance, the number of
-        actions, the number of success, the number of failure.
-        """
-
-class IDocutilsNodeMatch( Interface ):
-
-    directive = Text()
-    arguments = Attribute( "a list of arguments") 
-    options   = Attribute( "a dictionary of options:values") 
+class Reporter( object ):
+    """The Reporter methods are introduced between the calls to the
+    SessionParser and the CommandRunner"""
     
-    def __call__( doctreeelement ):
-        """
-        Given a doctree element, for example given as part of a
-        doctree.traverse(), returns True if matches the constraints.
-        """
+    def before(self, cmd ):
+        """Annonce the action to come. For example, the test to be
+        done, the expected result. In case, the test takes time, it is
+        desirable to let the user know what is happening beforehand."""
+
+    def passed(self, output ):
+        """Formats a successful result. Increment the *passed* counter"""
+
+    def failed(self, output ):
+        """Formats a failed result. Decrement the *passed* counter"""
+
+    def summary(self):
+        """Report the operations with, the number of actions, the
+        number of success, the number of failure, etc."""
+        
+
+class NodeMatch( object ):
+    """Given a doctree element, for example an element of
+    doctree.traverse(), returns True if matches the constraints."""
+
+    # Error, there is no more directive at this time
+    node = None
+    "Only node of this type will match"
+
+    attributes   = None
+    "a dictionary of attributes:values"
+    
+
+class BlockFilter( object ):
+    """Given an open file on a restructured text document, returns an
+    open file containing the text blocks marked up by the directive
+    attribute."""
+
+    directive = None
+    "Only text marked up with this directory will be kept"
+
+    arguments = None
+    "a list of arguments"
+
+    options   = None
+    "a dictionary of options:values"
+    
+            
