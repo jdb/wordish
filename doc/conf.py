@@ -12,7 +12,7 @@ master_doc = 'index'
 project = u'Wordish'
 copyright = u'2010, Jean Daniel Browne'
 release = file('../version').read().strip()
-version = '.'.join( version.split('.')[:2])
+version = '.'.join( release.split('.')[:2])
 exclude_trees = ['_build']
 unused_docs = ['changelog', 'methods']
 
