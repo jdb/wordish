@@ -5,13 +5,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Interfaces and objects description &mdash; Wordish v1.0.0beta4 documentation</title>
+    <title>Interfaces &mdash; Wordish v1.0.0beta documentation</title>
     <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '#',
-        VERSION:     '1.0.0beta4',
+        VERSION:     '1.0.0beta',
         COLLAPSE_MODINDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -19,8 +19,7 @@
     </script>
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="Wordish v1.0.0beta4 documentation" href="index.html" />
-    <link rel="prev" title="Roadmap: current limitations and future improvements" href="roadmap.html" /> 
+    <link rel="top" title="Wordish v1.0.0beta documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -32,17 +31,20 @@
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              accesskey="M">modules</a> |</li>
-        <li class="right" >
-          <a href="roadmap.html" title="Roadmap: current limitations and future improvements"
-             accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Wordish v1.0.0beta4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.0beta documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h4>Previous topic</h4>
-            <p class="topless"><a href="roadmap.html"
-                                  title="previous chapter">Roadmap: current limitations and future improvements</a></p>
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Interfaces</a><ul>
+<li><a class="reference external" href="#module-interfaces">Overview</a></li>
+<li><a class="reference external" href="#id2">Interfaces</a></li>
+</ul>
+</li>
+</ul>
+
             <h3>This Page</h3>
             <ul class="this-page-menu">
               <li><a href="sources/interfaces.txt"
@@ -69,186 +71,202 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="interfaces-and-objects-description">
-<span id="interfaces"></span><h1>Interfaces and objects description<a class="headerlink" href="#interfaces-and-objects-description" title="Permalink to this headline">¶</a></h1>
-<p>Wordish makes use of five python modules from the standard library:
-<a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/shlex.html#module-shlex"><tt class="xref docutils literal"><span class="pre">shlex</span></tt></a> offers to tokenize text, <a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/itertools.html#module-itertools"><tt class="xref docutils literal"><span class="pre">itertools</span></tt></a> offers
-<tt class="xref docutils literal"><span class="pre">takewhile()</span></tt> functions and others functional tools,
-<a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/stringio.html#module-StringIO"><tt class="xref docutils literal"><span class="pre">StringIO</span></tt></a> adapts a character string to the interface open
-file. <a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/re.html#module-re"><tt class="xref docutils literal"><span class="pre">re</span></tt></a> is the regular expression module, and <tt class="xref docutils literal"><span class="pre">docutils</span></tt>
-offers the tools to filter text in the <em>restructured text</em>
-format. <a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/sys.html#module-sys"><tt class="xref docutils literal"><span class="pre">sys</span></tt></a>, among others, gives access to the command line
-arguments.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;</span>
-
-
-<span class="sd">    filter = BlockSelector( directive=&#39;sourcecode&#39;, arg=[&#39;sh&#39;] )</span>
-<span class="sd">    with Shell() as run:</span>
-<span class="sd">        for cmd, expected in ShellSessionParser( filter(f) ):</span>
-<span class="sd">            if run( cmd ) != expected:</span>
-<span class="sd">                print &quot;unexpected command %s &#39;s output&quot;</span>
-
-
-<span class="sd">    report = TestReporter()</span>
-
-<span class="sd">    filter = BlockSelector( directive=&#39;sourcecode&#39;, arg=[&#39;sh&#39;] )</span>
-
-<span class="sd">    with CommandRunner() as run:</span>
-
-<span class="sd">        for cmd, expected in ShellSessionParser( filter(f) ):</span>
-
-<span class="sd">            print report.before( cmd, expected )</span>
-<span class="sd">            </span>
-<span class="sd">            output = run( cmd )</span>
-<span class="sd">            </span>
-<span class="sd">            if output == expected :</span>
-<span class="sd">                print report.success( output )</span>
-<span class="sd">            else</span>
-<span class="sd">                print report.failure( output )</span>
-
-<span class="sd">                if report.last_output.aborted(): </span>
-<span class="sd">                    print(&quot;there was a serious error: bailing out&quot;)</span>
-<span class="sd">                    break</span>
-
-<span class="sd"># I would rather have the output command manipulated explicitly the</span>
-<span class="sd"># branching into failed or success also done explicitly.</span>
-
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">from</span> <span class="nn">zope.interface</span> <span class="kn">import</span> <span class="n">Interface</span><span class="p">,</span> <span class="n">Attribute</span>
-<span class="kn">from</span> <span class="nn">zope.schema</span> <span class="kn">import</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Text</span>
-
-<span class="c"># todo, doctest the public API</span>
-
-<span class="k">class</span> <span class="nc">ISessionParser</span><span class="p">(</span> <span class="n">Interface</span> <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The first argument should an opened file argument containing a</span>
-<span class="sd">    *session*, the constructor should accept a list of *session</span>
-<span class="sd">    prompts* strings for the second argument.</span>
-
-<span class="sd">    A *session* begins with a prompt, then a *command* follows until a</span>
-<span class="sd">    newline, except when the newline is nested in curly brackets or</span>
-<span class="sd">    parentheses. Then follows the output which ends with a newline and</span>
-<span class="sd">    a prompt.</span>
-<span class="sd">    </span>
-<span class="sd">    This object is an iterable, and can be called with a for loop or a</span>
-<span class="sd">    generator expression: the next() method yields lists of two</span>
-<span class="sd">    strings: a command and an output.</span>
-
-<span class="sd">    The parsed commands can be sent to a *ICommandRunner* and the</span>
-<span class="sd">    parsed output, to a *IReporter* in charge of comparing the output</span>
-<span class="sd">    to the actual result of the application. Also, The ICommandRunner has</span>
-<span class="sd">    two ISessionParser set to its shell  XXXXXXXXXX</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">next</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a tuple whose first element is a command, and second</span>
-<span class="sd">        element is an output.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">script</span><span class="p">(</span> <span class="n">header</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;filename&quot;</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Writes the script and the cleanup script, named after the name</span>
-<span class="sd">        of the article.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">takewhile</span><span class="p">(</span> <span class="n">is_output</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Low level functions useful in a XXXXXXXXXXXXXX</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-<span class="k">class</span> <span class="nc">ICommandRunner</span><span class="p">(</span> <span class="n">Interface</span> <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The ICommandRunner is a context manager which runs a shell created</span>
-<span class="sd">    only for the duration of a *with* python code block. </span>
-
-<span class="sd">    The class instance is callable and is given by the</span>
-<span class="sd">    *ISessionParser* the shell command to be executed, the result of</span>
-<span class="sd">    the command is structured and returned as an *OutputCommand*.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Setup the ressource (the shell) executing the  commands.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Terminate the shell.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span> <span class="n">cmd</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Send the command to the shell, parses the output to return</span>
-<span class="sd">        an ICommandOutput instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-<span class="k">class</span> <span class="nc">ICommandOutput</span><span class="p">(</span> <span class="n">Interface</span> <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This class structures the output of a standard shell command with</span>
-<span class="sd">    the two strings stdout and stderr plus the returncode.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    
-    <span class="s">&quot;the standard output channel&quot;</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
-
-    <span class="s">&quot;the standard error channel&quot;</span>
-    <span class="n">err</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
-
-    <span class="n">returncode</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0</span> <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span> <span class="n">other</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The current output object can be compared with another object</span>
-<span class="sd">        for equality.</span>
-
-<span class="sd">        Depending on the needs, only the standard output is taken in</span>
-<span class="sd">        account, or for instance, the standard output is a second</span>
-<span class="sd">        check provided the returncode is zero.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    
-<span class="k">class</span> <span class="nc">IReporter</span><span class="p">(</span> <span class="n">Interface</span> <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The IReporter methods are introduced between the calls to the</span>
-<span class="sd">    ISessionParser and the ICommandRunner</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="sd">&quot;&quot;&quot;The expected output is presented and set by before(). It is</span>
-<span class="sd">    stored to be later compared to the actual output by after()&quot;&quot;&quot;</span>
-    <span class="n">expected</span> <span class="o">=</span> <span class="n">Attribute</span><span class="p">(</span><span class="s">&quot;an ICommandOutput()&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">before</span><span class="p">(</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">expected</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Annonce the action to come. For example, the test to be done,</span>
-<span class="sd">        the expected result. In case, the test takes time, it is</span>
-<span class="sd">        desirable to let the user know what is happening beforehand.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">after</span><span class="p">(</span> <span class="n">output</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Process and present the result.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">():</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Conclude the operations with, for instance, the number of</span>
-<span class="sd">        actions, the number of success, the number of failure.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-<span class="k">class</span> <span class="nc">IDocutilsNodeMatch</span><span class="p">(</span> <span class="n">Interface</span> <span class="p">):</span>
-
-    <span class="n">directive</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
-    <span class="n">arguments</span> <span class="o">=</span> <span class="n">Attribute</span><span class="p">(</span> <span class="s">&quot;a list of arguments&quot;</span><span class="p">)</span> 
-    <span class="n">options</span>   <span class="o">=</span> <span class="n">Attribute</span><span class="p">(</span> <span class="s">&quot;a dictionary of options:values&quot;</span><span class="p">)</span> 
-    
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span> <span class="n">doctreeelement</span> <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a doctree element, for example given as part of a</span>
-<span class="sd">        doctree.traverse(), returns True if matches the constraints.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+  <div class="section" id="interfaces">
+<span id="id1"></span><h1>Interfaces<a class="headerlink" href="#interfaces" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-interfaces">
+<h2>Overview<a class="headerlink" href="#module-interfaces" title="Permalink to this headline">¶</a></h2>
+<p>The <em>Wordish</em> modules declares three central classes:</p>
+<ul class="simple">
+<li>the <tt class="xref docutils literal"><span class="pre">BlockFilter</span></tt> which, given a directive, filters
+restructured blocks of text marked with the <em>directive</em> attribute of
+the object,</li>
+<li>the <a title="interfaces.ShellSessionParser" class="reference internal" href="#interfaces.ShellSessionParser"><tt class="xref docutils literal"><span class="pre">ShellSessionParser</span></tt></a> which splits a shell session log into
+commands and outputs,</li>
+<li>and the <a title="interfaces.CommandRunner" class="reference internal" href="#interfaces.CommandRunner"><tt class="xref docutils literal"><span class="pre">CommandRunner</span></tt></a> which spawns a shell subprocess, and
+to which the parsed commands are sent for execution,</li>
+</ul>
+<p>The <tt class="xref docutils literal"><span class="pre">wordish()</span></tt> module function, which is the main entry point of
+the script, requires a file descriptor <em>f</em> argument containing a shell
+session in a restructured text article. A simplified version of
+<tt class="xref docutils literal"><span class="pre">wordish()</span></tt> boils down to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">filter</span> <span class="o">=</span> <span class="n">BlockFilter</span><span class="p">(</span> <span class="n">directive</span><span class="o">=</span><span class="s">&#39;sourcecode&#39;</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;sh&#39;</span><span class="p">]</span> <span class="p">)</span>
+<span class="k">with</span> <span class="n">CommandRunner</span><span class="p">()</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">ShellSessionParser</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span> <span class="n">f</span> <span class="p">)</span> <span class="p">):</span>
+        <span class="k">if</span> <span class="n">run</span><span class="p">(</span> <span class="n">cmd</span> <span class="p">)</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Warning: unexpected command </span><span class="si">%s</span><span class="s"> &#39;s output&quot;</span>
 </pre></div>
+</div>
+<p><em>Wordish</em> also declares two additional classes:</p>
+<ul>
+<li><p class="first">The <a title="interfaces.Reporter" class="reference internal" href="#interfaces.Reporter"><tt class="xref docutils literal"><span class="pre">Reporter</span></tt></a> formats the parsed commands and output,
+accumulates the success and failures, and formats a report in the
+end.</p>
+</li>
+<li><p class="first">The <a title="interfaces.CommandOutput" class="reference internal" href="#interfaces.CommandOutput"><tt class="xref docutils literal"><span class="pre">CommandOutput</span></tt></a> is used to model the ouput of a shell
+command: the message printed on stdout, the message printed on
+stderr, and the return code. The <tt class="xref docutils literal"><span class="pre">CommandRunner.__call__()</span></tt>
+method returns instances of this class.</p>
+<p>A <em>CommandOutput</em> can be compared to a simple string, with the
+<tt class="docutils literal"><span class="pre">==</span></tt> or <tt class="docutils literal"><span class="pre">!=</span></tt> syntax (as in the example above), in which case,
+only the stdout message is used for the comparison.</p>
+</li>
+</ul>
+<p>The <tt class="xref docutils literal"><span class="pre">wordish()</span></tt> module function articulates the five classes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">report</span> <span class="o">=</span> <span class="n">TestReporter</span><span class="p">()</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">BlockFilter</span><span class="p">(</span><span class="n">directive</span><span class="o">=</span><span class="s">&#39;sourcecode&#39;</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;sh&#39;</span><span class="p">])</span>
+
+<span class="k">with</span> <span class="n">CommandRunner</span><span class="p">()</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">ShellSessionParser</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="p">):</span>
+        <span class="k">print</span> <span class="n">report</span><span class="o">.</span><span class="n">before</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+        <span class="k">print</span> <span class="n">report</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="k">if</span> <span class="n">out</span> <span class="o">==</span> <span class="n">expected</span> <span class="k">else</span> <span class="n">report</span><span class="o">.</span><span class="n">failure</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">aborted</span><span class="p">():</span> 
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;there was a serious error: bailing out&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+</pre></div>
+</div>
+<p><em>Wordish</em> makes use of five python modules from the standard library:</p>
+<ul class="simple">
+<li><a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/shlex.html#module-shlex"><tt class="xref docutils literal"><span class="pre">shlex</span></tt></a> parses text,</li>
+<li><a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/itertools.html#module-itertools"><tt class="xref docutils literal"><span class="pre">itertools</span></tt></a> provides <tt class="xref docutils literal"><span class="pre">takewhile()</span></tt> functions and others
+functional tools,</li>
+<li><a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/stringio.html#module-StringIO"><tt class="xref docutils literal"><span class="pre">StringIO</span></tt></a> adapts a character string to the interface of an
+open file.</li>
+<li><a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/re.html#module-re"><tt class="xref docutils literal"><span class="pre">re</span></tt></a> is the regular expression module,</li>
+<li><a title="(in Python v2.6)" class="reference external" href="http://docs.python.org/library/sys.html#module-sys"><tt class="xref docutils literal"><span class="pre">sys</span></tt></a>, among others, gives access to the command line
+arguments, and the exit status.</li>
+</ul>
+<p>Also, the required additional module, <tt class="xref docutils literal"><span class="pre">docutils</span></tt> offers the tools
+to filter text in the <em>restructured text</em> format.</p>
+</div>
+<div class="section" id="id2">
+<h2>Interfaces<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="interfaces.ShellSessionParser">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">ShellSessionParser</tt><a class="headerlink" href="#interfaces.ShellSessionParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Created with an open file <em>f</em>, containing a shell text
+<em>session</em>, and optionally, <em>prompts</em>, the list of potential
+prompts in the session.</p>
+<p>A <em>session</em> begins with a prompt, then a <em>command</em> follows
+until a newline, except when the newline is nested in curly
+brackets or parentheses. Then follows the output which ends with a
+newline and a prompt.</p>
+<p>This object is an iterable, and can be called in a for loop or a
+generator expression: the next() method yields lists of two
+strings: a command and an output.</p>
+<p>The parsed commands can be sent to a <em>ICommandRunner</em> and the
+parsed output can be compared to the CommandOutput instance
+returned by the <em>ICommandRunner</em></p>
+<p>Also, The SessionParser is instantiated twice in the command
+runner, connected to the stdout and stderr files of the shell
+subprocess.</p>
+<dl class="method">
+<dt id="interfaces.ShellSessionParser.next">
+<tt class="descname">next</tt><big>(</big><big>)</big><a class="headerlink" href="#interfaces.ShellSessionParser.next" title="Permalink to this definition">¶</a></dt>
+<dd>Returns a tuple whose first element is a command, and second
+element is an output.</dd></dl>
+
+<dl class="method">
+<dt id="interfaces.ShellSessionParser.takewhile">
+<tt class="descname">takewhile</tt><big>(</big><em>is_output</em><big>)</big><a class="headerlink" href="#interfaces.ShellSessionParser.takewhile" title="Permalink to this definition">¶</a></dt>
+<dd>Returns a string composed of the tokens until a specific
+token: either an un-nested linefeed if the argument <em>is_output</em>
+is false, or a prompt if <em>is_output</em> is true.</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="interfaces.CommandRunner">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">CommandRunner</tt><a class="headerlink" href="#interfaces.CommandRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>The CommandRunner is a context manager which runs a shell created
+only for the duration of a <em>with</em> python code block. A context
+manager is an object which can be called from a with statement.</p>
+<p><strong>The instance is a callable</strong>, which takes, as first argument, a
+shell command to be executed, the stdin, stdout and returncode of
+the command is returned as an <em>OutputCommand</em>.</p>
+<p>On <strong>entering the context</strong>, setup the ressource (the shell) executing
+the commands. On <strong>exiting the context</strong>, terminate the shell.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="interfaces.CommandOutput">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">CommandOutput</tt><a class="headerlink" href="#interfaces.CommandOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structures the output of a standard shell command with the two
+strings read on stdout and stderr plus the returncode.</p>
+<p>The <strong>equality operator</strong> can be used with the CommandOutput, The
+equality operator expects either a string or a CommandOuput as a
+right hand side. The right hand side can contain the three dots
+pattern &#8216;...&#8217; to match anything.</p>
+<p>When matching against another CommandOutput, only the non null
+attributes are matched: output == CommandOutput(out=None,
+err=None, returncode=None) is always True.</p>
+<dl class="attribute">
+<dt id="interfaces.CommandOutput.err">
+<tt class="descname">err</tt><a class="headerlink" href="#interfaces.CommandOutput.err" title="Permalink to this definition">¶</a></dt>
+<dd>The standard error channel</dd></dl>
+
+<dl class="attribute">
+<dt id="interfaces.CommandOutput.out">
+<tt class="descname">out</tt><a class="headerlink" href="#interfaces.CommandOutput.out" title="Permalink to this definition">¶</a></dt>
+<dd>The standard output channel</dd></dl>
+
+<dl class="attribute">
+<dt id="interfaces.CommandOutput.returncode">
+<tt class="descname">returncode</tt><a class="headerlink" href="#interfaces.CommandOutput.returncode" title="Permalink to this definition">¶</a></dt>
+<dd>The return code</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="interfaces.Reporter">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">Reporter</tt><a class="headerlink" href="#interfaces.Reporter" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Reporter methods are introduced between the calls to the
+SessionParser and the CommandRunner</p>
+<dl class="method">
+<dt id="interfaces.Reporter.before">
+<tt class="descname">before</tt><big>(</big><em>cmd</em><big>)</big><a class="headerlink" href="#interfaces.Reporter.before" title="Permalink to this definition">¶</a></dt>
+<dd>Annonce the action to come. For example, the test to be
+done, the expected result. In case, the test takes time, it is
+desirable to let the user know what is happening beforehand.</dd></dl>
+
+<dl class="method">
+<dt id="interfaces.Reporter.failed">
+<tt class="descname">failed</tt><big>(</big><em>output</em><big>)</big><a class="headerlink" href="#interfaces.Reporter.failed" title="Permalink to this definition">¶</a></dt>
+<dd>Formats a failed result. Decrement the <em>passed</em> counter</dd></dl>
+
+<dl class="method">
+<dt id="interfaces.Reporter.passed">
+<tt class="descname">passed</tt><big>(</big><em>output</em><big>)</big><a class="headerlink" href="#interfaces.Reporter.passed" title="Permalink to this definition">¶</a></dt>
+<dd>Formats a successful result. Increment the <em>passed</em> counter</dd></dl>
+
+<dl class="method">
+<dt id="interfaces.Reporter.summary">
+<tt class="descname">summary</tt><big>(</big><big>)</big><a class="headerlink" href="#interfaces.Reporter.summary" title="Permalink to this definition">¶</a></dt>
+<dd>Report the operations with, the number of actions, the
+number of success, the number of failure, etc.</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="interfaces.NodeMatch">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">NodeMatch</tt><a class="headerlink" href="#interfaces.NodeMatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a doctree element, for example an element of
+doctree.traverse(), returns True if matches the constraints.</p>
+<dl class="attribute">
+<dt id="interfaces.NodeMatch.attributes">
+<tt class="descname">attributes</tt><a class="headerlink" href="#interfaces.NodeMatch.attributes" title="Permalink to this definition">¶</a></dt>
+<dd>A dictionary of attributes:values</dd></dl>
+
+<dl class="attribute">
+<dt id="interfaces.NodeMatch.node">
+<tt class="descname">node</tt><a class="headerlink" href="#interfaces.NodeMatch.node" title="Permalink to this definition">¶</a></dt>
+<dd>Only node of this type will match</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -267,10 +285,7 @@ arguments.</p>
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="roadmap.html" title="Roadmap: current limitations and future improvements"
-             >previous</a> |</li>
-        <li><a href="index.html">Wordish v1.0.0beta4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.0beta documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -1,4 +1,21 @@
 # Sphinx inventory version 1
 # Project: Wordish
 # Version: 1.0
+interfaces mod interfaces.html
 wordish mod write.html
+interfaces.ShellSessionParser.takewhile method interfaces.html
+interfaces.CommandOutput.err attribute interfaces.html
+interfaces.NodeMatch.attributes attribute interfaces.html
+interfaces.Reporter.before method interfaces.html
+interfaces.NodeMatch class interfaces.html
+interfaces.Reporter.summary method interfaces.html
+interfaces.NodeMatch.node attribute interfaces.html
+interfaces.ShellSessionParser.next method interfaces.html
+interfaces.Reporter.failed method interfaces.html
+interfaces.CommandOutput.out attribute interfaces.html
+interfaces.CommandOutput.returncode attribute interfaces.html
+interfaces.CommandRunner class interfaces.html
+interfaces.ShellSessionParser class interfaces.html
+interfaces.CommandOutput class interfaces.html
+interfaces.Reporter.passed method interfaces.html
+interfaces.Reporter class interfaces.html

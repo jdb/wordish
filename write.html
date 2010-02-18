@@ -5,13 +5,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>How to write an article &mdash; Wordish v1.0.0beta4 documentation</title>
+    <title>How to write an article &mdash; Wordish v1.0.0beta documentation</title>
     <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '#',
-        VERSION:     '1.0.0beta4',
+        VERSION:     '1.0.0beta',
         COLLAPSE_MODINDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -19,9 +19,7 @@
     </script>
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="Wordish v1.0.0beta4 documentation" href="index.html" />
-    <link rel="next" title="How to test an article (no page yet)" href="test.html" />
-    <link rel="prev" title="Wordish documentation" href="index.html" /> 
+    <link rel="top" title="Wordish v1.0.0beta documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -33,23 +31,20 @@
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              accesskey="M">modules</a> |</li>
-        <li class="right" >
-          <a href="test.html" title="How to test an article (no page yet)"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="index.html" title="Wordish documentation"
-             accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Wordish v1.0.0beta4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.0beta documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h4>Previous topic</h4>
-            <p class="topless"><a href="index.html"
-                                  title="previous chapter">Wordish documentation</a></p>
-            <h4>Next topic</h4>
-            <p class="topless"><a href="test.html"
-                                  title="next chapter">How to test an article (no page yet)</a></p>
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">How to write an article</a><ul>
+<li><a class="reference external" href="#debugging-an-article"><em>Debugging</em> an article</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#installation">Installation</a></li>
+</ul>
+
             <h3>This Page</h3>
             <ul class="this-page-menu">
               <li><a href="sources/write.txt"
@@ -195,10 +190,11 @@ Untested <span class="nb">command</span>:
      python -m wordish
 6 tests found. 
 4 tests passed, 2 tests failed.
+
+There is another example real world article_ which is also included in
 </pre></div>
 </div>
-<p>There is another example real world <a class="reference external" href="http://jdb.github.com/sources/lvm.txt">article</a> which is also included in
-the sources distribution, and tested before each release. This is the
+<p>the sources distribution, and tested before each release. This is the
 article which prompted the need for the development of <em>wordish</em>.</p>
 <table class="docutils footnote" frame="void" id="id3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
@@ -216,7 +212,49 @@ the reference documentation is <a class="reference external" href="http://docuti
 characters do not need to be escaped.</td></tr>
 </tbody>
 </table>
+<div class="section" id="debugging-an-article">
+<h2><em>Debugging</em> an article<a class="headerlink" href="#debugging-an-article" title="Permalink to this headline">¶</a></h2>
+<p>When debugging an article, repeatedly executing half of the commands,
+I have found it handy to:</p>
+<ul class="simple">
+<li>write a cleanup script which resets the system under test to the
+initial state,</li>
+<li>use the <tt class="docutils literal"><span class="pre">false</span></tt> shell command in the articles, to explicitly
+require the execution to bail out at a certain point in the article,</li>
+<li>Use a log file with <tt class="docutils literal"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">wordish</span> <span class="pre">my_article.rst</span> <span class="pre">|</span> <span class="pre">tee</span> <span class="pre">my_article.log</span></tt></li>
+</ul>
 </div>
+</div>
+<div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p><em>Wordish</em> is available on the Python package index and can be
+installed <a class="footnote-reference" href="#id6" id="id5">[3]</a> with:</p>
+<div class="highlight-python"><pre>sudo pip wordish</pre>
+</div>
+<p>If you want to separate Python module from outside the debian or rpm
+repositories, from the Python modules installed managed by your
+distribution, you can use <a class="reference internal" href="#virtualenv">virtualenv</a>:</p>
+<div class="highlight-python"><pre>virtualenv wordish_env &amp;&amp; cd wordish_env
+source ./bin/activate
+pip wordish</pre>
+</div>
+<p>At this point the wordish module is available in the Python path. You can
+test it with:</p>
+<div class="highlight-python"><pre>python -m wordish</pre>
+</div>
+<p>This executes <em>wordish</em> on its docstrings, which is written in
+restructured text.</p>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[3]</a></td><td><a class="reference internal" href="#pip">pip</a> and <a class="reference internal" href="#distribute">distribute</a> are the new black: <em>pip</em> takes care of
+fetching packages and dependencies while <em>distribute</em> takes
+care of the definition and the building of the package. They
+aims replace and be backward compatible with <tt class="docutils literal"><span class="pre">easy_install</span></tt>
+and <tt class="docutils literal"><span class="pre">setuptools</span></tt>.</td></tr>
+</tbody>
+</table>
+<span class="target" id="virtualenv"><span id="distribute"></span><span id="pip"></span></span></div>
 
 
           </div>
@@ -233,13 +271,7 @@ characters do not need to be escaped.</td></tr>
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              >modules</a> |</li>
-        <li class="right" >
-          <a href="test.html" title="How to test an article (no page yet)"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="index.html" title="Wordish documentation"
-             >previous</a> |</li>
-        <li><a href="index.html">Wordish v1.0.0beta4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.0beta documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

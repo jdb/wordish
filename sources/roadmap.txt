@@ -1,8 +1,8 @@
 
 .. _roadmap:
 
-Roadmap: current limitations and future improvements
-====================================================
+Limitations and roadmap
+=======================
 
 objects and interfaces
 ----------------------
