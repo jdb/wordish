@@ -24,32 +24,24 @@ expected results with the actual output of the execution of the
 command to make sure the documentation is correct.
 
 
-Table of content
-----------------
-
-.. toctree::
-   :maxdepth: 1
-
-   write
-   test
-   roadmap
-   interfaces
-
-..   sources
-..   methods
-..   changelog
-
 Reader's guide
 --------------
 
-The same pages as above, but presented by audiences.
+- Administrators will find the few rules and installation procedure
+  in the page :ref:`write`. The page :ref:`roadmap` shows the
+  direction of the project.
 
-#. administrators will find the few rules and advises in the pages
-   :ref:`write` and :ref:`test`. The page :ref:`roadmap` shows the
-   direction of the project.
+- Anyone curious of how *Wordish* is designed may be interested in
+  the :ref:`interfaces`,
 
-#. anyone curious of how *Wordish* is designed may be interested in
-   the :ref:`interfaces`,
+.. #. for the brave Python developper impatient to propose a feature
+..    patch, a bug report and a fix, the page :ref:`sources`, and the
+..    page describing the :ref:`methods` will be helpful.
+
+..    The author of these lines must say that he found there are many
+..    ways to do *testing* and *packaging* and he would be grateful for
+..    any reader's advices on the existential questions listed :ref:`here
+..    <testsuitequestions>` and :ref:`here <testbuildchain>`
 
 
 Project ressources
@@ -65,16 +57,6 @@ bugs_. Deployment is done via the `Python package index`_.
 .. _bugs: http://github.com/jdb/wordish/issues
 
 .. _`Python package index`: http://pypi.python.org/pypi/wordish
-
-
-.. #. for the brave Python developper impatient to propose a feature
-..    patch, a bug report and a fix, the page :ref:`sources`, and the
-..    page describing the :ref:`methods` will be helpful.
-
-..    The author of these lines must say that he found there are many
-..    ways to do *testing* and *packaging* and he would be grateful for
-..    any reader's advices on the existential questions listed :ref:`here
-..    <testsuitequestions>` and :ref:`here <testbuildchain>`
 
 
 .. Indices and tables

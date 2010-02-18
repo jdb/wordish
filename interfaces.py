@@ -2,7 +2,8 @@
 The *Wordish* modules declares three central classes: 
 
 - the :class:`BlockFilter` which, given a directive, filters
-  restructured text marked with the directive,
+  restructured blocks of text marked with the *directive* attribute of
+  the object,
 
 - the :class:`ShellSessionParser` which splits a shell session log into
   commands and outputs,
@@ -10,10 +11,10 @@ The *Wordish* modules declares three central classes:
 - and the :class:`CommandRunner` which spawns a shell subprocess, and
   to which the parsed commands are sent for execution,
 
-The :func:`wordish` function, which is the main entry point of the script,
-requires a file descriptor *f* argument describing a shell session in
-a restructured text article. A simplified version of :func:`wordish`
-boils down to::
+The :func:`wordish` module function, which is the main entry point of
+the script, requires a file descriptor *f* argument containing a shell
+session in a restructured text article. A simplified version of
+:func:`wordish` boils down to::
 
   filter = BlockFilter( directive='sourcecode', arg=['sh'] )
   with CommandRunner() as run:
@@ -30,13 +31,13 @@ boils down to::
 - The :class:`CommandOutput` is used to model the ouput of a shell
   command: the message printed on stdout, the message printed on
   stderr, and the return code. The :meth:`CommandRunner.__call__`
-  method output instances of this class.
+  method returns instances of this class.
 
-  A *CommandOutput* can be compared to a simple string, with the '=='
-  syntax (as in the example above), in which case, only the stdout
-  message is used for the comparison.
+  A *CommandOutput* can be compared to a simple string, with the
+  ``==`` or ``!=`` syntax (as in the example above), in which case,
+  only the stdout message is used for the comparison.
 
-The :func:`wordish` function articulates the five classes::
+The :func:`wordish` module function articulates the five classes::
 
     report = TestReporter()
     filter = BlockFilter(directive='sourcecode', arg=['sh'])
@@ -56,7 +57,11 @@ The :func:`wordish` function articulates the five classes::
 
 
 class ShellSessionParser( object ):
-    """A *session* begins with a prompt, then a *command* follows
+    """Created with an open file *f*, containing a shell text
+    *session*, and optionally, *prompts*, the list of potential
+    prompts in the session.
+
+    A *session* begins with a prompt, then a *command* follows
     until a newline, except when the newline is nested in curly
     brackets or parentheses. Then follows the output which ends with a
     newline and a prompt.
@@ -73,12 +78,6 @@ class ShellSessionParser( object ):
     runner, connected to the stdout and stderr files of the shell
     subprocess."""
 
-    f = None
-    "An open file containing a shell text *session*"
-
-    prompts = None
-    "The list of prompts, potentially in the session"
-
     def next(self):
         """Returns a tuple whose first element is a command, and second
         element is an output."""
@@ -93,44 +92,35 @@ class CommandRunner( object ):
     only for the duration of a *with* python code block. A context
     manager is an object which can be called from a with statement.
  
-    The instance is a callable, which takes, as first argument, a
+    **The instance is a callable**, which takes, as first argument, a
     shell command to be executed, the stdin, stdout and returncode of
     the command is returned as an *OutputCommand*.
+
+    On **entering the context**, setup the ressource (the shell) executing
+    the commands. On **exiting the context**, terminate the shell.
     """
-    
-    def __enter__(self):
-        "Setup the ressource (the shell) executing the  commands."
-        
-
-    def __exit__(self):
-        "Terminate the shell."
-
-    def __call__(self, cmd ):
-        """Send the command to the shell, parses the output to return
-        an CommandOutput instance."""
 
 class CommandOutput( object ):
     """Structures the output of a standard shell command with the two
-    strings read on stdout and stderr plus the returncode."""
+    strings read on stdout and stderr plus the returncode.
+
+    The **equality operator** can be used with the CommandOutput, The
+    equality operator expects either a string or a CommandOuput as a
+    right hand side. The right hand side can contain the three dots
+    pattern '...' to match anything.
+
+    When matching against another CommandOutput, only the non null
+    attributes are matched: output == CommandOutput(out=None,
+    err=None, returncode=None) is always True."""
     
     out = None
-    "the standard output channel"
+    "The standard output channel"
 
     err = None
-    "the standard error channel"
+    "The standard error channel"
 
     returncode = None
-    "the return code"
-
-    def __eq__( self, other ):
-        """The equality operator expects either a string or a
-        CommandOuput as a right hand side. The right hand side can
-        contain the three dots pattern '...' to match anything.
-
-        When matching against another CommandOutput, only the non null
-        attributes are matched: output == CommandOutput(out=None,
-        err=None, returncode=None) is always True."""
-        
+    "The return code"
 
     
 class Reporter( object ):
@@ -162,7 +152,7 @@ class NodeMatch( object ):
     "Only node of this type will match"
 
     attributes   = None
-    "a dictionary of attributes:values"
+    "A dictionary of attributes:values"
     
 
 class BlockFilter( object ):
@@ -174,9 +164,9 @@ class BlockFilter( object ):
     "Only text marked up with this directory will be kept"
 
     arguments = None
-    "a list of arguments"
+    "A list of arguments"
 
     options   = None
-    "a dictionary of options:values"
+    "A dictionary of options:values"
     
             

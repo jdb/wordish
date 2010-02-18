@@ -14,7 +14,7 @@ copyright = u'2010, Jean Daniel Browne'
 version = '1.0'
 release = '1.0.0beta'
 exclude_trees = ['_build']
-
+unused_docs = ['changelog', 'methods']
 
 # add_function_parentheses = True
 # add_module_names = True
