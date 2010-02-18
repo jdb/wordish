@@ -11,10 +11,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 project = u'Wordish'
 copyright = u'2010, Jean Daniel Browne'
-version = '1.0'
-release = '1.0.0beta'
+release = file('version').read().strip()
+version = '.'.join( version.split('.')[:2])
 exclude_trees = ['_build']
-
+unused_docs = ['changelog', 'methods']
 
 # add_function_parentheses = True
 # add_module_names = True

@@ -12,23 +12,23 @@ Overview
 
 .. automodule:: interfaces
 
-Wordish makes use of five python modules from the standard library:
+*Wordish* makes use of five python modules from the standard library:
 
-- :mod:`shlex` offers to tokenize text, 
+- :mod:`shlex` parses text, 
 
-- :mod:`itertools` offers the :func:`takewhile` functions and others
+- :mod:`itertools` provides :func:`takewhile` functions and others
   functional tools,
 
-- :mod:`StringIO` adapts a character string to the interface open
-  file.
+- :mod:`StringIO` adapts a character string to the interface of an
+  open file.
 
 - :mod:`re` is the regular expression module, 
 
-- :mod:`docutils` offers the tools to filter text in the
-  *restructured text* format.
-
 - :mod:`sys`, among others, gives access to the command line
-  arguments.
+  arguments, and the exit status.
+
+Also, the required additional module, :mod:`docutils` offers the tools
+to filter text in the *restructured text* format.
 
 
 Interfaces
@@ -54,9 +54,9 @@ Interfaces
    :members:
    :undoc-members:
 
-.. autoclass:: interfaces.BlockFilter
-   :members:
-   :undoc-members:
+.. .. autoclass:: interfaces.BlockFilter
+..    :members:
+..    :undoc-members:
 
 
 

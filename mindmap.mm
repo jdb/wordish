@@ -3,29 +3,18 @@
 <font NAME="SansSerif" SIZE="12"/>
 <node TEXT="doc" POSITION="left">
 <node TEXT="writing">
-<node TEXT="parsing method (prompts, nesting)"/>
-<node TEXT="the doc string should be the beginning of the write section"/>
-<node TEXT="matching methods (ignoring, ellipsis, re)"/>
-<node TEXT="one subshell for the session"/>
 <node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
-<node TEXT="debug"/>
-<node TEXT="What is wordish? installation verification"/>
 </node>
 <node TEXT="testing">
 <node TEXT="false"/>
 <node TEXT="log file"/>
 <node TEXT="clean up code"/>
+<node TEXT="debug"/>
 </node>
 <node TEXT="roadmap" FOLDED="true">
 <node TEXT="get a blessing from the sphinx project"/>
 </node>
-<node TEXT="interfaces and object model" FOLDED="true">
-<node TEXT="overview simple run"/>
-<node TEXT="two parsers"/>
-<node TEXT="output and runner"/>
-<node TEXT="reporter"/>
-</node>
-<node TEXT="Python sources" FOLDED="true">
+<node TEXT="interfaces" FOLDED="true">
 <node TEXT="overview simple run"/>
 <node TEXT="two parsers"/>
 <node TEXT="output and runner"/>
@@ -73,8 +62,8 @@
 </node>
 <node TEXT="changelog"/>
 </node>
-<node TEXT="objects" FOLDED="true" POSITION="right">
-<node TEXT="ISessionParser" FOLDED="true">
+<node TEXT="objects" POSITION="right">
+<node TEXT="ISessionParser">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="hints in a command&apos;s comments">
@@ -85,6 +74,7 @@
 </node>
 <node TEXT="let him figure out the cleanup code on its own with comment hints"/>
 <node TEXT="get rid of get_command and get output,  make takewhile private"/>
+<node TEXT="when docutils is not present, be able to use a raw log "/>
 </node>
 <node TEXT="IReporter" FOLDED="true">
 <node COLOR="#ff0000" TEXT="explicit output manipulation outisde the reporter at bailout, show rest to help cleanup and help debug"/>
@@ -136,7 +126,7 @@
 <node TEXT="iterable"/>
 <node TEXT="member attribute is a list, a string, a dictionnary (docstring is less readable when building an overview), maybe epydoc is the way, or autointerface"/>
 </node>
-<node TEXT="packaging debian" FOLDED="true" POSITION="right">
+<node TEXT="packaging debian" POSITION="right">
 <node TEXT="standalones scripts"/>
 <node TEXT="man pages"/>
 <node TEXT="doc"/>
@@ -145,6 +135,7 @@
 <node TEXT="article examples"/>
 <node TEXT="interfaces"/>
 <node TEXT="article examples found by the module"/>
+<node TEXT="build dependency, sphinx"/>
 </node>
 <node TEXT="tests" FOLDED="true" POSITION="right">
 <node TEXT="some impede readability"/>
