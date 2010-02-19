@@ -1,13 +1,15 @@
 build_doc () {
-    # seems a bit fragile, we'll see
+
+    # here be fragons
     set -e -x
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
     version=`cat version`
 
     # switch to the doc repository, then checkout the doc sources
-    git checkout gh-pages
-    git checkout next doc wordish.py interfaces.py version
+    git checkout gh-pages 
+    git branch | grep -q '* gh-pages'  || return 1
+    git checkout $current_branch doc wordish.py interfaces.py version
 
     # build the doc
     ( cd doc ; sphinx-build  . .. )
@@ -22,17 +24,17 @@ build_doc () {
 
     # suppress the sources
     git rm -r doc wordish.py interfaces.py version -f
-    rm -rf doc *.pyc .buildinfo .doctrees/
+    rm -rf *.pyc .buildinfo .doctrees/
 
     # add potential new html file (no new file most of the time)
-    git add * || true
+    # git add * || true
 
     # commit the doc, push to github, back the current branch
-    git commit -a -m "Updated the doc to version $version"
+    # git commit -a -m "Updated the doc to version $version"
     # git push origin gh-pages
     git checkout  $current_branch
+    git branch | grep -q "* $current_branch"  || return 1
     rm -rf *.html  sources/ static/ searchindex.js objects.inv
-
 }
 
 ###################
@@ -98,10 +100,10 @@ if [ -n "$1" ] ; then $1 || die "wrong argument: $1" ;  fi
 
 if git branch | grep -q '^* master'; then    
 
-    for f in `ls test_*.py`; do
-	python $f || die "Unit tests failed" ; done 
+    # for f in `ls test_*.py`; do
+    #   python $f || die "Unit tests failed" ; done 
     build_doc || die "Build documentation failed"  
-    python setup.py sdist || die "Python package build failed"  return 1
+    # python setup.py sdist || die "Python package build failed"  return 1
     
 elif git branch | grep -q '^* next'; then    
 

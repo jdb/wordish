@@ -4,6 +4,96 @@
 Limitations and roadmap
 =======================
 
+
+Integration with Sphinx
+-----------------------
+
+- Sphinx integration, how to to reuse ``sourcecode``, so the directive
+  accepts the options ``ignored``, ``cleanup option``,
+  ``no_check``, ``can_abort``,
+
+- configuration: bailout_on_abort, match=string|re|ellipsis, prompts,
+  ignore_stderr, 
+
+- use the Sphinx logging system which can be shut from the command line,
+
+- build a directive ``test_report`` inserting a table report in the
+  doc,
+
+- build a directive ``article`` which takes the name of the article,
+  and for each, creates a command runner and accumulate the cleanup
+  code, in case of an abort.
+
+.. pr plan
+..     shunit
+..     jo lange
+..     ubuntu server
+..     sphinx
+..     docutils
+..     lvs
+..     btrfs, lvm
+..     debian administration
+..     python/debian/ubuntu planet/mailing list
+..     anevia
+..     roming
+..     imil
+
+
+Python/debian packaging
+-----------------------
+
+- use *distribute* to benefit from ``console_script``, and dependency
+  resolution (docutils), and also because it is the new black. Maybe
+  *pip* knows how to install man pages and re-hash the man-db,
+
+- how to package the future *sphinx.ext.wordish* (should the
+  repository be on bitbucket),
+
+- command line argument: ``--help``, ``--quiet``, ``--prompt``,
+  ``--match 'exact|ellipsis|regexp'``, ``--cleanup mycleanup.sh``,
+  ``ignore_stderr``, ``bailout_on_abort``
+
+- how to use git branches to ease debian and rpm packaging? (do like
+  the documentation on github with the gh-pages)
+
+..
+  la creation de la directive source prend le renvoie une queue sous
+  la forme d'une stringio, la directive source code écrit dans cette
+  stringio que le session parser consomme.
+
+  Le doctree généré est jeté, on s'en sert juste pour lancer la
+  directive sourcecode, tout en effet de bord. (on evite peut etre
+  aussi la latence au démarrage)
+
+  Ca ne sert pas a grand chose d'utiliser le session parser pour
+  réinserer des noeuds command et output sous la forme de literal block
+  dans la mesure ou il seront disjoint dans le doc final. Sauf si un
+  réèl builder html/latex implémnte un IReporter
+
+Interfaces
+----------
+
+- How to declare that a class implements a *context manager*, an
+  *iterable*, that a member attribute is a list of certain class or a
+  dictionary,
+
+- Use epydoc, or Sphinx syntax to specify the signature of methods and
+  objects,
+
+Tests
+-----
+
+- some impede readability, some are redundant, some use backdoors,
+  some important one tests may be missing, some doctest would better
+  be unit test and vice versa,
+
+- clear distinction between public (black box) and private api (white
+  box). Proof test est the public API at least,
+
+- some black box testing may be needed to be launched as root and be
+  run on every file in *examples/*,
+
+
 objects and interfaces
 ----------------------
 
@@ -83,90 +173,3 @@ objects and interfaces
       # essence  = [ n for n in doctree.traverse()    
       #             if is_article(n) or is_cleanup(n) or is_shell(n) ]   
       # snippets = [ split(a, is_cleanup ) for a in split( essence, is_article ) ]
-
-Python/debian packaging
------------------------
-
-- use *distribute* to benefit from ``console_script``, and dependency
-  resolution (docutils), and also because it is the new black. Maybe
-  *pip* knows how to install man pages and re-hash the man-db,
-
-- how to package the future *sphinx.ext.wordish* (should the
-  repository be on bitbucket),
-
-- command line argument: ``--help``, ``--quiet``, ``--prompt``,
-  ``--match 'exact|ellipsis|regexp'``, ``--cleanup mycleanup.sh``,
-  ``ignore_stderr``, ``bailout_on_abort``
-
-- how to use git branches to ease debian and rpm packaging? (do like
-  the documentation on github with the gh-pages)
-
-..
-  la creation de la directive source prend le renvoie une queue sous
-  la forme d'une stringio, la directive source code écrit dans cette
-  stringio que le session parser consomme.
-
-  Le doctree généré est jeté, on s'en sert juste pour lancer la
-  directive sourcecode, tout en effet de bord. (on evite peut etre
-  aussi la latence au démarrage)
-
-  Ca ne sert pas a grand chose d'utiliser le session parser pour
-  réinserer des noeuds command et output sous la forme de literal block
-  dans la mesure ou il seront disjoint dans le doc final. Sauf si un
-  réèl builder html/latex implémnte un IReporter
-
-Interfaces
-----------
-
-- How to declare that a class implements a *context manager*, an
-  *iterable*, that a member attribute is a list of certain class or a
-  dictionary,
-
-- Use epydoc, or Sphinx syntax to specify the signature of methods and
-  objects,
-
-Tests
------
-
-- some impede readability, some are redundant, some use backdoors,
-  some important one tests may be missing, some doctest would better
-  be unit test and vice versa,
-
-- clear distinction between public (black box) and private api (white
-  box). Proof test est the public API at least,
-
-- some black box testing may be needed to be launched as root and be
-  run on every file in *examples/*,
-
-Integration with Sphinx
------------------------
-
-- Sphinx integration, how to to reuse ``sourcecode``, so the directive
-  accepts the options ``ignored``, ``cleanup option``,
-  ``no_check``, ``can_abort``,
-
-- configuration: bailout_on_abort, match=string|re|ellipsis, prompts,
-  ignore_stderr, 
-
-- use the Sphinx logging system which can be shut from the command line,
-
-- build a directive ``test_report`` inserting a table report in the
-  doc,
-
-- build a directive ``article`` which takes the name of the article,
-  and for each, creates a command runner and accumulate the cleanup
-  code, in case of an abort.
-
-.. pr plan
-..     shunit
-..     jo lange
-..     ubuntu server
-..     sphinx
-..     docutils
-..     lvs
-..     btrfs, lvm
-..     debian administration
-..     python/debian/ubuntu planet/mailing list
-..     anevia
-..     roming
-..     imil

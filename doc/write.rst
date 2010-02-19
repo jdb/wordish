@@ -8,7 +8,7 @@ How to write an article
 
 
 *Debugging* an article
-----------------------
+======================
 
 When debugging an article, repeatedly executing half of the commands,
 I have found it handy to:
