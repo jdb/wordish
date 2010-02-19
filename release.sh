@@ -30,7 +30,7 @@ build_doc () {
     # git add * || true
 
     # commit the doc, push to github, back the current branch
-    # git commit -a -m "Updated the doc to version $version"
+    git commit -a -m "Updated the doc to version $version"
     # git push origin gh-pages
     git checkout  $current_branch
     git branch | grep -q "* $current_branch"  || return 1
