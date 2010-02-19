@@ -1,44 +1,4 @@
-die () { echo "$1" >&2 ; exit 1 ;  }
-
-
-build_doc () {
-
-    # here be fragons
-    set -e -x
-
-    current_branch=`git branch | awk '/\*/ {print $2}'`
-    version=`cat version`
-
-    # switch to the doc repository, then checkout the doc sources
-    git checkout gh-pages 
-    git branch | grep -q '* gh-pages'  || return 1
-    git checkout $current_branch doc wordish.py interfaces.py version
-
-    # build the doc
-    ( cd doc ; sphinx-build  . .. )
-
-    # adapt the sphinx layout to the github conventions
-    rm -rf static sources images 
-    mv {_,}sources
-    mv {_,}static  
-    mv {_,}images || true
-    find . -name '*.html' -o -name '*.js' | \
-	xargs sed -i 's/_static/static/g;s/_sources/sources/g;s/_images/images/g' 
-
-    # suppress the sources
-    git rm -r doc wordish.py interfaces.py version -f
-    rm -rf *.pyc .buildinfo .doctrees/
-
-    # add potential new html file (no new file most of the time)
-    # git add * || true
-
-    # commit the doc, push to github, back the current branch
-    # git commit -a -m "Updated the doc to version $version"
-    # git push origin gh-pages
-    git checkout  $current_branch
-    git branch | grep -q "* $current_branch"  || return 1
-    rm -rf *.html  sources/ static/ searchindex.js objects.inv
-}
+¾die () { echo "$1" >&2 ; exit 1 ;  }
 
 ###################
 ### functions dealing with the version
@@ -96,29 +56,62 @@ stabilize () {
 ### end of functions dealing with the version
 ###################
 
+build_doc () {
+
+    set -e -x
+
+    current_branch=`git branch | awk '/\*/ {print $2}'`
 
 
+    ( cd doc ; sphinx-build  . ../html )
 
-if [ -n "$1" ] ; then $1 || die "wrong argument: $1" ;  fi
+    # switch to the doc repository, then replace the html
+    git checkout gh-pages 
+    git branch | grep -q '* gh-pages'  || return 1
 
-if git branch | grep -q '^* master'; then    
+    mv html/* .
 
-    for f in `ls test_*.py`; do
-        python $f || die "Unit tests failed" ; done 
-    build_doc || die "Build documentation failed"  
-    python setup.py sdist || die "Python package build failed"  return 1
+    # adapt the sphinx layout to the github conventions
+    rm -rf static sources images html *.pyc
+    mv {_,}sources
+    mv {_,}static  
+    mv {_,}images || true
+    find . -name '*.html' -o -name '*.js' | \
+	xargs sed -i 's/_static/static/g;s/_sources/sources/g;s/_images/images/g' 
+
+    # add potential new html file (no new file most of the time)
+    git add *.html || true
+
+    # commit the doc, push to github, back the current branch
+    git commit -a -m "Updated the doc to version $version"   --amend
+    git push origin gh-pages
+
+    git checkout  $current_branch
+    git branch | grep -q "* $current_branch"  || return 1
     
-elif git branch | grep -q '^* next'; then    
+}
+
+
+if [ -n "$1" -a $1 != "upload" ] ; then 
+    $1 || die "wrong argument: $1" ;  
+fi
+
+if git branch | grep -q '^* master' ; then    
 
     for f in `ls test_*.py`; do
 	python $f || die "Unit tests failed" ; done 
-    build_doc || die "Build documentation failed"  
-    python setup.py sdist || die "Python package build failed"  return 1
 
-elif git branch | grep -q '^* debian'; then
+    version=`cat version`	|| die "No version file"
+    build_doc			|| die "Build documentation failed"  
+    python setup.py sdist	|| die "Python package build failed"
 
-    for f in `ls test_*.py`; do
-	python $f || die "Unit tests failed" ; done 
-    build_doc || die "Build documentation failed"
-    dpkg-buildpackage ; fi
+    if [ -f .last_uploaded_version -a `cat .last_uploaded_version` != $version] && [ $1 = "upload" ];
+	python setup upload   	|| die "Upload failed"
+	upload_doc
+	upload_deb
+	echo $version > .last_uploaded_version
+    fi
+    git archive v$version --format=tar --prefix=wordish-$version/ setup.py wordish.py | bzip2 > wordish-1.0.0b6.tar.bz2
+
+fi
 
