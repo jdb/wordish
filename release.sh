@@ -96,14 +96,15 @@ stabilize () {
 
 die () { echo "$1" >&2 ; exit 1 ;  }
 
-if [ -n "$1" ] ; then $1 || die "wrong argument: $1" ;  fi
+if [ -n "$1" ] ; then 
+    $1 || die "wrong argument: $1" ;  
 
-if git branch | grep -q '^* master'; then    
+elif git branch | grep -q '^* master'; then    
 
-    # for f in `ls test_*.py`; do
-    #   python $f || die "Unit tests failed" ; done 
+    for f in `ls test_*.py`; do
+      python $f || die "Unit tests failed" ; done 
     build_doc || die "Build documentation failed"  
-    # python setup.py sdist || die "Python package build failed"  return 1
+    python setup.py sdist || die "Python package build failed"  return 1
     
 elif git branch | grep -q '^* next'; then    
 
