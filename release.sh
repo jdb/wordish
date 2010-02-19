@@ -31,6 +31,7 @@ build_doc () {
     git commit -a -m "Updated the doc to version $version"
     # git push origin gh-pages
     git checkout  $current_branch
+    rm -rf *.html  sources/ static/ searchindex.js objects.inv
 
 }
 

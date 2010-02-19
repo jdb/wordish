@@ -134,7 +134,7 @@ report of this article:
    6 tests found. 
    4 tests passed, 2 tests failed.
 
-   There is another example real world article_ which is also included in
+There is another example real world article_ which is also included in
 the sources distribution, and tested before each release. This is the
 article which prompted the need for the development of *wordish*.
 
