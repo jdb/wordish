@@ -89,12 +89,13 @@ python setup.py sdist || die "Python package build failed"
 if [ "$1" = "upload" -o "$2" = "upload" ]; then
     if git branch | grep -q '^* master' ; then    
 	
-	git status || die "release.sh must be called from a commited repository"
+	git status | grep "nothing to commit (working directory clean)" \
+	    || die "release.sh must be called from a commited repository"
 	set -e -x
 	git checkout gh-pages
 	git push origin gh-pages
 	git checkout master
-	python setup.py sdist upload
+	python setup.py sdist # upload
        
     else 
 	echo "Please release from the master branch,"
