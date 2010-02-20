@@ -95,7 +95,7 @@ if [ "$1" = "upload" -o "$2" = "upload" ]; then
 	git push origin gh-pages
 	git checkout master
 	python setup.py sdist upload
-	
+       
     else 
 	echo "Please release from the master branch,"
 	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; 
