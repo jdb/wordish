@@ -1,16 +1,18 @@
 die () { echo "$1" >&2 ; exit 1 ;  }
 
+starts_with () { 
+    if [ `expr index $1 $2` -eq 1 ] ; then 
+	return 0; else return 1; fi ; }
+
 build_doc () {
 
-    # here be fragons
     set -e -x
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
 
     ( cd doc ; sphinx-build  . ../html )
     # switch to the doc repository, then checkout the doc sources
-    git checkout gh-pages 
-    git branch | grep -q '* gh-pages'  || return 1
+    git checkout gh-pages || return 1
 
     mv html/* .
     # adapt the sphinx layout to the github conventions
@@ -24,8 +26,7 @@ build_doc () {
     # commit the doc, push to github, back the current branch
     git commit -a -m "Updated the doc to version $version"
     # git push origin gh-pages
-    git checkout  $current_branch
-    git branch | grep -q "* $current_branch"  || return 1
+    git checkout $current_branch || return 1
 
 }
 
@@ -58,20 +59,35 @@ bump_minor () { echo $major.$(($minor+1)).0		 > version ; }
 
 stabilize  () { echo $major.$minor.$patch                > version ; }
 
-if [ -n "$1" ] ; then 
+# ./release.sh test  evrathing, say what would be uploaded
+# ./release.sh upload -> bump the patch if no b else bump the beta
+# ./release.sh bump_alpha upload -> bump the patch if no b else bump the beta and upload
+# ./release.sh bump_alpha -> bump the patch if no b else bump the beta and upload
 
-    $1 || die "wrong argument: $1" ;
+
+
+if starts_with "$1" pre_ || starts_with "$1" bump || [ "$1" = "stabilize" ] ; then 
+    
     parse_version 
+    $1 || die "wrong argument: $1" ;
     git commit -m "Updated version to `cat version`" version
+fi
 
-if git branch | grep -q '^* master'; then    
+for f in `ls test_*.py`; do
+    python $f || die "Unit tests failed" ; done 
 
-    version=`cat version`
-    for f in `ls test_*.py`; do
-      python $f || die "Unit tests failed" ; done 
+version=`cat version`
+build_doc || die "Build documentation failed"  
+python setup.py sdist || die "Python package build failed"
 
-    build_doc || die "Build documentation failed"  
-    python setup.py sdist || die "Python package build failed"
+if git branch | grep -q '^* master' && [ "$1" = "upload" -o "$2" = "upload" ]; then    
+
+    git status || die "release.sh must be called from a commited repository"
+    set -e -x
+    git checkout gh-pages
+    git push origin gh-pages
+    git checkout master
+    python setup.py sdist upload
 
 else 
     echo "Please release from the master branch,"
