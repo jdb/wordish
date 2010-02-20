@@ -80,16 +80,18 @@ version=`cat version`
 build_doc || die "Build documentation failed"  
 python setup.py sdist || die "Python package build failed"
 
-if git branch | grep -q '^* master' && [ "$1" = "upload" -o "$2" = "upload" ]; then    
-
-    git status || die "release.sh must be called from a commited repository"
-    set -e -x
-    git checkout gh-pages
-    git push origin gh-pages
-    git checkout master
-    python setup.py sdist upload
-
-else 
-    echo "Please release from the master branch,"
-    echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; fi    
-
+if [ [ "$1" = "upload" -o "$2" = "upload" ]; then
+    if git branch | grep -q '^* master' && ; then    
+	
+	git status || die "release.sh must be called from a commited repository"
+	set -e -x
+	git checkout gh-pages
+	git push origin gh-pages
+	git checkout master
+	python setup.py sdist upload
+	
+    else 
+	echo "Please release from the master branch,"
+	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; fi    
+    
+    
