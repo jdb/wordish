@@ -10,7 +10,11 @@ build_doc () {
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
 
-    ( cd doc ; sphinx-build  . ../html )
+    if ! git status ; then
+	git stash save "Stashing for building documentation"
+    fi
+	
+    ( cd doc ; sphinx-build -Q . ../html )
     # switch to the doc repository, then checkout the doc sources
     git checkout gh-pages || return 1
 
@@ -27,6 +31,9 @@ build_doc () {
     git commit -a -m "Updated the doc to version $version"
     # git push origin gh-pages
     git checkout $current_branch || return 1
+
+    if git stash list | grep -q "Stashing for building documentation" ;
+	then git stash pop ; fi
 
 }
 
@@ -65,8 +72,7 @@ stabilize  () { echo $major.$minor.$patch                > version ; }
 # ./release.sh bump_alpha -> bump the patch if no b else bump the beta and upload
 
 
-
-if starts_with "$1" pre_ || starts_with "$1" bump || [ "$1" = "stabilize" ] ; then 
+if starts_with "$1" "pre_" || starts_with "$1" "bump" || [ "$1" = "stabilize" ] ; then 
     
     parse_version 
     $1 || die "wrong argument: $1" ;
@@ -80,8 +86,8 @@ version=`cat version`
 build_doc || die "Build documentation failed"  
 python setup.py sdist || die "Python package build failed"
 
-if [ [ "$1" = "upload" -o "$2" = "upload" ]; then
-    if git branch | grep -q '^* master' && ; then    
+if [ "$1" = "upload" -o "$2" = "upload" ]; then
+    if git branch | grep -q '^* master' ; then    
 	
 	git status || die "release.sh must be called from a commited repository"
 	set -e -x
@@ -92,6 +98,6 @@ if [ [ "$1" = "upload" -o "$2" = "upload" ]; then
 	
     else 
 	echo "Please release from the master branch,"
-	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; fi    
-    
-    
+	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; 
+    fi    
+fi
