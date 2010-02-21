@@ -102,7 +102,7 @@ build_doc || die "Build documentation failed"
 python setup.py sdist || die "Python package build failed"
 
 
-# 3. Eventually upload to pypi, to gh-pages, to master
+# 3. If requested, upload to pypi, to gh-pages, to master
 if [ "$1" = upload -o "$2" = upload ]; then
     if git branch | grep -q '^* master' ; then    
 	
