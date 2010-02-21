@@ -50,13 +50,13 @@ Interfaces
    :members:
    :undoc-members:
 
-.. autoclass:: interfaces.NodeMatch
-   :members:
-   :undoc-members:
-
-.. .. autoclass:: interfaces.BlockFilter
+.. .. autoclass:: interfaces.NodeMatch
 ..    :members:
 ..    :undoc-members:
+
+.. autoclass:: interfaces.BlockFilter
+   :members:
+   :undoc-members:
 
 
 

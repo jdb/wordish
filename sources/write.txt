@@ -7,8 +7,8 @@ How to write an article
 .. automodule:: wordish
 
 
-*Debugging* an article
-======================
+Debugging an article
+====================
 
 When debugging an article, repeatedly executing half of the commands,
 I have found it handy to:
@@ -19,7 +19,8 @@ I have found it handy to:
 - use the ``false`` shell command in the articles, to explicitly
   require the execution to bail out at a certain point in the article,
 
-- Use a log file with ``python -m wordish my_article.rst | tee my_article.log``
+- Use a log file with ``python -m wordish my_article.rst | tee
+  my_article.log``
 
 
 Installation
