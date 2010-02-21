@@ -7,8 +7,8 @@ How to write an article
 .. automodule:: wordish
 
 
-Debugging an article
-====================
+*Debugging* an article
+======================
 
 When debugging an article, repeatedly executing half of the commands,
 I have found it handy to:
