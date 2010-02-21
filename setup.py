@@ -7,7 +7,7 @@ setup(
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = file('version').read().strip(),
+    version = "1.0.1",
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
