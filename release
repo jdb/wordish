@@ -85,7 +85,6 @@ handle_version () {
 }
 
 # 1. Update the version as requested on the command line
-version=`cat version`
 if [ "$1" != upload ];
     then handle_version "$@" 
 fi
@@ -94,9 +93,8 @@ fi
 # upload is requested, and the current version is the last uploaded
 # version (bump the beta if in beta, else bump the patch)
 
-version=`cat version`
 if ( [ "$1" = upload -o "$2" = upload ] ) \
-    && [ $version = `cat .last_uploaded` ]; then
+    && [ `cat version` = `cat .last_uploaded` ]; then
 
     if [ `expr index $version b` -eq 0 ] ;
     then handle_version bump_patch
@@ -104,6 +102,7 @@ if ( [ "$1" = upload -o "$2" = upload ] ) \
 fi
 
 # 2. Do the tests, build the doc, build the python packaging
+version=`cat version`
 for f in `ls test_*.py`; do
     python $f || die "Unit tests failed" ; done
 build_doc || die "Build documentation failed"  

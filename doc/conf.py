@@ -14,7 +14,7 @@ copyright = u'2010, Jean Daniel Browne'
 release = file('../version').read().strip()
 version = '.'.join( release.split('.')[:2])
 exclude_trees = ['_build']
-unused_docs = ['changelog', 'methods']
+unused_docs = ['changelog']
 
 # add_function_parentheses = True
 # add_module_names = True

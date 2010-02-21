@@ -161,7 +161,7 @@ class BlockFilter( object ):
     attribute."""
 
     directive = None
-    "Only text marked up with this directory will be kept"
+    "Only text marked up with this directive will be kept"
 
     arguments = None
     "A list of arguments"
