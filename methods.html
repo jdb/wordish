@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Organisation &mdash; Wordish v1.0.0b8 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1.0.0b8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Wordish v1.0.0b8 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li><a href="index.html">Wordish v1.0.0b8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Organisation</a><ul>
+<li><a class="reference external" href="#ressources">Ressources</a></li>
+<li><a class="reference external" href="#version">Version</a></li>
+</ul>
+</li>
+</ul>
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/methods.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="organisation">
+<span id="methods"></span><h1>Organisation<a class="headerlink" href="#organisation" title="Permalink to this headline">¶</a></h1>
+<p>Some issues are tedious to deal with ona regular basis, for examples:</p>
+<ul class="simple">
+<li>synchronizing the version in multiples files,</li>
+<li>ensuring that all tests pass when releasing,</li>
+<li>publishing the software module and documentation where the users
+expects them,</li>
+</ul>
+<p>If handled correctly, the developer can focus on the features, it is
+more fun, and the users gets awesome softwares.</p>
+<div class="section" id="ressources">
+<h2>Ressources<a class="headerlink" href="#ressources" title="Permalink to this headline">¶</a></h2>
+<p>The sources are kept in a git repository on github
+(<a class="reference external" href="http://github.com/jdb/wordish/">http://github.com/jdb/wordish/</a>), because git is a powerful source
+configuration management that the author wishes to learn. Install the
+<tt class="docutils literal"><span class="pre">git</span></tt> commands on your system (sometimes packaged as <tt class="docutils literal"><span class="pre">git-core</span></tt>)
+and use the following to retrieve the sources:</p>
+<div class="highlight-python"><pre>git clone git://github.com/jdb/wordish.git</pre>
+</div>
+<p>The released software module is available on the <a class="reference external" href="http://pypi.python.org/pypi/wordish.">Python package index</a>
+and can be installed using <em>easy_install</em> or <em>pip</em></p>
+<p>Github also provides a handy way to publish the documentation on the
+web. The documentation sources are located in the <em>doc/</em> source
+directory and are composed of restructured text pages built by the
+Sphinx documentation system. The output of Sphinx are nice static html
+pages which can be copied to the <em>gh-pages</em> special branch of the git
+repository. Github treats the branch specially by serving this <a class="reference external" href="http://github.com/jdb/wordish/tree/gh-pages">branch</a>
+through the web at this url: <a class="reference external" href="http://jdb.github.com/wordish/">http://jdb.github.com/wordish/</a>.</p>
+<p>There is an issue tracker at <a class="reference external" href="http://github.com/jdb/wordish/issues">http://github.com/jdb/wordish/issues</a>.</p>
+<p>There is also a <a class="reference external" href="http://wiki.github.com/jdb/wordish/">wiki</a> automatically set up by github, but the author
+has a personal preference for using a good text editor on files than
+typing characters in a web form.</p>
+</div>
+<div class="section" id="version">
+<h2>Version<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h2>
+<p>Whenever the code changes, the version gets incremented. The version
+number is based on the concpet of <tt class="docutils literal"><span class="pre">public</span> <span class="pre">interfaces</span></tt> and backward
+compatibility. For this project, the version number is composed of
+three numbers: <em>major.minor.patch</em></p>
+<ol class="arabic simple">
+<li>if the changes are seamless for the user, then the patch gets
+incremented. Usually, internal refactoring or backward compatible
+bugfixes cause a bump in the patch number,</li>
+<li>if the user has access to new features, if the changes are
+substantial and backward compatible, the minor number gets
+incremented.</li>
+<li>the major number is incremented when the user will have to change
+the way it uses the software. The major number is bumped when
+backward incompatible changes are introduced.</li>
+</ol>
+<p>Ok, there is a fourth number: the pre-release number suffixed to the
+version after the <em>b</em> letter (for <em>beta</em>), example: <em>1.2.3b7</em>. The
+pre-release number is here to indicate that the software will soon be
+released as <em>1.2.3</em>.</p>
+<p>To retrieve the specific sources which were used to build a release,
+for example version 1.0.0b7 use the tag:</p>
+<div class="highlight-python"><pre>git clone git://github.com/jdb/wordish.git v1.0.0b7</pre>
+</div>
+<span class="target" id="testsuitequestions"></span><span class="target" id="buildchain"></span><span class="target" id="testbuildchain"></span><span class="target" id="doc"></span></div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Wordish v1.0.0b8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2010, Jean Daniel Browne.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4.
+    </div>
+  </body>
+</html>

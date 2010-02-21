@@ -6,8 +6,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>How to write an article &mdash; Wordish v1.0.0b8 documentation</title>
-    <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '#',
@@ -17,8 +17,8 @@
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Wordish v1.0.0b8 documentation" href="index.html" /> 
   </head>
   <body>
@@ -39,13 +39,13 @@
             <h3><a href="index.html">Table Of Contents</a></h3>
             <ul>
 <li><a class="reference external" href="#">How to write an article</a></li>
-<li><a class="reference external" href="#debugging-an-article"><em>Debugging</em> an article</a></li>
+<li><a class="reference external" href="#debugging-an-article">Debugging an article</a></li>
 <li><a class="reference external" href="#installation">Installation</a></li>
 </ul>
 
             <h3>This Page</h3>
             <ul class="this-page-menu">
-              <li><a href="sources/write.txt"
+              <li><a href="_sources/write.txt"
                      rel="nofollow">Show Source</a></li>
             </ul>
           <div id="searchbox" style="display: none">
@@ -211,7 +211,7 @@ characters do not need to be escaped.</td></tr>
 </table>
 </div>
 <div class="section" id="debugging-an-article">
-<h1><em>Debugging</em> an article<a class="headerlink" href="#debugging-an-article" title="Permalink to this headline">¶</a></h1>
+<h1>Debugging an article<a class="headerlink" href="#debugging-an-article" title="Permalink to this headline">¶</a></h1>
 <p>When debugging an article, repeatedly executing half of the commands,
 I have found it handy to:</p>
 <ul class="simple">
@@ -219,7 +219,8 @@ I have found it handy to:</p>
 initial state,</li>
 <li>use the <tt class="docutils literal"><span class="pre">false</span></tt> shell command in the articles, to explicitly
 require the execution to bail out at a certain point in the article,</li>
-<li>Use a log file with <tt class="docutils literal"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">wordish</span> <span class="pre">my_article.rst</span> <span class="pre">|</span> <span class="pre">tee</span> <span class="pre">my_article.log</span></tt></li>
+<li>Use a log file with <tt class="docutils literal"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">wordish</span> <span class="pre">my_article.rst</span> <span class="pre">|</span> <span class="pre">tee</span>
+<span class="pre">my_article.log</span></tt></li>
 </ul>
 </div>
 <div class="section" id="installation">

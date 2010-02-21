@@ -6,8 +6,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Interfaces &mdash; Wordish v1.0.0b8 documentation</title>
-    <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '#',
@@ -17,8 +17,8 @@
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Wordish v1.0.0b8 documentation" href="index.html" /> 
   </head>
   <body>
@@ -47,7 +47,7 @@
 
             <h3>This Page</h3>
             <ul class="this-page-menu">
-              <li><a href="sources/interfaces.txt"
+              <li><a href="_sources/interfaces.txt"
                      rel="nofollow">Show Source</a></li>
             </ul>
           <div id="searchbox" style="display: none">
@@ -77,7 +77,7 @@
 <h2>Overview<a class="headerlink" href="#module-interfaces" title="Permalink to this headline">¶</a></h2>
 <p>The <em>Wordish</em> modules declares three central classes:</p>
 <ul class="simple">
-<li>the <tt class="xref docutils literal"><span class="pre">BlockFilter</span></tt> which, given a directive, filters
+<li>the <a title="interfaces.BlockFilter" class="reference internal" href="#interfaces.BlockFilter"><tt class="xref docutils literal"><span class="pre">BlockFilter</span></tt></a> which, given a directive, filters
 restructured blocks of text marked with the <em>directive</em> attribute of
 the object,</li>
 <li>the <a title="interfaces.ShellSessionParser" class="reference internal" href="#interfaces.ShellSessionParser"><tt class="xref docutils literal"><span class="pre">ShellSessionParser</span></tt></a> which splits a shell session log into
@@ -251,19 +251,25 @@ number of success, the number of failure, etc.</dd></dl>
 </dd></dl>
 
 <dl class="class">
-<dt id="interfaces.NodeMatch">
-<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">NodeMatch</tt><a class="headerlink" href="#interfaces.NodeMatch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a doctree element, for example an element of
-doctree.traverse(), returns True if matches the constraints.</p>
+<dt id="interfaces.BlockFilter">
+<em class="property">class </em><tt class="descclassname">interfaces.</tt><tt class="descname">BlockFilter</tt><a class="headerlink" href="#interfaces.BlockFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an open file on a restructured text document, returns an
+open file containing the text blocks marked up by the directive
+attribute.</p>
 <dl class="attribute">
-<dt id="interfaces.NodeMatch.attributes">
-<tt class="descname">attributes</tt><a class="headerlink" href="#interfaces.NodeMatch.attributes" title="Permalink to this definition">¶</a></dt>
-<dd>A dictionary of attributes:values</dd></dl>
+<dt id="interfaces.BlockFilter.arguments">
+<tt class="descname">arguments</tt><a class="headerlink" href="#interfaces.BlockFilter.arguments" title="Permalink to this definition">¶</a></dt>
+<dd>A list of arguments</dd></dl>
 
 <dl class="attribute">
-<dt id="interfaces.NodeMatch.node">
-<tt class="descname">node</tt><a class="headerlink" href="#interfaces.NodeMatch.node" title="Permalink to this definition">¶</a></dt>
-<dd>Only node of this type will match</dd></dl>
+<dt id="interfaces.BlockFilter.directive">
+<tt class="descname">directive</tt><a class="headerlink" href="#interfaces.BlockFilter.directive" title="Permalink to this definition">¶</a></dt>
+<dd>Only text marked up with this directive will be kept</dd></dl>
+
+<dl class="attribute">
+<dt id="interfaces.BlockFilter.options">
+<tt class="descname">options</tt><a class="headerlink" href="#interfaces.BlockFilter.options" title="Permalink to this definition">¶</a></dt>
+<dd>A dictionary of options:values</dd></dl>
 
 </dd></dl>
 
