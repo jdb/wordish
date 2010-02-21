@@ -24,10 +24,10 @@ build_doc () {
     if git status | grep -q -v "nothing to commit (working directory clean)"; 
     then git stash save "Stashing for building documentation"; fi
 	
-    ( cd doc ; sphinx-build -Q . ../html )
+    ( cd doc ; sphinx-build -Q . ../build/html )
     git checkout gh-pages || return 1
 
-    mv html/* .
+    mv build/html/* .
 
     rm -rf static sources images *.pyc .buildinfo .doctrees/
     mv {_,}sources
