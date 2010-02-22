@@ -154,6 +154,8 @@ article which prompted the need for the development of *wordish*.
 
 """
 
+__version__ = '1.0.2'
+
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile, chain

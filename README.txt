@@ -1,24 +1,9 @@
 
-
-from distutils.core import setup
-
-setup(
-
-    py_modules = [ 'wordish' ],
-
-    name = 'wordish',
-    version = '1.0.2',
-    author = 'Jean Daniel Browne',
-    author_email = 'jeandaniel.browne@gmail.com',
-    description = ("Parses a shell session, test the "
-                   "commands compare the outputs"),
-
-    long_description = """Wordish is a script which executes a shell
-session parsed from a documentation in the restructured text [#]_
-format, then tests and builds a report of the execution. To mark up
-shell code in an article, *wordish* uses the custom directive
-``sourcecode``, with the rquired argument ``sh``. When presented with
-an article:
+Wordish is a script which executes a shell session parsed from a
+documentation in the restructured text [#]_ format, then tests and builds a
+report of the execution. To mark up shell code in an article,
+*wordish* uses the custom directive ``sourcecode``, with the rquired
+argument ``sh``. When presented with an article:
 
 #. *wordish* filters out the text which is not marked with
    ``sourcecode``,
@@ -40,7 +25,7 @@ Example::
 
 This simply renders like:
 
-::
+.. sourcecode:: sh
 
    ~$ echo "hello world"   # Mmmh, insightful comment
    hello world
@@ -59,7 +44,7 @@ curly brackets are used to define functions and parentheses makes the
 nested command to be interpreted in a subprocess shell. The two
 following examples from the introduction make it clear:
 
-::
+.. sourcecode:: sh
 
    ~$ (
    echo $((1+1)) )
@@ -77,7 +62,7 @@ the state of the shell must be kept between each snippets. *wordish*
 keep a connection with the same *shell* subprocess (*bash* is used)
 for the duration of the article.
 
-::
+.. sourcecode:: sh
 
    ~$ sum 42 58
    3
@@ -90,7 +75,7 @@ displaying ``$RANDOM``, or displaying the size of a partitions in
 bytes, there is a handy wildcard pattern which can be used:
 ``...``. It matches everything like ``.*`` in regexp [#]_.
 
-::
+.. sourcecode:: sh
 
    ~$ echo "a random number: " $RANDOM
    ...
@@ -100,7 +85,7 @@ precautiously aborts, refusing to execute commands on the system under
 test which is in an undefined state. *wordish* displays the remaining
 unexecuted commands.
 
-::
+.. sourcecode:: sh
 
    ~$ What have the Romans ever done for us
    aqueduct? roads? wine !
@@ -112,7 +97,7 @@ This introduction is embedded in the wordish module as the
 docstring. Just run *wordish* with no argument to get the example
 report of this article:
 
-::
+.. sourcecode:: sh
 
    ~$ python -m wordish
    Trying:	echo "hello world"   # Mmmh, insightful comment...
@@ -166,22 +151,3 @@ article which prompted the need for the development of *wordish*.
 
 .. [#] Regexp are not directly used so that the various special regexp
        characters do not need to be escaped.
-
-""",
-    classifiers = [ 'Development Status :: 4 - Beta',
-                    'Environment :: Console',
-                    'Intended Audience :: Developers',
-                    'Intended Audience :: Education',
-                    'Intended Audience :: System Administrators',
-                    'License :: OSI Approved :: GNU General Public License (GPL)',
-                    'Operating System :: Unix',
-                    'Programming Language :: Python :: 2',
-                    'Programming Language :: Unix Shell',
-                    'Topic :: Documentation',
-                    'Topic :: Education',
-                    'Topic :: Software Development :: Testing',
-                    'Topic :: Utilities'],
-
-    license = 'GPL',
-    requires = [ 'docutils (>=0.5)' ]
-    )

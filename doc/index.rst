@@ -34,9 +34,10 @@ Reader's guide
 - Anyone curious of how *Wordish* is designed may be interested in
   the :ref:`interfaces`,
 
-.. #. for the brave Python developper impatient to propose a feature
-..    patch, a bug report and a fix, the page :ref:`sources`, and the
-..    page describing the :ref:`methods` will be helpful.
+- For the brave Python developper impatient to propose a feature
+  patch, a bug report and a fix, the page describing the
+  :ref:`methods` will hopefully help him get started.
+
 
 ..    The author of these lines must say that he found there are many
 ..    ways to do *testing* and *packaging* and he would be grateful for
