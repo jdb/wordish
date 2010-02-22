@@ -46,7 +46,8 @@ build_doc () {
 
 new_version () {
     echo $1 > version
-    sed -i "s/\(__version__ = \).*/\1 '$1'/" wordish.py
+    sed -i "s/\(__version__ = \).*/\1'$1'/" wordish.py
+    sed -i "s/\(    version = \).*/\1'$1',/" setup.py
     git commit -m "Updated version to `cat version`" wordish.py version --no-verify
 }
 
