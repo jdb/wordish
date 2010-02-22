@@ -62,8 +62,8 @@
 </node>
 <node TEXT="changelog"/>
 </node>
-<node TEXT="objects" POSITION="right">
-<node TEXT="ISessionParser">
+<node TEXT="objects" FOLDED="true" POSITION="right">
+<node TEXT="ISessionParser" FOLDED="true">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="hints in a command&apos;s comments">
@@ -83,7 +83,7 @@
 <node TEXT="I get regularly bitten by , 0 in the report"/>
 <node TEXT="report knows less about command output"/>
 </node>
-<node TEXT="ICommandRunner" FOLDED="true">
+<node TEXT="ICommandRunner">
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="some command are not meant to be executed, others not identical, others not aborted"/>
 <node TEXT="ignore from :argument:, comment"/>
@@ -103,7 +103,7 @@
 <node TEXT="--match &apos;exact|ellipsis|regexp&apos;"/>
 <node TEXT="give the option to attach a cleanup script"/>
 </node>
-<node TEXT="packaging python" FOLDED="true" POSITION="right">
+<node TEXT="packaging python" POSITION="right">
 <node COLOR="#ff0000" TEXT="just use distribute to have eggs which have dependencies which will install docutils..."/>
 <node COLOR="#ff0000" TEXT="use distutils to generate console scripts"/>
 <node TEXT="where can distutils install the manpages? rehash the db?"/>
