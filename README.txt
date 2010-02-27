@@ -25,7 +25,7 @@ Example::
 
 This simply renders like:
 
-.. sourcecode:: sh
+::
 
    ~$ echo "hello world"   # Mmmh, insightful comment
    hello world
@@ -44,7 +44,7 @@ curly brackets are used to define functions and parentheses makes the
 nested command to be interpreted in a subprocess shell. The two
 following examples from the introduction make it clear:
 
-.. sourcecode:: sh
+::
 
    ~$ (
    echo $((1+1)) )
@@ -62,7 +62,7 @@ the state of the shell must be kept between each snippets. *wordish*
 keep a connection with the same *shell* subprocess (*bash* is used)
 for the duration of the article.
 
-.. sourcecode:: sh
+::
 
    ~$ sum 42 58
    3
@@ -75,7 +75,7 @@ displaying ``$RANDOM``, or displaying the size of a partitions in
 bytes, there is a handy wildcard pattern which can be used:
 ``...``. It matches everything like ``.*`` in regexp [#]_.
 
-.. sourcecode:: sh
+::
 
    ~$ echo "a random number: " $RANDOM
    ...
@@ -85,7 +85,7 @@ precautiously aborts, refusing to execute commands on the system under
 test which is in an undefined state. *wordish* displays the remaining
 unexecuted commands.
 
-.. sourcecode:: sh
+::
 
    ~$ What have the Romans ever done for us
    aqueduct? roads? wine !
@@ -97,7 +97,7 @@ This introduction is embedded in the wordish module as the
 docstring. Just run *wordish* with no argument to get the example
 report of this article:
 
-.. sourcecode:: sh
+::
 
    ~$ python -m wordish
    Trying:	echo "hello world"   # Mmmh, insightful comment...
@@ -151,3 +151,4 @@ article which prompted the need for the development of *wordish*.
 
 .. [#] Regexp are not directly used so that the various special regexp
        characters do not need to be escaped.
+
