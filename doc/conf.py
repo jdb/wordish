@@ -12,7 +12,7 @@ master_doc = 'index'
 project = u'Wordish'
 copyright = u'2010, Jean Daniel Browne'
 release = '1.0.1'
-version = '1.0.1',
+version = '1.0.1'
 exclude_trees = ['_build']
 unused_docs = ['changelog']
 

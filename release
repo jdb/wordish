@@ -13,20 +13,14 @@
 #   -> bump the patch if no b else bump the beta and upload (check last_upload)
 
 
-
-
-
-
-
-
 build_doc () {
 
     set -x
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
 
-    if git status | grep -q "nothing to commit (working directory clean)"; 
-    then return 1 ; fi
+    if ! git status | grep -q "nothing to commit (working directory clean)"; 
+    then git stash save "just building doc" ; fi
 	
     ( cd doc ; sphinx-build -Q . ../build/html )
     git checkout gh-pages || return 1
@@ -42,6 +36,10 @@ build_doc () {
 
     git commit -a -m "Updated the doc to version $version"
     git checkout $current_branch || return 1
+
+    if git stash list | grep "just building doc"; then
+	git stash pop
+	fi
 }
 
 update_long_description () {
@@ -87,13 +85,13 @@ new_version () {
 	
 	stabilize  )  new=$major.$minor.$patch		     ;; 
 
-	* )  ;;
+	* )  new=`cat version` ;;
     esac
-
+    set -x 
     echo $new > version
-    sed -i "s/\(__version__ = \).*/\1'$mew'/" wordish.py
-    sed -i "s/\(version = \).*/\1'$new',/" doc/conf.py
-    sed -i "s/\(    version = \).*/\1'$new'/" setup.py
+    sed -i "s/\(__version__ = \).*/\1'$new'/" wordish.py
+    sed -i "s/\(version = \).*/\1'$new'/" doc/conf.py
+    sed -i "s/\(    version = \).*/\1'$new',/" setup.py
 
     update_long_description
 
@@ -109,15 +107,16 @@ die () { echo "$1" >&2 ; exit 1 ;  }
 #    version (bump the beta if in beta, else bump the patch)
 
 version=`cat version`
-if [ -z "$1" && "$1" != upload ];
-    then handle_version "$@" 
+if [ -n "$1" -a "$1" != upload ];
+    then 
+    new_version "$@" 
     version=`cat version`
 elif ( [ "$1" = upload -o "$2" = upload ] ) \
     && [ $version = `cat .last_uploaded` ]; then
 
     if [ `expr index $version b` -eq 0 ] ;
-    then handle_version bump_patch
-    else handle_version bump_beta ; fi
+    then new_version bump_patch
+    else new_version bump_beta ; fi
 fi
 
 # 2. Do the tests, build the doc, build the python packaging
@@ -125,9 +124,9 @@ fi
 
 version=`cat version`
 for f in `ls test_*.py`; do
-    python $f		|| die "Unit tests failed" ; done
-build_doc		|| die "Build documentation failed"  
-python setup.py sdist	|| die "Python package build failed"
+    python $f > /dev/null  || die "Unit tests failed" ; done
+build_doc		   || die "Build documentation failed"  
+python setup.py sdist	   || die "Python package build failed"
 
 
 # 3. If requested, upload to pypi, to gh-pages, to master
