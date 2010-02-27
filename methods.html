@@ -5,13 +5,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Organisation &mdash; Wordish v1.1.0 documentation</title>
+    <title>Organisation &mdash; Wordish v1.0.1 documentation</title>
     <link rel="stylesheet" href="static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '#',
-        VERSION:     '1.1.0',
+        VERSION:     '1.0.1',
         COLLAPSE_MODINDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -19,7 +19,7 @@
     </script>
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="Wordish v1.1.0 documentation" href="index.html" /> 
+    <link rel="top" title="Wordish v1.0.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -31,7 +31,7 @@
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              accesskey="M">modules</a> |</li>
-        <li><a href="index.html">Wordish v1.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar">
@@ -43,6 +43,9 @@
 <li><a class="reference external" href="#version">Version</a></li>
 </ul>
 </li>
+<li><a class="reference external" href="#release">Release</a></li>
+<li><a class="reference external" href="#documentation">Documentation</a></li>
+<li><a class="reference external" href="#deployment">Deployment</a></li>
 </ul>
 
             <h3>This Page</h3>
@@ -130,8 +133,69 @@ released as <em>1.2.3</em>.</p>
 for example version 1.0.0b7 use the tag:</p>
 <div class="highlight-python"><pre>git clone git://github.com/jdb/wordish.git v1.0.0b7</pre>
 </div>
-<span class="target" id="testsuitequestions"></span><span class="target" id="buildchain"></span><span class="target" id="testbuildchain"></span><span class="target" id="doc"></span></div>
 </div>
+</div>
+<div class="section" id="release">
+<h1>Release<a class="headerlink" href="#release" title="Permalink to this headline">¶</a></h1>
+<p>Three steps :</p>
+<ol class="arabic">
+<li><p class="first">As the user may request a version change, or because the version
+must be incremented between two uploads, prior to build the new
+version must be pushed wherever the version is mentionned :</p>
+<ul class="simple">
+<li>in the documentation (in <em>doc/conf.py</em>),</li>
+<li>in the Python packaging configuration (in the <em>setup.py</em>) <a href="#id2"><span class="problematic" id="id3"><span id="id1"></span>[#]_</span></a>,</li>
+<li>and in the <em>Wordish</em> python module itself, ( in the module constant
+<tt class="docutils literal"><span class="pre">__version__</span></tt>).</li>
+<li>The version file will also be used when building the <em>man page</em> as
+well as when building debian and fedora packages.</li>
+</ul>
+<p>This step is skipped if no upload and no version change was
+requested.</p>
+<p>The version is kept in a file named <tt class="docutils literal"><span class="pre">version</span></tt> and is pushed
+explicitly in the files with sed. The setup.py file should not read
+and depend on the version file at execution time, because at
+install time the version file is not available anymore.</p>
+<p>The inclusion of the version in the software module make it
+possible for users of the module to adapt their use to multiple
+wordish version depending on the software module version.</p>
+<p>Before commiting, the setup.py&#8217;s <em>long_description</em> parameter and
+the README.txt are also updated with the latest docstring from the
+<em>wordish</em> module.</p>
+</li>
+<li><p class="first">The tests are tried, the documentation is rebuilt, the package is
+rebuilt. Any error bailout the release script. This step is
+idempotent except for the documentation in the gh-branch which gets
+commited (not pushed).</p>
+<p>The scripts stops here if upload was not specified as an argument.</p>
+</li>
+<li><p class="first">If an upload was requested, if the repository is not clean or if
+the current branch is not master, the script bails out.</p>
+</li>
+</ol>
+<p>In the <em>wordish</em> sources, the version is kept in the file named
+version. The version is inserted :</p>
+<p>The long description in the Python packaging configuration (in the
+<em>setup.py</em>), is also updated from the <em>wordish</em> module docstring.</p>
+</div>
+<div class="section" id="documentation">
+<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+<p>There are four sources for documentation:</p>
+<ol class="arabic simple">
+<li>the wordish module docstrings which is copied into README.txt, the
+<em>long description</em> of the setup.py,</li>
+<li>the <em>doc/</em> directory which is transformed into html pages stored in
+the branch gh-pages. This is a special convention of github which
+interpret these file to be presented on the project page.</li>
+<li>the sources for the man pages in the <em>man/</em> directory are
+restructured text pages built into the <em>man format</em></li>
+<li>the wordish public API is described in the <em>interfaces.py</em> file</li>
+</ol>
+</div>
+<div class="section" id="deployment">
+<h1>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h1>
+<p>Wordish is available on the Python package index, writing only a file</p>
+<span class="target" id="testsuitequestions"></span><span class="target" id="buildchain"></span><span class="target" id="testbuildchain"></span><span class="target" id="doc"></span></div>
 
 
           </div>
@@ -148,7 +212,7 @@ for example version 1.0.0b7 use the tag:</p>
         <li class="right" >
           <a href="modindex.html" title="Global Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Wordish v1.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Wordish v1.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
