@@ -13,11 +13,15 @@
 #   -> bump the patch if no b else bump the beta and upload (check last_upload)
 
 
-die () { echo "$1" >&2 ; exit 1 ;  }
+
+
+
+
+
 
 build_doc () {
 
-    set -e -x
+    set -x
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
 
@@ -38,16 +42,6 @@ build_doc () {
 
     git commit -a -m "Updated the doc to version $version"
     git checkout $current_branch || return 1
-
-}
-
-new_version () {
-    echo $1 > version
-    sed -i "s/\(__version__ = \).*/\1'$1'/" wordish.py
-    sed -i "s/\(version = \).*/\1'$1',/" doc/conf.py
-    sed -i "s/\(    version = \).*/\1'$1'/" setup.py
-
-    git commit -m "Updated version to `cat version`" setup.py doc/conf.py wordish.py version --no-verify
 }
 
 update_long_description () {
@@ -61,10 +55,9 @@ file('setup.py','w').write(m.group('before') + replacement + m.group('after'))
 file('README.txt','w').write(replacement)
 EOF
 
-    git commit -m "Updated version to `cat version`" setup.py  --no-verify
 }
 
-handle_version () {
+new_version () {
 
     unset major minor patch beta
     
@@ -85,30 +78,42 @@ handle_version () {
 
     case "$1" in
 
-	pre_minor  )  new_version $major.$(($minor+1)).0b	     ;; 
-	pre_major  )  new_version $(($major+1)).0.0.0b		     ;; 
+	pre_minor  )  new=$major.$(($minor+1)).0b	     ;; 
+	pre_major  )  new=$(($major+1)).0.0.0b		     ;; 
 
-	bump_beta  )  new_version $major.$minor.${patch}b$((1+$beta));; 
-	bump_patch )  new_version $major.$minor.$(($patch+1))	     ;; 
-	bump_minor )  new_version $major.$(($minor+1)).0	     ;; 
+	bump_beta  )  new=$major.$minor.${patch}b$((1+$beta));; 
+	bump_patch )  new=$major.$minor.$(($patch+1))	     ;; 
+	bump_minor )  new=$major.$(($minor+1)).0	     ;; 
 	
-	stabilize  )  new_version $major.$minor.$patch		     ;; 
+	stabilize  )  new=$major.$minor.$patch		     ;; 
 
 	* )  ;;
     esac
+
+    echo $new > version
+    sed -i "s/\(__version__ = \).*/\1'$mew'/" wordish.py
+    sed -i "s/\(version = \).*/\1'$new',/" doc/conf.py
+    sed -i "s/\(    version = \).*/\1'$new'/" setup.py
+
+    update_long_description
+
+    git commit -m "Updated version to $new" setup.py doc/conf.py wordish.py version README.txt --no-verify
+
 }
 
-# 1. Update the version if a version is set on the command line
-if [ "$1" != upload ];
+die () { echo "$1" >&2 ; exit 1 ;  }
+
+# 1. Update the version if a version is set on the command line Never
+#    upload twice the same version: increment the version if an upload
+#    is requested, and the current version is the last uploaded
+#    version (bump the beta if in beta, else bump the patch)
+
+version=`cat version`
+if [ -z "$1" && "$1" != upload ];
     then handle_version "$@" 
-fi
-
-# 1'. Never upload twice the same version: increment the version if an
-# upload is requested, and the current version is the last uploaded
-# version (bump the beta if in beta, else bump the patch)
-
-if ( [ "$1" = upload -o "$2" = upload ] ) \
-    && [ `cat version` = `cat .last_uploaded` ]; then
+    version=`cat version`
+elif ( [ "$1" = upload -o "$2" = upload ] ) \
+    && [ $version = `cat .last_uploaded` ]; then
 
     if [ `expr index $version b` -eq 0 ] ;
     then handle_version bump_patch
@@ -116,33 +121,36 @@ if ( [ "$1" = upload -o "$2" = upload ] ) \
 fi
 
 # 2. Do the tests, build the doc, build the python packaging
+#    bail out if any problem
+
 version=`cat version`
 for f in `ls test_*.py`; do
-    python $f || die "Unit tests failed" ; done
-build_doc || die "Build documentation failed"  
-python setup.py sdist || die "Python package build failed"
+    python $f		|| die "Unit tests failed" ; done
+build_doc		|| die "Build documentation failed"  
+python setup.py sdist	|| die "Python package build failed"
+
 
 # 3. If requested, upload to pypi, to gh-pages, to master
 if [ "$1" = upload -o "$2" = upload ]; then
-    if git branch | grep -q '^* master' ; then    
+
+    curbranch=`git branch | awk '/\*/ {print $2}'`
+    test $curbranch == master || \
+	die "Please switch from the current '$curbranch' to the master branch"
 	
-	git status | grep "nothing to commit (working directory clean)" \
-	    || die "release.sh must be called from a commited repository"
-	set -e -x
-	git checkout gh-pages
-	git push origin gh-pages
-	git checkout master
+    git status | grep "nothing to commit (working directory clean)" \
+	|| die "release.sh must be called from a commited repository"
+	
+    set -e -x
+    git checkout gh-pages
+    git push origin gh-pages
+    git checkout master
+    
+    python setup.py sdist upload
+    echo $version > .last_uploaded
 
-	python setup.py sdist  upload
-	echo $version > .last_uploaded
-
-	git tag v$version
-	git commit -a -m "Released v$version" --no-verify
-	git push origin master
-    else 
-	echo "Please release from the master branch,"
-	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; 
-    fi    
+    git tag v$version
+    git commit -a -m "Released v$version" --no-verify
+    git push origin master
 fi
 
 # 4. Build the debian package from the tag: this could be in debian/rules

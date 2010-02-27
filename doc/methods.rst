@@ -85,22 +85,59 @@ for example version 1.0.0b7 use the tag::
 Release
 =======
 
+Three steps :
+
+#. As the user may request a version change, or because the version
+   must be incremented between two uploads, prior to build the new
+   version must be pushed wherever the version is mentionned :
+
+   - in the documentation (in *doc/conf.py*), 
+
+   - in the Python packaging configuration (in the *setup.py*) [#]_,
+
+   - and in the *Wordish* python module itself, ( in the module constant
+     ``__version__``).
+
+   - The version file will also be used when building the *man page* as
+     well as when building debian and fedora packages.
+
+   This step is skipped if no upload and no version change was
+   requested.
+
+   The version is kept in a file named ``version`` and is pushed
+   explicitly in the files with sed. The setup.py file should not read
+   and depend on the version file at execution time, because at
+   install time the version file is not available anymore.
+
+   The inclusion of the version in the software module make it
+   possible for users of the module to adapt their use to multiple
+   wordish version depending on the software module version.
+
+   Before commiting, the setup.py's *long_description* parameter and
+   the README.txt are also updated with the latest docstring from the
+   *wordish* module.
+
+   .. the process is missing a release note howto built from the git
+   .. log and formatted into the debian or rpm changelog, the tar ball
+   .. does not the man pages nor the documentation
+
+   .. this whole process is super tightly linked to git, github,
+   .. python distutils
+
+#. The tests are tried, the documentation is rebuilt, the package is
+   rebuilt. Any error bailout the release script. This step is
+   idempotent except for the documentation in the gh-branch which gets
+   commited (not pushed).
+
+   The scripts stops here if upload was not specified as an argument.
+
+#. If an upload was requested, if the repository is not clean or if
+   the current branch is not master, the script bails out.
+
 In the *wordish* sources, the version is kept in the file named
 version. The version is inserted :
 
-- in the documentation (in *doc/conf.py*), 
 
-- in the Python packaging configuration (in the *setup.py*),
-
-- and in the *Wordish* python module itself, ( in the module constant
-  ``__version__``).
-
-- The version file will also be used when building the *man page* as
-  well as when building debian and fedora packages.
-
-The inclusion of the version in the software module make it possible
-for user to adapt their use to multiple wordish version depending on
-the software module version.
 
 The long description in the Python packaging configuration (in the
 *setup.py*), is also updated from the *wordish* module docstring.
