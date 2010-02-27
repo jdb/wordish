@@ -21,8 +21,8 @@ build_doc () {
 
     current_branch=`git branch | awk '/\*/ {print $2}'`
 
-    if git status | grep -q -v "nothing to commit (working directory clean)"; 
-    then git stash save "Stashing for building documentation"; fi
+    if git status | grep -q "nothing to commit (working directory clean)"; 
+    then return 1 ; fi
 	
     ( cd doc ; sphinx-build -Q . ../build/html )
     git checkout gh-pages || return 1
@@ -36,18 +36,32 @@ build_doc () {
     find . -name '*.html' -o -name '*.js' | \
 	xargs sed -i 's/_static/static/g;s/_sources/sources/g;s/_images/images/g' 
 
-
     git commit -a -m "Updated the doc to version $version"
     git checkout $current_branch || return 1
 
-    if git stash list | grep -q "Stashing for building documentation" ;
-	then git stash pop ; fi
 }
 
 new_version () {
     echo $1 > version
-    sed -i "s/\(__version__ = \).*/\1 '$1'/" wordish.py
-    git commit -m "Updated version to `cat version`" wordish.py version --no-verify
+    sed -i "s/\(__version__ = \).*/\1'$1'/" wordish.py
+    sed -i "s/\(version = \).*/\1'$1',/" doc/conf.py
+    sed -i "s/\(    version = \).*/\1'$1'/" setup.py
+
+    git commit -m "Updated version to `cat version`" setup.py doc/conf.py wordish.py version --no-verify
+}
+
+update_long_description () {
+
+    python <<EOF
+import re, wordish
+replacement = re.compile('^.. sourcecode:: sh', re.M).sub('::', wordish.__doc__)
+m = re.compile('(?P<before>.*?long_description\W*=\W*""").*?(?P<after>""".*)', re.S
+    ).match( file('setup.py').read() )
+file('setup.py','w').write(m.group('before') + replacement + m.group('after'))
+file('README.txt','w').write(replacement)
+EOF
+
+    git commit -m "Updated version to `cat version`" setup.py  --no-verify
 }
 
 handle_version () {
@@ -71,25 +85,25 @@ handle_version () {
 
     case "$1" in
 
-	pre_minor  )  new_version $major.$(($minor+1)).0b	        ;; 
-	pre_major  )  new_version $(($major+1)).0.0.0b		        ;; 
+	pre_minor  )  new_version $major.$(($minor+1)).0b	     ;; 
+	pre_major  )  new_version $(($major+1)).0.0.0b		     ;; 
 
-	bump_beta  )  new_version $major.$minor.${patch}b$((1+$beta))	;; 
-	bump_patch )  new_version $major.$minor.$(($patch+1))	        ;; 
-	bump_minor )  new_version $major.$(($minor+1)).0	        ;; 
+	bump_beta  )  new_version $major.$minor.${patch}b$((1+$beta));; 
+	bump_patch )  new_version $major.$minor.$(($patch+1))	     ;; 
+	bump_minor )  new_version $major.$(($minor+1)).0	     ;; 
 	
-	stabilize  )  new_version $major.$minor.$patch			;; 
+	stabilize  )  new_version $major.$minor.$patch		     ;; 
 
 	* )  ;;
     esac
 }
 
-# 1. Update the version as requested on the command line
+# 1. Update the version if a version is set on the command line
 if [ "$1" != upload ];
     then handle_version "$@" 
 fi
 
-# 1'. Never upload twice the same version: update the version if an
+# 1'. Never upload twice the same version: increment the version if an
 # upload is requested, and the current version is the last uploaded
 # version (bump the beta if in beta, else bump the patch)
 
@@ -122,11 +136,15 @@ if [ "$1" = upload -o "$2" = upload ]; then
 	python setup.py sdist  upload
 	echo $version > .last_uploaded
 
-	git commit -a -m "Released v$version" --no-verify
 	git tag v$version
+	git commit -a -m "Released v$version" --no-verify
 	git push origin master
     else 
 	echo "Please release from the master branch,"
 	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; 
     fi    
 fi
+
+# 4. Build the debian package from the tag: this could be in debian/rules
+git archive --format=tar --prefix=wordish-$1/ v$1 wordish.py setup.py \
+    | bzip2  > build/wordish-$1.tar.bz2

@@ -11,8 +11,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 project = u'Wordish'
 copyright = u'2010, Jean Daniel Browne'
-release = file('../version').read().strip()
-version = '.'.join( release.split('.')[:2])
+release = '1.0.1'
+version = '1.1.0'
 exclude_trees = ['_build']
 unused_docs = ['changelog']
 

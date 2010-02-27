@@ -7,18 +7,18 @@ setup(
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = "1.0.1",
+    version = '1.1.0'
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
                    "commands compare the outputs"),
 
-    long_description = """Wordish is a script which executes a shell
-session parsed from a documentation in the restructured text [#]_
-format, then tests and builds a report of the execution. To mark up
-shell code in an article, *wordish* uses the custom directive
-``sourcecode``, with the rquired argument ``sh``. When presented with
-an article:
+    long_description = """
+Wordish is a script which executes a shell session parsed from a
+documentation in the restructured text [#]_ format, then tests and builds a
+report of the execution. To mark up shell code in an article,
+*wordish* uses the custom directive ``sourcecode``, with the rquired
+argument ``sh``. When presented with an article:
 
 #. *wordish* filters out the text which is not marked with
    ``sourcecode``,

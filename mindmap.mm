@@ -11,10 +11,10 @@
 <node TEXT="clean up code"/>
 <node TEXT="debug"/>
 </node>
-<node TEXT="roadmap" FOLDED="true">
+<node TEXT="roadmap">
 <node TEXT="get a blessing from the sphinx project"/>
 </node>
-<node TEXT="interfaces" FOLDED="true">
+<node TEXT="interfaces">
 <node TEXT="overview simple run"/>
 <node TEXT="two parsers"/>
 <node TEXT="output and runner"/>
@@ -62,7 +62,7 @@
 </node>
 <node TEXT="changelog"/>
 </node>
-<node TEXT="objects" POSITION="right">
+<node TEXT="objects" FOLDED="true" POSITION="right">
 <node TEXT="ISessionParser">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
@@ -126,7 +126,7 @@
 <node TEXT="iterable"/>
 <node TEXT="member attribute is a list, a string, a dictionnary (docstring is less readable when building an overview), maybe epydoc is the way, or autointerface"/>
 </node>
-<node TEXT="packaging debian" POSITION="right">
+<node TEXT="packaging debian" FOLDED="true" POSITION="right">
 <node TEXT="standalones scripts"/>
 <node TEXT="man pages"/>
 <node TEXT="doc"/>
@@ -146,18 +146,18 @@
 <node TEXT="some use backdoors"/>
 <node TEXT="functional_tests should be launched as root and be run on every file in example"/>
 </node>
+<node TEXT="release" FOLDED="true" POSITION="right">
+<node TEXT="triage the output"/>
+<node TEXT="briefly resume the goals"/>
+<node TEXT="fail party"/>
+</node>
 <node TEXT="pr plan" FOLDED="true" POSITION="right">
-<node TEXT="shunit"/>
-<node TEXT="lo lange"/>
-<node TEXT="ubuntu"/>
+<node TEXT="debian administration"/>
 <node TEXT="sphinx"/>
 <node TEXT="docutils"/>
 <node TEXT="lvs"/>
-<node TEXT="guy from redhat"/>
-<node TEXT="debian administration"/>
 <node TEXT="python planet"/>
 <node TEXT="debian planet"/>
-<node TEXT="debian ml"/>
 <node TEXT="anevia"/>
 <node TEXT="roming"/>
 <node TEXT="imil"/>
