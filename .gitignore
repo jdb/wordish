@@ -1,9 +1,7 @@
 .buildinfo
 .doctrees/
-doc/
-wordish.py*
-doc/*
+build/
 dist/
-version
 interfaces.py*
+wordish.py*
 
