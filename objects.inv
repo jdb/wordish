@@ -1,6 +1,6 @@
 # Sphinx inventory version 1
 # Project: Wordish
-# Version: 1.0.1
+# Version: 1.0.2
 interfaces mod interfaces.html
 wordish mod write.html
 interfaces.ShellSessionParser.takewhile method interfaces.html
