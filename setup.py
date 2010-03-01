@@ -1,13 +1,15 @@
 
-
-from distutils.core import setup
+from setuptools import setup
 
 setup(
 
     py_modules = [ 'wordish' ],
+    # packages = [ 'wordish' ],
+    # package_dir = { 'wordish':'.' },
+    # include_package_data = True,
 
     name = 'wordish',
-    version = '1.0.1',
+    version = '1.0.2',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
