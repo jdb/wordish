@@ -4,9 +4,6 @@ from setuptools import setup
 setup(
 
     py_modules = [ 'wordish' ],
-    # packages = [ 'wordish' ],
-    # package_dir = { 'wordish':'.' },
-    # include_package_data = True,
 
     name = 'wordish',
     version = '1.0.2',
@@ -14,6 +11,9 @@ setup(
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
                    "commands compare the outputs"),
+
+    license = 'GPL',
+    requires = [ 'docutils (>=0.5)' ],
 
     long_description = """
 Wordish is a script which executes a shell session parsed from a
@@ -182,8 +182,5 @@ article which prompted the need for the development of *wordish*.
                     'Topic :: Documentation',
                     'Topic :: Education',
                     'Topic :: Software Development :: Testing',
-                    'Topic :: Utilities'],
-
-    license = 'GPL',
-    requires = [ 'docutils (>=0.5)' ]
+                    'Topic :: Utilities']
     )
