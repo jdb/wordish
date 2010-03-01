@@ -15,31 +15,33 @@
 
 build_doc () {
 
+    #1 Do the job in the local branch
+    ( cd doc ; sphinx-build -Q . ../html )
+    ( cd html
+	rm -rf static sources images *.pyc .buildinfo .doctrees/
+	mv {_,}sources
+	mv {_,}static  
+	mv {_,}images || true
+	find . -name '*.html' -o -name '*.js' | \
+	    xargs sed -i 's/_static/static/g;s/_sources/sources/g' 
+    )
+
+    # - interlude -  Make an incursion in another branch 
+    #  stash if needed, prepare come back
     set -x
-
-    current_branch=`git branch | awk '/\*/ {print $2}'`
-
     if ! git status | grep -q "nothing to commit (working directory clean)"; 
     then git stash save "just building doc" ; fi
-	
-    ( cd doc ; sphinx-build -Q . ../build/html )
+    current_branch=`git branch | awk '/\*/ {print $2}'`
     git checkout gh-pages || return 1
 
-    mv build/html/* .
-
-    rm -rf static sources images *.pyc .buildinfo .doctrees/
-    mv {_,}sources
-    mv {_,}static  
-    mv {_,}images || true
-    find . -name '*.html' -o -name '*.js' | \
-	xargs sed -i 's/_static/static/g;s/_sources/sources/g;s/_images/images/g' 
-
+    #2 Do the job in the other branch 
+    mv html/* .
     git commit -a -m "Updated the doc to version $version"
-    git checkout $current_branch || return 1
 
+    # - conclusion -  Back to the work branch
+    git checkout $current_branch || return 1
     if git stash list | grep "just building doc"; then
-	git stash pop
-	fi
+	git stash pop ; fi
 }
 
 update_long_description () {
@@ -152,6 +154,3 @@ if [ "$1" = upload -o "$2" = upload ]; then
     git push origin master
 fi
 
-# 4. Build the debian package from the tag: this could be in debian/rules
-git archive --format=tar --prefix=wordish-$1/ v$1 wordish.py setup.py \
-    | bzip2  > build/wordish-$1.tar.bz2
