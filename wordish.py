@@ -154,7 +154,7 @@ article which prompted the need for the development of *wordish*.
 
 """
 
-__version__ = '1.0.2'
+__version__ = (1,0,2,None)
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
@@ -200,11 +200,6 @@ class ShellSessionParser( object ):
         and can be modified with the function arguments 'com' and
         'whi'. 
 
-        If the argument shlex_object is set to True then it'is not the
-        list of tokens but the shlex object itself so that you can
-        experiment with the :obj:`shlex` and it multiple attribute and
-        method.
-
         >>> list(ShellSessionParser( "Yozza 1 2" ).tokens)
         ['Yozza', ' ', '1', ' ', '2']
         
@@ -243,23 +238,23 @@ class ShellSessionParser( object ):
         self.max_prompt_len = max([ len(p) for p in self.prompts ])
 
 
-    def _has_token( self ):
+    def has_token( self ):
         r"""
         Returns False if the token list is empty (which usually means
         the end of file has been reached). Returns True otherwise.
 
         >>> sess = ShellSessionParser( "~$ env | grep USER\nUSER=jd" )
-        >>> sess._has_token()
+        >>> sess.has_token()
         True
         >>> for t in sess.tokens: pass
-        >>> sess._has_token()
+        >>> sess.has_token()
         False
         """
         t = self.tokens.get_token()
         return False if t==self.tokens.eof else self.tokens.push_token( t ) or True
 
     
-    def is_output( self, token ):
+    def _is_output( self, token ):
         r"""
         Returns true if the token is after the last token of the
         output of a command, else returns false. The functions stops
@@ -268,11 +263,11 @@ class ShellSessionParser( object ):
         >>> sess = ShellSessionParser( "youpi\n~# " )
         >>> sess.tokens.next()
         'youpi'
-        >>> sess.is_output( 'youpi' )
+        >>> sess._is_output( 'youpi' )
         True
         >>> sess.tokens.next(),sess.tokens.next()
         ('\n', '~')
-        >>> sess.is_output( '~' )
+        >>> sess._is_output( '~' )
         False
         """
         # TODO: in the unittest, make sure '~' occurs in the -1, -2, and -3 position.
@@ -287,7 +282,7 @@ class ShellSessionParser( object ):
         else:
             return True
 
-    def is_command( self, token ):
+    def _is_command( self, token ):
         r"""
         Returns true if the token is after the last token of a command
         in the section, else returns false. The functions stops right
@@ -297,19 +292,19 @@ class ShellSessionParser( object ):
         >>> sess = ShellSessionParser( "date\n" )
         >>> sess.tokens.next()
         'date'
-        >>> sess.is_command( 'date' )
+        >>> sess._is_command( 'date' )
         True
         >>> sess.tokens.next()
         '\n'
-        >>> sess.is_command( '\n' )
+        >>> sess._is_command( '\n' )
         False
 
         This is the end of output, since the linefeed was not nested.
 
         >>> sess = ShellSessionParser( "(youpi\n)\n" )
-        >>> [ sess.is_command( sess.tokens.next()) for i in range(3) ]
+        >>> [ sess._is_command( sess.tokens.next()) for i in range(3) ]
         [True, True, True]
-        >>> sess.is_command( sess.tokens.next()); sess.is_command( sess.tokens.next()); 
+        >>> sess._is_command( sess.tokens.next()); sess._is_command( sess.tokens.next()); 
         True
         False
         
@@ -339,28 +334,10 @@ class ShellSessionParser( object ):
         """
         return ''.join (
             list( takewhile(
-                    self.is_output if is_output else self.is_command, 
+                    self._is_output if is_output else self._is_command, 
                     self.tokens )
                  ) ).strip()
 
-    def _get_command(self):
-        """
-        Returns a string from the current token to the end of the
-        next *command*.
-
-        Maybe be confused about what is the end of a command when called
-        in the middle of an output.
-        """
-
-        return self._takewhile(is_output=False)
-
-    def _get_output(self):
-        """
-        Returns a string from the current token to the end of the
-        next *output*.
-        """
-
-        return self._takewhile(is_output=True)
 
     def __iter__(self):
         r"""
@@ -376,9 +353,9 @@ class ShellSessionParser( object ):
         command: true
         output: 
         """
-        self._get_output()
-        while self._has_token() :
-            yield self._get_command(), self._get_output()
+        self.takewhile()
+        while self.has_token() :
+            yield self.takewhile(is_output=False), self.takewhile()
 
 
     
@@ -390,15 +367,39 @@ class ShellSessionParser( object ):
 
             
 class CommandOutput( object ):
+    """Structures the output of a standard shell command with the two
+    strings read on stdout and stderr plus the returncode.
 
-    # TODO: docstrings
+    The **equality operator** can be used with the CommandOutput, The
+    equality operator expects either a string or a CommandOuput as a
+    right hand side. The right hand side can contain the three dots
+    pattern '...' to match anything.
 
-    def __init__(self, out=None, err=None, returncode=None, cmd=None, match='ellipsis' ):
+    When matching against another CommandOutput, only the non null
+    attributes are matched: output == CommandOutput(out=None,
+    err=None, returncode=None) is always True."""
+
+    def __init__(self, out=None, err=None, returncode=None, 
+                 cmd=None, match='ellipsis' ):
+        """Is initialized with the out, err, and returncode. It is
+        also possible to store in this object the command which was
+        used to generate this output, by setting the cmd argument.
+
+        The *match* argument modifies the behavior of the '=='
+        equality operator. Match can be set with the *string*, *re* or
+        *ellipsis* value. If *string* is set, the comparison between
+        the two strings is the exact string comparison. If *re* is
+        set, then the right hand side is expected to be a valid
+        regular expression which is matched against the object. If
+        *ellipsis* is set, then '...' is special wildcard pattern
+        which can be used to match anything.
+
+        """
         self.out, self.err, self.returncode = out, err, returncode
         self.cmd = cmd
 
         assert match in ['string', 're', 'ellipsis']
-        self.match = getattr(self, match + '_match')
+        self._match = getattr(self, '_%s_match' % match)
 
     def __str__(self):
         """
@@ -419,13 +420,14 @@ class CommandOutput( object ):
     
     __repr__ = __str__
         
+    # todo match should be a private method
     def __neq__(self, other ):
         return not self.__eq__(other)
 
     def __eq__(self, other ):
 
         if isinstance(other, basestring):
-            return self.match( other, self.out )
+            return self._match( other, self.out )
 
         attrs = 'out', 'err', 'returncode'
         if any( [ not hasattr( other, a ) for a in attrs ]):
@@ -433,12 +435,12 @@ class CommandOutput( object ):
                              "string or a CommandOutput instance.")
         
         return all( [ 
-                self.match( str( getattr( other, a )) , str( getattr( self, a )))
+                self._match( str( getattr( other, a )) , str( getattr( self, a )))
                 for a in attrs 
                 if getattr( other, a ) is not None 
                 and getattr( self, a ) is not None ] )
 
-    def ellipsis_match(self,pattern,string):
+    def _ellipsis_match(self,pattern,string):
 
         if '...' in pattern:
             start, end = pattern.split('...')
@@ -446,10 +448,10 @@ class CommandOutput( object ):
         else:
             return pattern==string
 
-    def string_match(self,pattern,string):
+    def _string_match(self,pattern,string):
         return pattern==string
 
-    def re_match(self,pattern,string):
+    def _re_match(self,pattern,string):
         return re.match(pattern, string) is not None
 
     def exited_gracefully(self):
@@ -460,7 +462,7 @@ class CommandOutput( object ):
 
 
 class CommandRunner ( object ):
-    r""" Implements a python "context manager", when entering the
+    r"""Implements a python "context manager", when entering the
     context (the *with* block ), creates a shell in a subprocess,
     right before exiting the context (leaving the block or processing
     an exception), the shell is assured to be terminated.
@@ -505,9 +507,9 @@ class CommandRunner ( object ):
         the"""
 
         self.shell.stdin.write( cmd + self.terminator )
-        return CommandOutput( *self.read_output(), cmd=cmd )
+        return CommandOutput( *self._read_output(), cmd=cmd )
  
-    def read_output(self):
+    def _read_output(self):
         
         out =      self.stdout._takewhile( is_output=True )
         ret = int( self.stdout.tokens.next() )
@@ -524,31 +526,34 @@ class CommandRunner ( object ):
         # self.p.send_signal( signal.SIGKILL ) will be needed
 
 class TestReporter( object):
+    """The Reporter methods are introduced between the calls to the
+    SessionParser and the CommandRunner"""
 
     # should clearly present aborted from failed, and also not tested
     # will need a crazy dot graph to sort this mess
     def __init__( self ):
         self.passcount, self.failcount = 0, 0
-        self.last_expected, self.last_output = None, None
-
-    def failed( self, output ):
-        self.failcount += 1
-        return "Failed, got:\t%s\n" % output 
 
     def passed( self, output):
+        "Formats a successful result. Increment the *passed* counter"
         self.passcount += 1
         return "ok\n"
 
-    def before( self, cmd, expected ):
-        self.last_expected = expected
-        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
+    def failed( self, output ):
+        "Formats a failed result. Decrement the *passed* counter"
+        self.failcount += 1
+        return "Failed, got:\t%s\n" % output 
 
-    def after(self, output ):
-        self.last_output = output
-        return self.passed( output 
-                   ) if output==self.last_expected else self.failed( output )
+    def before( self, cmd, expected ):
+        "Annonce the action to come. For example, the test to be
+        done, the expected result. In case, the test takes time, it is
+        desirable to let the user know what is happening beforehand."
+        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
     
     def summary( self ):
+        "Report the operations with, the number of actions, the
+        number of success, the number of failure, etc."
+
         print "%s tests found. " % (self.passcount + self.failcount)
         if self.failcount==0:
             print "All tests passed"
@@ -559,7 +564,7 @@ class TestReporter( object):
         return self.failcount
                 
 
-class BlockSelector( object):
+class BlockFilter( object):
     # this object could be a function after all, the prototype would
     # be a little more complex.
 
@@ -616,26 +621,32 @@ def wordish():
     for f in files:
 
         report = TestReporter()
-        filter = BlockSelector( directive='sourcecode', arg=['sh'])
+        filter = BlockFilter( directive='sourcecode', arg=['sh'])
         session = iter( ShellSessionParser( filter( f ) ))
 
         with CommandRunner() as run:
             for cmd, expected in session:
 
                 print report.before( cmd, expected )
-                print report.after( run( cmd ) )
 
-                if report.last_output.aborted(): 
+                if re.search('#.*ignore',expected) is not None: continue
+                    
+                if re.search('#.*&2',expected):
+                    expected=CommandOutput(err=expected) else CommandOutput(expected)
 
-                    # sole condition if expected.returncode is None if
-                    # expected returncode is not None and expected!=actual
-                    # output should bailout. Test and errors should be
-                    # different.
+                m=re.search('#.*returncode=(\d)',expected)
+                if m is not None:
+                    expected.returncode=m.group(1)
 
+                out = run( cmd )
+                self.passed(out) if out==expected else self.failed(out)
+
+                if out.aborted(): 
+                    # Test and errors should be differentiated
                     print( "Command aborted, bailing out")
                     remaining_cmds = [ cmd for cmd, _ in session ]
                     if len( remaining_cmds )==0:
-                        print( "No remaining command" )
+                        print( "No remaining command anyway" )
                     else:
                         print "Untested command%s:\n\t" % (
                             "s" if len( remaining_cmds )>1 else ""  ),
@@ -647,7 +658,7 @@ def wordish():
 def rst2sh():
     
     files = sys.argv[1:] if len( sys.argv ) > 1 else StringIO( __doc__ ),
-    filter = BlockSelector( directive='sourcecode', arg=['sh'])
+    filter = BlockFilter( directive='sourcecode', arg=['sh'])
     for f in files: 
         print ShellSessionParser( 
             filter ( f  if hasattr(f, 'read') else file(f) )

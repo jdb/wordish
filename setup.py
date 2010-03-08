@@ -6,11 +6,15 @@ setup(
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = '1.0.2',
+    version = '1.0.3',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
                    "commands compare the outputs"),
+
+    use_2to3 = True,
+    entry_points = { 'console_scripts': [
+            'wordish = wordish:wordish'],},
 
     license = 'GPL',
     requires = [ 'docutils (>=0.5)' ],
