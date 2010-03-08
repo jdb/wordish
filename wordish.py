@@ -154,7 +154,8 @@ article which prompted the need for the development of *wordish*.
 
 """
 
-__version__ = (1,0,2,None)
+# Version as major, minor, patch, beta. beta is set to None when stable
+__version__ = (1,0,3,None)
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
@@ -545,9 +546,9 @@ class TestReporter( object):
         return "Failed, got:\t%s\n" % output 
 
     def before( self, cmd, expected ):
-        "Annonce the action to come. For example, the test to be
+        """Annonce the action to come. For example, the test to be
         done, the expected result. In case, the test takes time, it is
-        desirable to let the user know what is happening beforehand."
+        desirable to let the user know what is happening beforehand."""
         return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
     
     def summary( self ):
