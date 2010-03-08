@@ -155,7 +155,7 @@ article which prompted the need for the development of *wordish*.
 """
 
 # Version as major, minor, patch, beta. beta is set to None when stable
-__version__ = (1,0,3,None)
+__version__ = (1,0,4,None)
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
@@ -552,8 +552,8 @@ class TestReporter( object):
         return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
     
     def summary( self ):
-        "Report the operations with, the number of actions, the
-        number of success, the number of failure, etc."
+        """Report the operations with, the number of actions, the
+        number of success, the number of failure, etc."""
 
         print "%s tests found. " % (self.passcount + self.failcount)
         if self.failcount==0:
