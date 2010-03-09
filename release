@@ -35,7 +35,7 @@ build_doc () {
     git checkout gh-pages || return 1
 
     #2 Do the job in the other branch 
-    mv html/* .
+    cp -r html/* .
     git commit -a -m "Updated the doc to version $version"
 
     # - conclusion -  Back to the work branch
@@ -78,21 +78,35 @@ new_version () {
 
     case "$1" in
 
-	pre_minor  )  new=$major.$(($minor+1)).0b	     ;; 
-	pre_major  )  new=$(($major+1)).0.0.0b		     ;; 
+	pre_minor  )  
+	    minor=$(($minor+1)) ; patch=0 ; beta=1 ;; 
 
-	bump_beta  )  new=$major.$minor.${patch}b$((1+$beta));; 
-	bump_patch )  new=$major.$minor.$(($patch+1))	     ;; 
-	bump_minor )  new=$major.$(($minor+1)).0	     ;; 
-	
-	stabilize  )  new=$major.$minor.$patch		     ;; 
+	pre_major  )  
+	    major=$(($major+1)) ; minor=0 ; patch=0 ; beta=1 ;; 
 
-	* )  new=`cat version` ;;
+	bump_beta  )  
+	    beta=$((1+${beta:-0})) ;; 
+
+	bump_patch )  
+	    patch=$(($patch+1)) ; unset beta ;; 
+
+	bump_minor ) 
+	    minor=$(($minor+1)) ; patch=0 ; unset beta ;; 
+
+	stabilize  )  
+	    unset beta ;; 
+
+	# * )  ;;
     esac
+
+    new=$major.$minor.$patch${beta:+b}$beta
+    pynew='('$major','$minor','$patch','${beta:-None}')'
+
     set -x 
     echo $new > version
-    sed -i "s/\(__version__ = \).*/\1'$new'/" wordish.py
+    sed -i "s/\(__version__ = \).*/\1$pynew/" wordish.py
     sed -i "s/\(version = \).*/\1'$new'/" doc/conf.py
+    sed -i "s/\(release = \).*/\1'$new'/" doc/conf.py
     sed -i "s/\(    version = \).*/\1'$new',/" setup.py
 
     update_long_description

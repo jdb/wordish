@@ -320,7 +320,7 @@ class ShellSessionParser( object ):
 
         return True
 
-    def _takewhile( self, is_output=False ):
+    def takewhile( self, is_output=False ):
         r"""
         Returns a command or an output depending of the terminator
         provided. i.e. every token on which the terminator returns
@@ -354,9 +354,9 @@ class ShellSessionParser( object ):
         command: true
         output: 
         """
-        self.takewhile()
+        self.takewhile(is_output=True)
         while self.has_token() :
-            yield self.takewhile(is_output=False), self.takewhile()
+            yield self.takewhile(), self.takewhile(is_output=True)
 
 
     
@@ -481,24 +481,32 @@ class CommandRunner ( object ):
     0
     2, 0
     """
-    separate_stderr = True
 
+    parse_stderr = True
+    """When true, stderr is also parsed, and stored in the returned
+    CommandOuput.stderr attribute"""
+    
     def __enter__( self ):
-        if CommandRunner.separate_stderr:
-            self.terminator = '\necho "~$ $?" \n' + 'echo "~$ " >&2 \n' 
-            self.shell = Popen( "/bin/bash", shell=True, 
-                                stdin=PIPE, stdout=PIPE,stderr=PIPE, 
-                                universal_newlines=True)
-                                
-            self.stdout = ShellSessionParser( self.shell.stdout )
-            self.stderr = ShellSessionParser( self.shell.stderr ) 
-        else:
-            self.terminator = '\necho "~$ " \n' 
-            self.shell = Popen( "sh", shell=True, 
-                                stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+        """Creates a subshell, and plugs a shell session parser to the stdout.
 
-            self.stdout = ShellSessionParser( self.shell.stdout )
-            self.stderr = None
+        If the class attribute parse_stderr is true, stderr is also
+        parsed: the returned command output has not only a stdout and
+        a returncode attribute but also a stderr attribute"""
+       
+        self.terminator = '\necho "~$ "$? \n' 
+        if CommandRunner.parse_stderr:
+            self.terminator += 'echo "~$ " >&2 \n' 
+            stderr=PIPE if CommandRunner.parse_stderr else STDOUT
+
+        self.shell = Popen( 
+            "/bin/bash", shell=True, stdin=PIPE, stdout=PIPE,
+            stderr=stderr, universal_newlines=True)
+                                
+        self.stdout = ShellSessionParser( self.shell.stdout )
+        self.stderr = None
+        if CommandRunner.parse_stderr:
+            self.stderr = ShellSessionParser( self.shell.stderr ) 
+
         return self
 
     def __call__( self, cmd):
@@ -512,11 +520,10 @@ class CommandRunner ( object ):
  
     def _read_output(self):
         
-        out =      self.stdout._takewhile( is_output=True )
+        out =      self.stdout.takewhile( is_output=True )
         ret = int( self.stdout.tokens.next() )
-        err =      self.stderr._takewhile( True 
-                       ) if CommandRunner.separate_stderr else None 
-
+        err =      self.stderr.takewhile( True 
+                       ) if CommandRunner.parse_stderr else None 
         return out,err, ret
 
     def __exit__( self, *arg):
@@ -535,12 +542,12 @@ class TestReporter( object):
     def __init__( self ):
         self.passcount, self.failcount = 0, 0
 
-    def passed( self, output):
+    def passed( self, output=None ):
         "Formats a successful result. Increment the *passed* counter"
         self.passcount += 1
         return "ok\n"
 
-    def failed( self, output ):
+    def failed( self, output=None ):
         "Formats a failed result. Decrement the *passed* counter"
         self.failcount += 1
         return "Failed, got:\t%s\n" % output 
@@ -627,20 +634,23 @@ def wordish():
 
         with CommandRunner() as run:
             for cmd, expected in session:
-
+                print cmd, expected
                 print report.before( cmd, expected )
 
-                if re.search('#.*ignore',expected) is not None: continue
+                if re.search('#.*ignore',cmd) is not None: 
+                    continue
                     
-                if re.search('#.*&2',expected):
-                    expected=CommandOutput(err=expected) else CommandOutput(expected)
+                if re.search('#.*&2',cmd) is not None:
+                    expected = CommandOutput(err=expected) 
+                else: 
+                    expected = CommandOutput(expected)
 
-                m=re.search('#.*returncode=(\d)',expected)
+                m=re.search('#.*returncode=(\d)',cmd)
                 if m is not None:
                     expected.returncode=m.group(1)
 
                 out = run( cmd )
-                self.passed(out) if out==expected else self.failed(out)
+                report.passed(out) if out==expected else report.failed(out)
 
                 if out.aborted(): 
                     # Test and errors should be differentiated
