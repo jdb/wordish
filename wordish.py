@@ -161,7 +161,7 @@ from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile, chain
 from StringIO import StringIO
-import re
+import re, os
 from docutils import core
 from docutils.parsers import rst
 
@@ -312,7 +312,7 @@ class ShellSessionParser( object ):
         The first linefeed was nested in a subshell, hence was
         not the end of a command. The second linefedd was.
         """
-        if token == '\n' and self.nested==0:
+        if token == os.linesep and self.nested==0:
             return False
 
         elif token in '({': self.nested += 1
