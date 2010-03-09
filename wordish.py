@@ -162,10 +162,13 @@ from shlex import shlex
 from itertools import takewhile, chain
 from StringIO import StringIO
 import re, os
-from docutils import core
-from docutils.parsers import rst
-
-
+try:
+    from docutils import core
+    from docutils.parsers import rst
+    is_docutils_present = True
+except ImportError:
+    is_docutils_present = False
+    
 def trace( decorated ):
     def f( *arg,**kwarg):
         print "%s: %s, %s => " % (decorated.__name__, arg, kwarg),
@@ -629,7 +632,11 @@ def wordish():
     for f in files:
 
         report = TestReporter()
-        filter = BlockFilter( directive='sourcecode', arg=['sh'])
+        if is_docutils_present:
+            filter = BlockFilter( directive='sourcecode', arg=['sh']) 
+        else:
+            filter = lambda f:f
+
         session = iter( ShellSessionParser( filter( f ) ))
 
         with CommandRunner() as run:
@@ -638,6 +645,7 @@ def wordish():
                 print report.before( cmd, expected )
 
                 if re.search('#\W*(ignore|ign)',cmd) is not None: 
+                    run( cmd )
                     continue
                     
                 if re.search('#\W*(&2|on stderr)',cmd) is not None:
