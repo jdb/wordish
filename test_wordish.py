@@ -75,33 +75,33 @@ class CommandOutputTestCase(unittest.TestCase):
     def test_equal_string( self ):
 
         for samples in self.true_examples, self.true_combinatorial: 
-            for parsed, actual in samples:
-                self.assertTrue( out(*parsed)==out(*actual) )
+            for want, got in samples:
+                self.assertTrue( out(*want)==out(*got) )
 
-        for parsed, actual in self.false_combinatorial:
-            self.assertFalse( out(*parsed)==out(*actual) )
+        for want, got in self.false_combinatorial:
+            self.assertFalse( out(*want)==out(*got) )
             
     def test_equal_re( self ):
 
         for samples in (self.true_examples, self.true_combinatorial,
                         self.true_re):
-            for parsed, actual in samples:
-                self.assertTrue( self.re(*parsed)==self.re(*actual) )
+            for want, got in samples:
+                self.assertTrue( self.re(*want)==self.re(*got) )
 
         for samples in self.false_combinatorial, self.false_re:
-            for parsed, actual in samples:
-                self.assertFalse( self.re(*parsed)==self.re(*actual) )
+            for want, got in samples:
+                self.assertFalse( self.re(*want)==self.re(*got) )
 
     def test_equal_ellipsis( self ):
           
         for samples in (self.true_examples, self.true_combinatorial,
                         self.true_ellipsis):
-            for parsed, actual in samples:
-                self.assertTrue( self.ellipsis(*parsed)==self.ellipsis(*actual) )
+            for want, got in samples:
+                self.assertEqual( self.ellipsis(*want),self.ellipsis(*got) )
 
         for samples in self.false_combinatorial, self.false_ellipsis:
-            for parsed, actual in samples:
-                self.assertFalse( self.ellipsis(*parsed)==self.ellipsis(*actual) )
+            for want, got in samples:
+                self.assertFalse( self.ellipsis(*want)==self.ellipsis(*got) )
 
     def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
@@ -120,8 +120,8 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "ls", "ls"),
             ( "", "") )
 
-        for text, expected in commands:
-            self.assertEqual( session(text).takewhile(), expected ) 
+        for text, want in commands:
+            self.assertEqual( session(text).takewhile(), want ) 
 
 
     def test_output (self):
@@ -133,8 +133,8 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "~# ", ""),
             ( "", "") )
 
-        for text, expected in outputs:
-            self.assertEqual( session(text).takewhile(is_output=True), expected)
+        for text, want in outputs:
+            self.assertEqual( session(text).takewhile(is_output=True), want)
 
     def test_next ( self ):
         
@@ -266,10 +266,10 @@ supercalifragilisticexpialidocious
 
 """)
 
-        expected = "~$ echo coucou\ncoucou\n"
+        want = "~$ echo coucou\ncoucou\n"
 
         filter = BlockFilter(directive='codesource', arg=['blabi'])
-        self.assertEqual( filter(article).read(), expected)
+        self.assertEqual( filter(article).read(), want)
 
 class HintsTestCase( unittest.TestCase ):
 

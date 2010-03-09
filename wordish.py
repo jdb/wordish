@@ -168,6 +168,10 @@ try:
     is_docutils_present = True
 except ImportError:
     is_docutils_present = False
+
+import doctest
+# The module ellipsis match function is a direct call to doctest's
+# ellipsis match
     
 def trace( decorated ):
     def f( *arg,**kwarg):
@@ -444,19 +448,14 @@ class CommandOutput( object ):
                 if getattr( other, a ) is not None 
                 and getattr( self, a ) is not None ] )
 
-    def _ellipsis_match(self,pattern,string):
+    def _ellipsis_match(self, want, got):
+        return doctest._ellipsis_match(want, got)
 
-        if '...' in pattern:
-            start, end = pattern.split('...')
-            return string.startswith(start) and string.endswith(end)
-        else:
-            return pattern==string
+    def _string_match(self,want,got):
+        return want==got
 
-    def _string_match(self,pattern,string):
-        return pattern==string
-
-    def _re_match(self,pattern,string):
-        return re.match(pattern, string) is not None
+    def _re_match(self,want,got):
+        return re.match(want, got) is not None
 
     def exited_gracefully(self):
         return self.returncode==0
@@ -555,11 +554,11 @@ class TestReporter( object):
         self.failcount += 1
         return "Failed, got:\t%s\n" % output 
 
-    def before( self, cmd, expected ):
+    def before( self, cmd, want ):
         """Annonce the action to come. For example, the test to be
         done, the expected result. In case, the test takes time, it is
         desirable to let the user know what is happening beforehand."""
-        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
+        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, want )
     
     def summary( self ):
         """Report the operations with, the number of actions, the
@@ -640,27 +639,27 @@ def wordish():
         session = iter( ShellSessionParser( filter( f ) ))
 
         with CommandRunner() as run:
-            for cmd, expected in session:
-                print cmd, expected
-                print report.before( cmd, expected )
+            for cmd, want in session:
+                print cmd, want
+                print report.before( cmd, want )
 
                 if re.search('#\W*(ignore|ign)',cmd) is not None: 
                     run( cmd )
                     continue
                     
                 if re.search('#\W*(&2|on stderr)',cmd) is not None:
-                    expected = CommandOutput(err=expected) 
+                    want = CommandOutput(err=want) 
                 else: 
-                    expected = CommandOutput(expected)
+                    want = CommandOutput(want)
 
                 m=re.search('#\W*(ret|returncode)=(\d)',cmd)
                 if m is not None:
-                    expected.returncode=m.group(2)
+                    want.returncode=m.group(2)
 
                 out = run( cmd )
-                report.passed(out) if out==expected else report.failed(out)
+                report.passed(out) if out==want else report.failed(out)
 
-                if (expected.err is None and not expected.aborted()) and out.aborted(): 
+                if (want.err is None and not want.aborted()) and out.aborted(): 
                     # Test and errors should be differentiated
                     print( "Command aborted unexpectedly, bailing out")
                     remaining_cmds = [ cmd for cmd, _ in session ]
