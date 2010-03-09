@@ -6,7 +6,9 @@ from wordish import CommandOutput as out
 from wordish import CommandRunner as shell
 from wordish import TestReporter 
 from wordish import BlockFilter
-import sys
+from tempfile import mkstemp
+from subprocess import Popen
+import sys, os
 
 # TODO: command runner not tested: create file check existence, check
 # enter, check exit
@@ -248,7 +250,7 @@ class ReporterTestCase( unittest.TestCase ):
         self.assertEqual(report.failcount,9)
         self.assertEqual(report.passcount,1)
 
-class BlockSelectorTestCase( unittest.TestCase ):
+class BlockFilterTestCase( unittest.TestCase ):
 
     def test( self ):
 
@@ -266,40 +268,89 @@ supercalifragilisticexpialidocious
 
         expected = "~$ echo coucou\ncoucou\n"
 
-        filter = BlockSelector(directive='codesource', arg=['blabi'])
+        filter = BlockFilter(directive='codesource', arg=['blabi'])
         self.assertEqual( filter(article).read(), expected)
 
-class BlackBoxTestCase( unittest.TestCase ):
+class HintsTestCase( unittest.TestCase ):
 
-    def test_cmdline_options(self):
+    def wordish_on_string(self,s):
+        _,fn = mkstemp()
+        f=file(fn,'w')
+        f.write(s)
+        f.close()
+        p=Popen("python ./wordish.py %s >/dev/null 2>&1" % fn, shell=True)
+        p.communicate()
+        os.remove(fn)
+        return p.returncode
 
-        commands = (
-            ("date\nls\nid\n", "date" ),
-            ("date # comment\n", "date # comment" ),
-            ("ls # ~$ promptlike\n", "ls # ~$ promptlike" ),
-            ( "hello () {\n echo hello\n} \n some more stuff",
-              "hello () {\n echo hello\n}" ),
-            ( "( cd \ntmp )\n", "( cd \ntmp )"),
-            ( "ls", "ls"),
-            ( "", "") )
+    def test_ignore(self):
 
-        for text, expected in commands:
-            self.assertEqual( session(text).takewhile(), expected ) 
+        s="""
+This article is going to get me to the Pulitzer prize.
 
+.. sourcecode:: sh
+
+   ~$ echo hello
+   hello
+   ~$ echo coucou   # ignore
+   something different from coucou
+   ~$ echo coucou
+   Ola !
+
+supercalifragilisticexpialidocious
+"""
+        self.assertEqual( self.wordish_on_string(s), 1 ) 
+
+    def test_returncode(self):
+
+        s="""
+This article is going to get me to the Pulitzer prize.
+
+.. sourcecode:: sh
+
+   ~$ echo hello
+   hello
+   ~$ false   # returncode=1
+   ~$ echo coucou
+   Ola !
+
+supercalifragilisticexpialidocious
+"""
+        self.assertEqual( self.wordish_on_string(s), 1 ) 
+
+    def test_stderr(self):
+        s="""
+This article is going to get me to the Pulitzer prize.
+
+.. sourcecode:: sh
+
+   ~$ true
+   ~$ ls $RANDOM   # on stderr
+   ls: cannot access ...: No such file or directory
+   ~$ echo coucou
+   Ola!
+
+supercalifragilisticexpialidocious
+"""
+        self.assertEqual( self.wordish_on_string(s), 1 ) 
             
 
 if __name__ == '__main__':
    
     suite = unittest.TestSuite()
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ShellSessionParserTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandOutputTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandRunnerTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ReporterTestCase))
-    # suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BlockSelectorTestCase))
-    # suite.addTest(doctest.DocTestSuite(wordish))
 
-    # ce qui aurait pu etre completement possible au lieu de parser
-    # deux fois, c'est que la directive source code 
+    add = lambda t: [ suite.addTest(unittest.TestLoader(
+            ).loadTestsFromTestCase(i)) for i in t ]
+
+    add( [ ShellSessionParserTestCase,
+           CommandOutputTestCase, 
+           CommandRunnerTestCase, 
+           ReporterTestCase, 
+           BlockFilterTestCase,
+           HintsTestCase,
+           ] )
+
+    suite.addTest(doctest.DocTestSuite(wordish))
 
     run = unittest.TextTestRunner(verbosity=2).run(suite)
 

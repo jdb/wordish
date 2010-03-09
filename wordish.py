@@ -328,9 +328,9 @@ class ShellSessionParser( object ):
         returns whether the stream of tokens is terminated or not.
 
         >>> session = ShellSessionParser
-        >>> session( "cmd" )._takewhile()
+        >>> session( "cmd" ).takewhile()
         'cmd'
-        >>> session( "t () {\ncmd\n}\nhello" )._takewhile()
+        >>> session( "t () {\ncmd\n}\nhello" ).takewhile()
         't () {\ncmd\n}'
         """
         return ''.join (
@@ -459,7 +459,7 @@ class CommandOutput( object ):
         return self.returncode==0
 
     def aborted(self):
-        return self.returncode!=0
+        return not self.returncode in [0,None]
 
 
 class CommandRunner ( object ):
@@ -637,24 +637,24 @@ def wordish():
                 print cmd, expected
                 print report.before( cmd, expected )
 
-                if re.search('#.*ignore',cmd) is not None: 
+                if re.search('#\W*(ignore|ign)',cmd) is not None: 
                     continue
                     
-                if re.search('#.*&2',cmd) is not None:
+                if re.search('#\W*(&2|on stderr)',cmd) is not None:
                     expected = CommandOutput(err=expected) 
                 else: 
                     expected = CommandOutput(expected)
 
-                m=re.search('#.*returncode=(\d)',cmd)
+                m=re.search('#\W*(ret|returncode)=(\d)',cmd)
                 if m is not None:
-                    expected.returncode=m.group(1)
+                    expected.returncode=m.group(2)
 
                 out = run( cmd )
                 report.passed(out) if out==expected else report.failed(out)
 
-                if out.aborted(): 
+                if (expected.err is None and not expected.aborted()) and out.aborted(): 
                     # Test and errors should be differentiated
-                    print( "Command aborted, bailing out")
+                    print( "Command aborted unexpectedly, bailing out")
                     remaining_cmds = [ cmd for cmd, _ in session ]
                     if len( remaining_cmds )==0:
                         print( "No remaining command anyway" )
