@@ -161,6 +161,7 @@ from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
 from itertools import takewhile, chain
 from StringIO import StringIO
+from optparse import OptionParser
 import re, os
 try:
     from docutils import core
@@ -194,7 +195,7 @@ class ShellSessionParser( object ):
     output  : coucou
     """
 
-    def __init__( self, f, prompts=['~# ', '~$ '], com='', whi='' ):
+    def __init__( self, f, prompts=None,com='', whi='' ):
 
         r"""
         The constructor takes a filename or an open file or a string
@@ -238,7 +239,7 @@ class ShellSessionParser( object ):
         self.nested = 0
 
         self.prompts = []
-        for p in prompts:
+        for p in prompts if prompts else conf.prompts:
             s=shlex(p)
             s.commenters, s.whitespace = com, whi
             self.prompts.append( list( s ) )
@@ -362,13 +363,31 @@ class ShellSessionParser( object ):
         output: 
         """
         self.takewhile(is_output=True)
+
         while self.has_token() :
-            yield self.takewhile(), self.takewhile(is_output=True)
+            cmd,_want =  self.takewhile(), self.takewhile(is_output=True)
 
+            print "XXXXXXXXXXX"+cmd
+            if conf.parse_hints:
+                want = CommandOutput() 
+                if re.search('#\W*(ignore|ign)',cmd) is not None: 
+                    want.ignore = True
+                    
+                else:
+                    if re.search('#.*(&2|on stderr)',cmd):
+                        want.err = _want
+                    else:
+                        want.out = _want
 
-    
+                        m=re.search('#.*(ret|returncode)=(\d)',cmd) 
+                        want.returncode=m.group(2) if m else None
+                
+            yield cmd,want
+                    
     def toscript(self):
-        commentize = lambda o: '# %s\n' % o.replace( '\n', '\n# ' )
+        def commentize( want ):
+            want = want if isinstance(want,basestring) else want.out
+            return '# %s\n' % want.replace( '\n', '\n# ' )
         return "#!/bin/sh\nset -e  # -x\n\n%s\n" % '\n'.join(  
             chain( *( ( c, commentize(o) ) for c, o in self ) ) )
 
@@ -388,7 +407,7 @@ class CommandOutput( object ):
     err=None, returncode=None) is always True."""
 
     def __init__(self, out=None, err=None, returncode=None, 
-                 cmd=None, match='ellipsis' ):
+                 cmd=None, match=None, ignore=False ):
         """Is initialized with the out, err, and returncode. It is
         also possible to store in this object the command which was
         used to generate this output, by setting the cmd argument.
@@ -404,8 +423,9 @@ class CommandOutput( object ):
 
         """
         self.out, self.err, self.returncode = out, err, returncode
-        self.cmd = cmd
+        self.cmd, self.ignore = cmd, ignore
 
+        match=match if match else conf.match
         assert match in ['string', 're', 'ellipsis']
         self._match = getattr(self, '_%s_match' % match)
 
@@ -496,19 +516,20 @@ class CommandRunner ( object ):
         a returncode attribute but also a stderr attribute"""
        
         self.terminator = '\necho "~$ "$? \n' 
-        if CommandRunner.parse_stderr:
+        if conf.parse_stderr:
             self.terminator += 'echo "~$ " >&2 \n' 
-            stderr=PIPE if CommandRunner.parse_stderr else STDOUT
 
         self.shell = Popen( 
-            "/bin/bash", shell=True, stdin=PIPE, stdout=PIPE,
-            stderr=stderr, universal_newlines=True)
+            conf.shell, shell=True, stdin=PIPE, stdout=PIPE,
+            stderr=PIPE if conf.parse_stderr else STDOUT,
+            universal_newlines=True)
                                 
-        self.stdout = ShellSessionParser( self.shell.stdout )
-        self.stderr = None
-        if CommandRunner.parse_stderr:
-            self.stderr = ShellSessionParser( self.shell.stderr ) 
+        self.stdout = ShellSessionParser( self.shell.stdout, 
+                                          prompts=conf.prompts )
 
+        self.stderr = ShellSessionParser( self.shell.stderr,
+                                          prompts=conf.prompts 
+                                          ) if conf.parse_stderr else None
         return self
 
     def __call__( self, cmd):
@@ -587,8 +608,11 @@ class BlockFilter( object):
     # which might not be a problem in our case, but is unneeded in the
     # general case.
 
-    def __init__( self, directive='sourcecode', arg=['sh'] ):
+    def __init__( self, directive=None, arg=None ):
         self.f = StringIO()
+
+        directive = directive or  conf.filter_directive
+        directive = directive or  conf.filter_directive
 
         class Directive( rst.Directive ):
             has_content = True
@@ -615,20 +639,51 @@ class BlockFilter( object):
         return self.f
 
 
+def make_conf():
+
+    p = OptionParser()
+    p.add_option( '-n', "--dont-parse-hints", action="store_false", dest="parse_hints" )
+    p.add_option( '-p', "--prompts" )
+    p.add_option( '-v', "--verbose", action="store_true" )
+    p.add_option( '-e', "--parse-stderr" )
+    p.add_option( '-s', "--shell" )
+    p.add_option( '-m', "--match" )  
+    p.add_option( '-f', "--directive-filter" )   
+    p.add_option( '-a', "--directive-arguments" )
+
+    defaults = {
+        "parse_hints"         : True,
+        "prompts"             : ["~# ", "~$ "],
+        "verbose"             : False,
+        "parse_stderr"        : True,
+        "shell"               : "bash",
+        "match"               : "ellipsis",
+        "directive_filter"    : "sourcecode",
+        "directive_arguments" : ["sh"] }
+    o,a =p.parse_args()
+    [ setattr(o,k,v) for k,v in defaults.items() if getattr(o,k) is None ]
+    print o.parse_hints
+    return o,a
+
+conf,ff=make_conf()
+
+
+
 #########
 ######### Console script entry points
 
 import sys
 
+
 def wordish():
 
-    files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( __doc__ ),)
-    files = [ f if f!="-" else sys.stdin for f in files ] 
-    files = [ f if hasattr(f, 'read') else file(f) for f in files ]
+    fi = a if len( ff ) > 1 else (StringIO( __doc__ ),)
+    fi = [ f if f!="-" else sys.stdin for f in fi ] 
+    fi = [ f if hasattr(f, 'read') else file(f) for f in fi ]
 
     ret = 0
 
-    for f in files:
+    for f in fi:
 
         report = TestReporter()
         if is_docutils_present:
@@ -636,42 +691,36 @@ def wordish():
         else:
             filter = lambda f:f
 
-        session = iter( ShellSessionParser( filter( f ) ))
+        session = iter( ShellSessionParser( filter( f ), 
+                                            prompts=conf.prompts ) )
 
         with CommandRunner() as run:
             for cmd, want in session:
-                print cmd, want
-                print report.before( cmd, want )
 
-                if re.search('#\W*(ignore|ign)',cmd) is not None: 
-                    run( cmd )
+                if want.ignore:
+                    out = run( cmd )
                     continue
+                else:
+                    if conf.verbose:
+                        print report.before( cmd, want )
+                    out = run( cmd )
+
+                msg=report.passed(out) if out==want else report.failed(out)
+                if conf.verbose: print msg
                     
-                if re.search('#\W*(&2|on stderr)',cmd) is not None:
-                    want = CommandOutput(err=want) 
-                else: 
-                    want = CommandOutput(want)
-
-                m=re.search('#\W*(ret|returncode)=(\d)',cmd)
-                if m is not None:
-                    want.returncode=m.group(2)
-
-                out = run( cmd )
-                report.passed(out) if out==want else report.failed(out)
-
                 if (want.err is None and not want.aborted()) and out.aborted(): 
-                    # Test and errors should be differentiated
-                    print( "Command aborted unexpectedly, bailing out")
                     remaining_cmds = [ cmd for cmd, _ in session ]
+                    print( "Command aborted unexpectedly, bailing out")
                     if len( remaining_cmds )==0:
                         print( "No remaining command anyway" )
                     else:
-                        print "Untested command%s:\n\t" % (
-                            "s" if len( remaining_cmds )>1 else ""  ),
-                        print( "\n\t".join( remaining_cmds ))
+                        print "Untested command%s:\n\t%s" % (
+                            "s" if len( remaining_cmds )>1 else "",
+                            "\n\t".join( remaining_cmds ))
 
         ret += report.summary()
     return ret
+
 
 def rst2sh():
     
@@ -679,7 +728,8 @@ def rst2sh():
     filter = BlockFilter( directive='sourcecode', arg=['sh'])
     for f in files: 
         print ShellSessionParser( 
-            filter ( f  if hasattr(f, 'read') else file(f) )
+            filter ( f  if hasattr(f, 'read') else file(f) ),
+            prompts=conf.prompts, 
             ).toscript()
 
 if __name__=='__main__':

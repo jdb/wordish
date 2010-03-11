@@ -342,17 +342,17 @@ if __name__ == '__main__':
     add = lambda t: [ suite.addTest(unittest.TestLoader(
             ).loadTestsFromTestCase(i)) for i in t ]
 
-    add( [ ShellSessionParserTestCase,
-           CommandOutputTestCase, 
-           CommandRunnerTestCase, 
-           ReporterTestCase, 
-           BlockFilterTestCase,
+    add( [ #ShellSessionParserTestCase,
+           #CommandOutputTestCase, 
+           #CommandRunnerTestCase, 
+           #ReporterTestCase, 
+           #BlockFilterTestCase,
            HintsTestCase,
            ] )
 
-    suite.addTest(doctest.DocTestSuite(wordish))
+    #suite.addTest(doctest.DocTestSuite(wordish))
 
-    run = unittest.TextTestRunner(verbosity=2).run(suite)
+    run = unittest.TextTestRunner(verbosity=1).run(suite)
 
     if len(run.errors)!=0 or len(run.failures)!=0:
         sys.exit(1)

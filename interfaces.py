@@ -18,8 +18,8 @@ session in a restructured text article. A simplified version of
 
   filter = BlockFilter( directive='sourcecode', arg=['sh'] )
   with CommandRunner() as run:
-      for cmd, expected in ShellSessionParser( filter( f ) ):
-          if run( cmd ) != expected:
+      for cmd, want in ShellSessionParser( filter( f ) ):
+          if run( cmd ) != want:
               print "Warning: unexpected command %s 's output"
 
 *Wordish* also declares two additional classes:
@@ -43,12 +43,12 @@ The :func:`wordish` module function articulates the five classes::
     filter = BlockFilter(directive='sourcecode', arg=['sh'])
 
     with CommandRunner() as run:
-        for cmd, expected in ShellSessionParser( filter(f) ):
-            print report.before(cmd, expected)
+        for cmd, want in ShellSessionParser( filter(f) ):
+            print report.before(cmd, want)
 
             out = run(cmd)
 
-            print report.success(out) if out == expected else report.failure(out)
+            print report.success(out) if out == want else report.failure(out)
 
             if out.aborted(): 
                 print("there was a serious error: bailing out")
@@ -145,7 +145,7 @@ class Reporter( object ):
 
     def before(self, cmd ):
         "Annonce the action to come. For example, the test to be
-        done, the expected result. In case, the test takes time, it is
+        done, the want result. In case, the test takes time, it is
         desirable to let the user know what is happening beforehand."
 
     def summary(self):
