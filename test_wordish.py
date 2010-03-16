@@ -3,7 +3,7 @@ import unittest, doctest, wordish
 from StringIO import StringIO 
 from wordish import ShellSessionParser as session
 from wordish import CommandOutput as out
-from wordish import CommandRunner as shell
+from wordish import CommandRunner
 from wordish import TestReporter 
 from wordish import BlockFilter
 from tempfile import mkstemp
@@ -24,11 +24,11 @@ class CommandOutputTestCase(unittest.TestCase):
     def setUp(self):
 
         self.true_examples = ( 
-            (( "hello world", None, None),                ( "hello world", None, None)),
-            (( "hello world", "warning", None ),     ( "hello world", None, None )),
-            (( "hello world", "warning", -1 ), ( "hello world", None, None )),     
-            (( "hello world", "warning"),      ( "hello world", "warning", None )),
-            (( "hello world", "warning", -1 ), ( "hello world", "warning", -1 )),
+            (( "hello world", None, None),   ( "hello world", None, None )),
+            (( "hello world", "warn", None ),( "hello world", None, None )),
+            (( "hello world", "warn", -1 ),  ( "hello world", None, None )),
+            (( "hello world", "warn"),       ( "hello world", "warn", None )),
+            (( "hello world", "warn", -1 ),  ( "hello world", "warn", -1 )),
             (( None, None, None),              ( None, None, None)),
             (( 1, None, 1),                    (None, 1, None) ),
             (( 1, None, None),                 (None, 1, 1)),
@@ -183,36 +183,36 @@ class CommandRunnerTestCase( unittest.TestCase ):
     def test_simple_command( self ):
         "sh writes on stdout"
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo coucou')
         self.assertEqual( out.out, 'coucou' )
 
     def test_stderr( self ):
         "sh writes on stderr"
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo coucou >&2')
         self.assertEqual( out.err, 'coucou' )
 
     def test_bashism( self ):
         "handy bash curly brackets"
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo a{b,c}')
         self.assertEqual( out.out, 'ab ac' )
 
     def test_returncode( self ):
         "return codes"
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('true')
         self.assertEqual( out.returncode, 0 )
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('false')
         self.assertEqual( out.returncode, 1 )
 
     def test_sequence_of_command( self ):
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             zero =  sh('export coucou=1').returncode
             zero += sh('test $coucou==1').returncode
             zero += sh('myfunc () { echo coucou ; return 42 ; }').returncode
@@ -225,14 +225,14 @@ class CommandRunnerTestCase( unittest.TestCase ):
         """use enter(), ask for the shell pid, check with the os that
         the process with this pid is 'sh'"""
         
-        with shell() as sh:
+        with CommandRunner() as sh:
             self.assertTrue( sh.shell.pid > 0)
         
     def test_exit(self):
         """Check that the pid of the shell does not exist anymore, or
         is not the son of this python object"""
         
-        with shell() as sh:
+        with CommandRunner() as sh:
             pass
         self.assertEqual(sh.shell.returncode, -15)
 
@@ -271,70 +271,51 @@ supercalifragilisticexpialidocious
         filter = BlockFilter(directive='codesource', arg=['blabi'])
         self.assertEqual( filter(article).read(), want)
 
+
 class HintsTestCase( unittest.TestCase ):
 
-    def wordish_on_string(self,s):
-        _,fn = mkstemp()
-        f=file(fn,'w')
-        f.write(s)
-        f.close()
-        p=Popen("python ./wordish.py %s >/dev/null 2>&1" % fn, shell=True)
-        p.communicate()
-        os.remove(fn)
-        return p.returncode
+    # classes which requires a conf cannot be tested without a conf
+    # the conf is expected global while this test case can not declare 
+    # a global conf object. The wordish objects can all take an optional conf
+    # attribute which override the global configuration. 
+
+    def execute(self, s):
+        with CommandRunner() as run:
+            return all([run(cmd)==want for cmd,want in session(s)])
 
     def test_ignore(self):
-
         s="""
-This article is going to get me to the Pulitzer prize.
-
-.. sourcecode:: sh
-
-   ~$ echo hello
-   hello
-   ~$ echo coucou   # ignore
-   something different from coucou
-   ~$ echo coucou
-   Ola !
-
-supercalifragilisticexpialidocious
+~$ echo hello
+hello
+~$ echo coucou   # ignore
+something different from coucou
+~$ echo coucou
+coucou
 """
-        self.assertEqual( self.wordish_on_string(s), 1 ) 
+        self.assertTrue( self.execute(s)) 
 
     def test_returncode(self):
 
         s="""
-This article is going to get me to the Pulitzer prize.
-
-.. sourcecode:: sh
-
-   ~$ echo hello
-   hello
-   ~$ false   # returncode=1
-   ~$ echo coucou
-   Ola !
-
-supercalifragilisticexpialidocious
+~$ echo hello
+hello
+~$ false   # returncode=1
+~$ echo coucou
+coucou
 """
-        self.assertEqual( self.wordish_on_string(s), 1 ) 
+        self.assertTrue( self.execute(s)) 
 
     def test_stderr(self):
         s="""
-This article is going to get me to the Pulitzer prize.
-
-.. sourcecode:: sh
-
-   ~$ true
-   ~$ ls $RANDOM   # on stderr
-   ls: cannot access ...: No such file or directory
-   ~$ echo coucou
-   Ola!
-
-supercalifragilisticexpialidocious
+~$ echo hello
+hello
+~$ ls $RANDOM   # on stderr
+ls: cannot access ...: No such file or directory
+~$ echo coucou
+coucou
 """
-        self.assertEqual( self.wordish_on_string(s), 1 ) 
+        self.assertTrue( self.execute(s)) 
             
-
 if __name__ == '__main__':
    
     suite = unittest.TestSuite()
@@ -342,15 +323,14 @@ if __name__ == '__main__':
     add = lambda t: [ suite.addTest(unittest.TestLoader(
             ).loadTestsFromTestCase(i)) for i in t ]
 
-    add( [ #ShellSessionParserTestCase,
-           #CommandOutputTestCase, 
-           #CommandRunnerTestCase, 
-           #ReporterTestCase, 
-           #BlockFilterTestCase,
-           HintsTestCase,
-           ] )
+    add( [ CommandOutputTestCase, 
+           HintsTestCase, 
+           ShellSessionParserTestCase,
+           CommandRunnerTestCase, 
+           ReporterTestCase, 
+           BlockFilterTestCase ] )
 
-    #suite.addTest(doctest.DocTestSuite(wordish))
+    suite.addTest(doctest.DocTestSuite(wordish))
 
     run = unittest.TextTestRunner(verbosity=1).run(suite)
 

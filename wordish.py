@@ -163,12 +163,65 @@ from itertools import takewhile, chain
 from StringIO import StringIO
 from optparse import OptionParser
 import re, os
+
+# le grand ecart: les objets veulent utiliser une valeur placee soit
+# dans self et dans ce cas, la valeur ne peux etre mise a jour a moins
+# d'une API, soit dans variable globale conf, mise a jour par d'autres
+# fonctions grace au mot cle global:
+
+# 1 passees en parametre du constructeur de l'objet
+#   -> interessant pour le test mais lourd a l'utilisation s'il 
+#      faut passer les valeurs de conf en parametre en permanence 
+
+# 2 passees en parametre a travers un objet conf 
+#    -> meme cas, plus light, mieux range mais risque de masquage 
+#       ou de modification d'un objet conf global
+
+# 3 soit d'un eventuel objet global conf (conf discrete)
+# 3 valeur par default en dur dans l'objet (encapsulation de l'objet)
+
+
+
+# en tout cas, les methodes passent par l'objet global conf ou
+# lisent la valeur dans l'objet global puis la stocke dans une variable locale
+# qui est prete a etre mise a jour dans le cas d'un message de config
+
+def make_conf():
+
+    p = OptionParser()
+    p.add_option( '-p', "--prompts" )
+    p.add_option( '-v', "--verbose", action="store_true" )
+    p.add_option( '-e', "--parse-stderr" )
+    p.add_option( '-s', "--shell" )
+    p.add_option( '-m', "--match" )  
+    p.add_option( '-f', "--directive-filter" )   
+    p.add_option( '-a', "--directive-arguments" )
+    p.add_option( '-l', "--shell-log", action="store_true" )
+    p.add_option( '-n', "--dont-parse-hints", 
+                  action="store_false", dest="parse_hints" )
+
+    defaults = {
+        "parse_hints"         : True,
+        "prompts"             : ["~# ", "~$ "],
+        "verbose"             : False,
+        "parse_stderr"        : True,
+        "shell"               : "bash",
+        "match"               : "ellipsis",
+        "directive_filter"    : "sourcecode",
+        "directive_arguments" : ["sh"],
+        "shell_log"           : False }
+
+    p.set_defaults( **defaults )
+    # [ setattr(o,k,v) for k,v in defaults.items() if getattr(o,k) is None ]
+    return p.parse_args()
+
+conf,ff = make_conf()
+
 try:
     from docutils import core
     from docutils.parsers import rst
-    is_docutils_present = True
 except ImportError:
-    is_docutils_present = False
+    conf.shell_log = False
 
 import doctest
 # The module ellipsis match function is a direct call to doctest's
@@ -195,7 +248,7 @@ class ShellSessionParser( object ):
     output  : coucou
     """
 
-    def __init__( self, f, prompts=None,com='', whi='' ):
+    def __init__( self, f, prompts=None,com='', whi=''):
 
         r"""
         The constructor takes a filename or an open file or a string
@@ -223,6 +276,7 @@ class ShellSessionParser( object ):
         """
         
         self.tokens = shlex( f if hasattr(f, "read") else StringIO( f )) 
+
         self.tokens.commenters = com 
         # deactivate shlex comments facility which won't work for us.
         # The terminating linefeed means two things: end of comment an
@@ -239,7 +293,7 @@ class ShellSessionParser( object ):
         self.nested = 0
 
         self.prompts = []
-        for p in prompts if prompts else conf.prompts:
+        for p in prompts or conf.prompts:
             s=shlex(p)
             s.commenters, s.whitespace = com, whi
             self.prompts.append( list( s ) )
@@ -367,7 +421,6 @@ class ShellSessionParser( object ):
         while self.has_token() :
             cmd,_want =  self.takewhile(), self.takewhile(is_output=True)
 
-            print "XXXXXXXXXXX"+cmd
             if conf.parse_hints:
                 want = CommandOutput() 
                 if re.search('#\W*(ignore|ign)',cmd) is not None: 
@@ -422,7 +475,7 @@ class CommandOutput( object ):
         which can be used to match anything.
 
         """
-        self.out, self.err, self.returncode = out, err, returncode
+        self.out, self.returncode, self.err = out, returncode, err
         self.cmd, self.ignore = cmd, ignore
 
         match=match if match else conf.match
@@ -448,8 +501,8 @@ class CommandOutput( object ):
     
     __repr__ = __str__
         
-    # todo match should be a private method
-    def __neq__(self, other ):
+    def __ne__(self, other ):
+        print "coucou"        
         return not self.__eq__(other)
 
     def __eq__(self, other ):
@@ -639,36 +692,6 @@ class BlockFilter( object):
         return self.f
 
 
-def make_conf():
-
-    p = OptionParser()
-    p.add_option( '-n', "--dont-parse-hints", action="store_false", dest="parse_hints" )
-    p.add_option( '-p', "--prompts" )
-    p.add_option( '-v', "--verbose", action="store_true" )
-    p.add_option( '-e', "--parse-stderr" )
-    p.add_option( '-s', "--shell" )
-    p.add_option( '-m', "--match" )  
-    p.add_option( '-f', "--directive-filter" )   
-    p.add_option( '-a', "--directive-arguments" )
-
-    defaults = {
-        "parse_hints"         : True,
-        "prompts"             : ["~# ", "~$ "],
-        "verbose"             : False,
-        "parse_stderr"        : True,
-        "shell"               : "bash",
-        "match"               : "ellipsis",
-        "directive_filter"    : "sourcecode",
-        "directive_arguments" : ["sh"] }
-    o,a =p.parse_args()
-    [ setattr(o,k,v) for k,v in defaults.items() if getattr(o,k) is None ]
-    print o.parse_hints
-    return o,a
-
-conf,ff=make_conf()
-
-
-
 #########
 ######### Console script entry points
 
@@ -686,7 +709,7 @@ def wordish():
     for f in fi:
 
         report = TestReporter()
-        if is_docutils_present:
+        if conf.shell_log:
             filter = BlockFilter( directive='sourcecode', arg=['sh']) 
         else:
             filter = lambda f:f
@@ -708,11 +731,16 @@ def wordish():
                 msg=report.passed(out) if out==want else report.failed(out)
                 if conf.verbose: print msg
                     
-                if (want.err is None and not want.aborted()) and out.aborted(): 
+                if (want.err is None and not want.aborted()) and out.aborted():
+
+                    if conf.verbose is False: 
+                        print report.before( cmd, want )
+                        print msg
+                        
                     remaining_cmds = [ cmd for cmd, _ in session ]
-                    print( "Command aborted unexpectedly, bailing out")
+                    print "Command aborted unexpectedly, bailing out"
                     if len( remaining_cmds )==0:
-                        print( "No remaining command anyway" )
+                        print "No remaining command anyway" 
                     else:
                         print "Untested command%s:\n\t%s" % (
                             "s" if len( remaining_cmds )>1 else "",
