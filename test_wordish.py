@@ -269,7 +269,7 @@ supercalifragilisticexpialidocious
         want = "~$ echo coucou\ncoucou\n"
 
         filter = BlockFilter(directive='codesource', arg=['blabi'])
-        self.assertEqual( filter(article).read(), want)
+        self.assertEqual(filter(article).read(), want)
 
 
 class HintsTestCase( unittest.TestCase ):
@@ -292,7 +292,7 @@ something different from coucou
 ~$ echo coucou
 coucou
 """
-        self.assertTrue( self.execute(s)) 
+        self.assertTrue(self.execute(s)) 
 
     def test_returncode(self):
 
@@ -303,7 +303,7 @@ hello
 ~$ echo coucou
 coucou
 """
-        self.assertTrue( self.execute(s)) 
+        self.assertTrue(self.execute(s)) 
 
     def test_stderr(self):
         s="""
@@ -314,7 +314,7 @@ ls: cannot access ...: No such file or directory
 ~$ echo coucou
 coucou
 """
-        self.assertTrue( self.execute(s)) 
+        self.assertTrue(self.execute(s)) 
             
 if __name__ == '__main__':
    

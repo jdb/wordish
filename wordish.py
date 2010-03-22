@@ -191,11 +191,11 @@ def make_conf():
     p = OptionParser()
     p.add_option( '-p', "--prompts" )
     p.add_option( '-v', "--verbose", action="store_true" )
-    p.add_option( '-e', "--parse-stderr" )
     p.add_option( '-s', "--shell" )
     p.add_option( '-m', "--match" )  
     p.add_option( '-f', "--directive-filter" )   
     p.add_option( '-a', "--directive-arguments" )
+    p.add_option( '-e', "--parse-stderr", action="store_true" )
     p.add_option( '-l', "--shell-log", action="store_true" )
     p.add_option( '-n', "--dont-parse-hints", 
                   action="store_false", dest="parse_hints" )
@@ -215,7 +215,7 @@ def make_conf():
     # [ setattr(o,k,v) for k,v in defaults.items() if getattr(o,k) is None ]
     return p.parse_args()
 
-conf,ff = make_conf()
+conf,file_list = make_conf()
 
 try:
     from docutils import core
@@ -230,7 +230,7 @@ import doctest
 def trace( decorated ):
     def f( *arg,**kwarg):
         print "%s: %s, %s => " % (decorated.__name__, arg, kwarg),
-        ret = decorated( *arg,**kwarg )
+        ret = decorated( *arg, **kwarg )
         print ret
         return ret
     return f
@@ -639,11 +639,8 @@ class TestReporter( object):
         number of success, the number of failure, etc."""
 
         print "%s tests found. " % (self.passcount + self.failcount)
-        if self.failcount==0:
-            print "All tests passed"
-        else:
-            print "%s tests passed, %s tests failed." % (
-                self.passcount, self.failcount)
+        print "%s tests passed, %s tests failed." % (
+            self.passcount, self.failcount)
 
         return self.failcount
                 
@@ -698,24 +695,24 @@ class BlockFilter( object):
 import sys
 
 
-def wordish():
+def wordish( file_list ):
 
-    fi = a if len( ff ) > 1 else (StringIO( __doc__ ),)
-    fi = [ f if f!="-" else sys.stdin for f in fi ] 
-    fi = [ f if hasattr(f, 'read') else file(f) for f in fi ]
+    files = file_list or [StringIO( __doc__ ),]
+    files = [ f if f!="-" else sys.stdin for f in files ] 
+    files = [ f if hasattr(f, 'read') else file(f) for f in files ]
 
     ret = 0
 
-    for f in fi:
+    for f in files:
 
         report = TestReporter()
-        if conf.shell_log:
-            filter = BlockFilter( directive='sourcecode', arg=['sh']) 
-        else:
-            filter = lambda f:f
 
-        session = iter( ShellSessionParser( filter( f ), 
-                                            prompts=conf.prompts ) )
+        if conf.shell_log:
+            filter = lambda f:f
+        else:
+            filter = BlockFilter( directive='sourcecode', arg=['sh']) 
+
+        session = iter( ShellSessionParser( filter( f ) ) )
 
         with CommandRunner() as run:
             for cmd, want in session:
@@ -729,9 +726,11 @@ def wordish():
                     out = run( cmd )
 
                 msg=report.passed(out) if out==want else report.failed(out)
+
                 if conf.verbose: print msg
-                    
-                if (want.err is None and not want.aborted()) and out.aborted():
+
+                if (want.err is None and not want.aborted()
+                    ) and out.aborted():
 
                     if conf.verbose is False: 
                         print report.before( cmd, want )
@@ -740,13 +739,16 @@ def wordish():
                     remaining_cmds = [ cmd for cmd, _ in session ]
                     print "Command aborted unexpectedly, bailing out"
                     if len( remaining_cmds )==0:
-                        print "No remaining command anyway" 
+                        print "No remaining command" 
                     else:
                         print "Untested command%s:\n\t%s" % (
                             "s" if len( remaining_cmds )>1 else "",
                             "\n\t".join( remaining_cmds ))
 
-        ret += report.summary()
+        failcount = report.summary()
+        if failcount==0:
+            print "All tests passed"
+
     return ret
 
 
@@ -761,6 +763,6 @@ def rst2sh():
             ).toscript()
 
 if __name__=='__main__':
-    sys.exit( wordish() )
+    sys.exit( wordish( file_list) )
     
                     
