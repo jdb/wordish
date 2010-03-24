@@ -18,8 +18,8 @@ session in a restructured text article. A simplified version of
 
   filter = BlockFilter( directive='sourcecode', arg=['sh'] )
   with CommandRunner() as run:
-      for cmd, expected in ShellSessionParser( filter( f ) ):
-          if run( cmd ) != expected:
+      for cmd, want in ShellSessionParser( filter( f ) ):
+          if run( cmd ) != want:
               print "Warning: unexpected command %s 's output"
 
 *Wordish* also declares two additional classes:
@@ -43,12 +43,12 @@ The :func:`wordish` module function articulates the five classes::
     filter = BlockFilter(directive='sourcecode', arg=['sh'])
 
     with CommandRunner() as run:
-        for cmd, expected in ShellSessionParser( filter(f) ):
-            print report.before(cmd, expected)
+        for cmd, want in ShellSessionParser( filter(f) ):
+            print report.before(cmd, want)
 
             out = run(cmd)
 
-            print report.success(out) if out == expected else report.failure(out)
+            print report.success(out) if out == want else report.failure(out)
 
             if out.aborted(): 
                 print("there was a serious error: bailing out")
@@ -87,6 +87,11 @@ class ShellSessionParser( object ):
         token: either an un-nested linefeed if the argument *is_output*
         is false, or a prompt if *is_output* is true."""
 
+    def has_token(self, is_output):
+        """ Returns False if the token list is empty (which usually
+        means the end of file has been reached). Returns True
+        otherwise."""
+
 class CommandRunner( object ):
     """The CommandRunner is a context manager which runs a shell created
     only for the duration of a *with* python code block. A context
@@ -122,25 +127,30 @@ class CommandOutput( object ):
     returncode = None
     "The return code"
 
+    def exited_gracefully(self):
+        "Return True if the command executed succcessfully"
     
+    def aborted(self):
+        "Return True if the command aborted"
+
 class Reporter( object ):
     """The Reporter methods are introduced between the calls to the
-    SessionParser and the CommandRunner"""
-    
-    def before(self, cmd ):
-        """Annonce the action to come. For example, the test to be
-        done, the expected result. In case, the test takes time, it is
-        desirable to let the user know what is happening beforehand."""
+    SessionParser and the CommandRunner"""    
 
     def passed(self, output ):
-        """Formats a successful result. Increment the *passed* counter"""
+        "Formats a successful result. Increment the *passed* counter"
 
     def failed(self, output ):
-        """Formats a failed result. Decrement the *passed* counter"""
+        "Formats a failed result. Increment the *failed* counter"""
+
+    def before(self, cmd ):
+        "Annonce the action to come. For example, the test to be
+        done, the want result. In case, the test takes time, it is
+        desirable to let the user know what is happening beforehand."
 
     def summary(self):
-        """Report the operations with, the number of actions, the
-        number of success, the number of failure, etc."""
+        "Report the operations with, the number of actions, the
+        number of success, the number of failure, etc."
         
 
 class NodeMatch( object ):

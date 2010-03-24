@@ -3,10 +3,12 @@ import unittest, doctest, wordish
 from StringIO import StringIO 
 from wordish import ShellSessionParser as session
 from wordish import CommandOutput as out
-from wordish import CommandRunner as shell
+from wordish import CommandRunner
 from wordish import TestReporter 
-from wordish import BlockSelector
-import sys
+from wordish import BlockFilter
+from tempfile import mkstemp
+from subprocess import Popen
+import sys, os
 
 # TODO: command runner not tested: create file check existence, check
 # enter, check exit
@@ -22,11 +24,11 @@ class CommandOutputTestCase(unittest.TestCase):
     def setUp(self):
 
         self.true_examples = ( 
-            (( "hello world", None, None),                ( "hello world", None, None)),
-            (( "hello world", "warning", None ),     ( "hello world", None, None )),
-            (( "hello world", "warning", -1 ), ( "hello world", None, None )),     
-            (( "hello world", "warning"),      ( "hello world", "warning", None )),
-            (( "hello world", "warning", -1 ), ( "hello world", "warning", -1 )),
+            (( "hello world", None, None),   ( "hello world", None, None )),
+            (( "hello world", "warn", None ),( "hello world", None, None )),
+            (( "hello world", "warn", -1 ),  ( "hello world", None, None )),
+            (( "hello world", "warn"),       ( "hello world", "warn", None )),
+            (( "hello world", "warn", -1 ),  ( "hello world", "warn", -1 )),
             (( None, None, None),              ( None, None, None)),
             (( 1, None, 1),                    (None, 1, None) ),
             (( 1, None, None),                 (None, 1, 1)),
@@ -73,33 +75,33 @@ class CommandOutputTestCase(unittest.TestCase):
     def test_equal_string( self ):
 
         for samples in self.true_examples, self.true_combinatorial: 
-            for parsed, actual in samples:
-                self.assertTrue( out(*parsed)==out(*actual) )
+            for want, got in samples:
+                self.assertTrue( out(*want)==out(*got) )
 
-        for parsed, actual in self.false_combinatorial:
-            self.assertFalse( out(*parsed)==out(*actual) )
+        for want, got in self.false_combinatorial:
+            self.assertFalse( out(*want)==out(*got) )
             
     def test_equal_re( self ):
 
         for samples in (self.true_examples, self.true_combinatorial,
                         self.true_re):
-            for parsed, actual in samples:
-                self.assertTrue( self.re(*parsed)==self.re(*actual) )
+            for want, got in samples:
+                self.assertTrue( self.re(*want)==self.re(*got) )
 
         for samples in self.false_combinatorial, self.false_re:
-            for parsed, actual in samples:
-                self.assertFalse( self.re(*parsed)==self.re(*actual) )
+            for want, got in samples:
+                self.assertFalse( self.re(*want)==self.re(*got) )
 
     def test_equal_ellipsis( self ):
           
         for samples in (self.true_examples, self.true_combinatorial,
                         self.true_ellipsis):
-            for parsed, actual in samples:
-                self.assertTrue( self.ellipsis(*parsed)==self.ellipsis(*actual) )
+            for want, got in samples:
+                self.assertEqual( self.ellipsis(*want),self.ellipsis(*got) )
 
         for samples in self.false_combinatorial, self.false_ellipsis:
-            for parsed, actual in samples:
-                self.assertFalse( self.ellipsis(*parsed)==self.ellipsis(*actual) )
+            for want, got in samples:
+                self.assertFalse( self.ellipsis(*want)==self.ellipsis(*got) )
 
     def test_exit_gracefully( self ):
         self.assertTrue( out( returncode=0 ).exited_gracefully() )
@@ -118,8 +120,8 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "ls", "ls"),
             ( "", "") )
 
-        for text, expected in commands:
-            self.assertEqual( session(text)._takewhile(), expected ) 
+        for text, want in commands:
+            self.assertEqual( session(text).takewhile(), want ) 
 
 
     def test_output (self):
@@ -131,8 +133,8 @@ class ShellSessionParserTestCase( unittest.TestCase ):
             ( "~# ", ""),
             ( "", "") )
 
-        for text, expected in outputs:
-            self.assertEqual( session(text)._takewhile(is_output=True), expected)
+        for text, want in outputs:
+            self.assertEqual( session(text).takewhile(is_output=True), want)
 
     def test_next ( self ):
         
@@ -181,37 +183,36 @@ class CommandRunnerTestCase( unittest.TestCase ):
     def test_simple_command( self ):
         "sh writes on stdout"
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo coucou')
         self.assertEqual( out.out, 'coucou' )
 
     def test_stderr( self ):
         "sh writes on stderr"
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo coucou >&2')
         self.assertEqual( out.err, 'coucou' )
 
     def test_bashism( self ):
         "handy bash curly brackets"
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('echo a{b,c}')
         self.assertEqual( out.out, 'ab ac' )
-
 
     def test_returncode( self ):
         "return codes"
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('true')
         self.assertEqual( out.returncode, 0 )
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             out = sh('false')
         self.assertEqual( out.returncode, 1 )
 
     def test_sequence_of_command( self ):
 
-        with shell() as sh:
+        with CommandRunner() as sh:
             zero =  sh('export coucou=1').returncode
             zero += sh('test $coucou==1').returncode
             zero += sh('myfunc () { echo coucou ; return 42 ; }').returncode
@@ -224,14 +225,14 @@ class CommandRunnerTestCase( unittest.TestCase ):
         """use enter(), ask for the shell pid, check with the os that
         the process with this pid is 'sh'"""
         
-        with shell() as sh:
+        with CommandRunner() as sh:
             self.assertTrue( sh.shell.pid > 0)
         
     def test_exit(self):
         """Check that the pid of the shell does not exist anymore, or
         is not the son of this python object"""
         
-        with shell() as sh:
+        with CommandRunner() as sh:
             pass
         self.assertEqual(sh.shell.returncode, -15)
 
@@ -240,14 +241,16 @@ class ReporterTestCase( unittest.TestCase ):
 
     def test_counters_and_append(self):
         report = TestReporter()
+        exp = out(returncode=0)
         for i in range(10):
-            report.before("", out(returncode=0))
-            report.after( out(returncode=i))
+            report.before("a cool command", 'cmd')
+            report.passed() if exp==out(returncode=i) else report.failed() 
+
 
         self.assertEqual(report.failcount,9)
         self.assertEqual(report.passcount,1)
 
-class BlockSelectorTestCase( unittest.TestCase ):
+class BlockFilterTestCase( unittest.TestCase ):
 
     def test( self ):
 
@@ -263,26 +266,73 @@ supercalifragilisticexpialidocious
 
 """)
 
-        expected = "~$ echo coucou\ncoucou\n"
+        want = "~$ echo coucou\ncoucou\n"
 
-        filter = BlockSelector(directive='codesource', arg=['blabi'])
-        self.assertEqual( filter(article).read(), expected)
+        filter = BlockFilter(directive='codesource', arg=['blabi'])
+        self.assertEqual(filter(article).read(), want)
+
+
+class HintsTestCase( unittest.TestCase ):
+
+    # classes which requires a conf cannot be tested without a conf
+    # the conf is expected global while this test case can not declare 
+    # a global conf object. The wordish objects can all take an optional conf
+    # attribute which override the global configuration. 
+
+    def execute(self, s):
+        with CommandRunner() as run:
+            return all([run(cmd)==want for cmd,want in session(s)])
+
+    def test_ignore(self):
+        s="""
+~$ echo hello
+hello
+~$ echo coucou   # ignore
+something different from coucou
+~$ echo coucou
+coucou
+"""
+        self.assertTrue(self.execute(s)) 
+
+    def test_returncode(self):
+
+        s="""
+~$ echo hello
+hello
+~$ false   # returncode=1
+~$ echo coucou
+coucou
+"""
+        self.assertTrue(self.execute(s)) 
+
+    def test_stderr(self):
+        s="""
+~$ echo hello
+hello
+~$ ls $RANDOM   # on stderr
+ls: cannot access ...: No such file or directory
+~$ echo coucou
+coucou
+"""
+        self.assertTrue(self.execute(s)) 
             
-
 if __name__ == '__main__':
    
     suite = unittest.TestSuite()
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ShellSessionParserTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandOutputTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(CommandRunnerTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ReporterTestCase))
-    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(BlockSelectorTestCase))
+
+    add = lambda t: [ suite.addTest(unittest.TestLoader(
+            ).loadTestsFromTestCase(i)) for i in t ]
+
+    add( [ CommandOutputTestCase, 
+           HintsTestCase, 
+           ShellSessionParserTestCase,
+           CommandRunnerTestCase, 
+           ReporterTestCase, 
+           BlockFilterTestCase ] )
+
     suite.addTest(doctest.DocTestSuite(wordish))
 
-    # ce qui aurait pu etre completement possible au lieu de parser
-    # deux fois, c'est que la directive source code 
-
-    run = unittest.TextTestRunner(verbosity=2).run(suite)
+    run = unittest.TextTestRunner(verbosity=1).run(suite)
 
     if len(run.errors)!=0 or len(run.failures)!=0:
         sys.exit(1)

@@ -1,51 +1,26 @@
+
 <map version="0.7.1">
 <node TEXT="wordish">
 <font NAME="SansSerif" SIZE="12"/>
 <node TEXT="doc" POSITION="left">
-<node TEXT="writing">
-<node TEXT="working examples: raid, lvm, deb, git, ssh, ipvsadm"/>
-</node>
+<node TEXT="writing"/>
 <node TEXT="testing">
 <node TEXT="false"/>
 <node TEXT="log file"/>
 <node TEXT="clean up code"/>
 <node TEXT="debug"/>
 </node>
-<node TEXT="roadmap" FOLDED="true">
-<node TEXT="get a blessing from the sphinx project"/>
-</node>
+<node TEXT="roadmap"/>
 <node TEXT="interfaces" FOLDED="true">
 <node TEXT="overview simple run"/>
 <node TEXT="two parsers"/>
 <node TEXT="output and runner"/>
 <node TEXT="reporter"/>
 </node>
-<node TEXT="software engineering" FOLDED="true">
-<node TEXT="github, source, branches and versions"/>
-<node TEXT="doctests and unit tests"/>
-<node TEXT="packaging" FOLDED="true">
-<node TEXT="test package_data and data_files, where do they end up?"/>
-<node TEXT="distutils, distribute, pip"/>
-<node TEXT="include the readme in the long description"/>
-<node TEXT="which license"/>
-<node TEXT="content">
-<node TEXT="one module"/>
-<node TEXT="one test file"/>
-<node TEXT="man page, README.rst"/>
-<node TEXT="setup.py"/>
-<node TEXT="four examples"/>
-<node TEXT="MANIFEST"/>
-<node TEXT="build"/>
-<node TEXT="sdist"/>
-</node>
-</node>
-<node TEXT="some organization with freemind"/>
-<node TEXT="mention in the doc that working on the setup.py is eased by a virtualenv"/>
-</node>
 <node TEXT="making of" FOLDED="true">
-<node TEXT="modelisation"/>
-<node TEXT="parser du text, des tokens nexts"/>
-<node TEXT="executer des commandes"/>
+<node TEXT="object modelisation"/>
+<node TEXT="parser du text, des tokens nexts, iterator"/>
+<node TEXT="executer des commandes dans un sous shell"/>
 <node TEXT="packaging"/>
 <node TEXT="testing"/>
 <node TEXT="docutils"/>
@@ -59,11 +34,33 @@
 <node TEXT="git commit rebuilds the docs, the readme, the setup.py"/>
 <node TEXT="include .. in the beginning of the sys.path"/>
 </node>
+<node TEXT="release management"/>
+<node TEXT="version management"/>
+<node TEXT="git branch batch branch incursion to store the documentation"/>
+<node TEXT="the dist directory should be the build interface">
+<node TEXT="release use build as well as gitignore"/>
+</node>
+<node COLOR="#ff0000" TEXT="1. just use distribute to have eggs which have dependencies which will install docutils..."/>
+<node TEXT="3. use the official documentation repository"/>
+<node COLOR="#ff0000" TEXT="2. use distutils to generate console scripts"/>
+<node TEXT="where can distutils install the manpages? rehash the db? the answer is no"/>
+<node TEXT="can the scripts be installed in /usr/bin? only with debian packages"/>
+<node TEXT="what should be the interface between the python sources and deb/rpm on the other side? the dist directory"/>
+<node TEXT="where does distutils {package,} additional files go? don&apos;t use then unless the code require them"/>
 </node>
 <node TEXT="changelog"/>
+<node TEXT="software engineering">
+<node TEXT="git source, branches, virtualenv"/>
+<node TEXT=" versions and interfaces"/>
+<node TEXT="doctests and unit tests"/>
+<node TEXT="source tarball"/>
+<node TEXT="documentation"/>
+<node TEXT="setup.py, packages/pypi.python.org"/>
+<node TEXT="some organization with freemind"/>
+</node>
 </node>
 <node TEXT="objects" FOLDED="true" POSITION="right">
-<node TEXT="ISessionParser" FOLDED="true">
+<node TEXT="ISessionParser">
 <node TEXT="universal linefeed for commands in win articles"/>
 <node TEXT="list commands used and version"/>
 <node TEXT="hints in a command&apos;s comments">
@@ -83,7 +80,7 @@
 <node TEXT="I get regularly bitten by , 0 in the report"/>
 <node TEXT="report knows less about command output"/>
 </node>
-<node TEXT="ICommandRunner">
+<node TEXT="ICommandRunner" FOLDED="true">
 <node TEXT="interactive via cmds.py or screen (tty?), confirm, insert command, ctrl-C ..."/>
 <node TEXT="some command are not meant to be executed, others not identical, others not aborted"/>
 <node TEXT="ignore from :argument:, comment"/>
@@ -104,13 +101,9 @@
 <node TEXT="give the option to attach a cleanup script"/>
 </node>
 <node TEXT="packaging python" POSITION="right">
-<node COLOR="#ff0000" TEXT="just use distribute to have eggs which have dependencies which will install docutils..."/>
-<node COLOR="#ff0000" TEXT="use distutils to generate console scripts"/>
-<node TEXT="where can distutils install the manpages? rehash the db?"/>
-<node TEXT="can the scripts be installed in /usr/bin"/>
-<node TEXT="what should be the interface between the python sources and deb/rpm on the other side"/>
-<node TEXT="where does distutils {package,} additional files go?"/>
-<node TEXT="additional vs package data in distutils? another solution in eggs? in buildout? MANIFEST?"/>
+<node TEXT="4. use the python 2to3 automation">
+<node TEXT="setuptools2.4/2.5/3.1 required to use venv2.4/2.5/3.1"/>
+</node>
 </node>
 <node TEXT="docutils" FOLDED="true" POSITION="right">
 <node TEXT="directive source code">
@@ -127,15 +120,13 @@
 <node TEXT="member attribute is a list, a string, a dictionnary (docstring is less readable when building an overview), maybe epydoc is the way, or autointerface"/>
 </node>
 <node TEXT="packaging debian" POSITION="right">
-<node TEXT="standalones scripts"/>
 <node TEXT="man pages"/>
+<node TEXT="python and cddb"/>
 <node TEXT="doc"/>
 <node TEXT="python module"/>
+<node TEXT="script"/>
 <node TEXT="sphinx extension"/>
-<node TEXT="article examples"/>
-<node TEXT="interfaces"/>
-<node TEXT="article examples found by the module"/>
-<node TEXT="build dependency, sphinx"/>
+<node TEXT="build depends on sphinx"/>
 </node>
 <node TEXT="tests" FOLDED="true" POSITION="right">
 <node TEXT="some impede readability"/>

@@ -13,45 +13,51 @@
 #   -> bump the patch if no b else bump the beta and upload (check last_upload)
 
 
-die () { echo "$1" >&2 ; exit 1 ;  }
-
 build_doc () {
 
-    set -e -x
+    #1 Do the job in the local branch
+    ( cd doc ; sphinx-build -Q . ../html )
+    ( cd html
+	rm -rf static sources images *.pyc .buildinfo .doctrees/
+	mv {_,}sources
+	mv {_,}static  
+	mv {_,}images || true
+	find . -name '*.html' -o -name '*.js' | \
+	    xargs sed -i 's/_static/static/g;s/_sources/sources/g' 
+    )
 
+    # - interlude -  Make an incursion in another branch 
+    #  stash if needed, prepare come back
+    set -x
+    if ! git status | grep -q "nothing to commit (working directory clean)"; 
+    then git stash save "just building doc" ; fi
     current_branch=`git branch | awk '/\*/ {print $2}'`
-
-    if git status | grep -q -v "nothing to commit (working directory clean)"; 
-    then git stash save "Stashing for building documentation"; fi
-	
-    ( cd doc ; sphinx-build -Q . ../build/html )
     git checkout gh-pages || return 1
 
-    mv build/html/* .
-
-    rm -rf static sources images *.pyc .buildinfo .doctrees/
-    mv {_,}sources
-    mv {_,}static  
-    mv {_,}images || true
-    find . -name '*.html' -o -name '*.js' | \
-	xargs sed -i 's/_static/static/g;s/_sources/sources/g;s/_images/images/g' 
-
-
+    #2 Do the job in the other branch 
+    cp -r html/* .
     git commit -a -m "Updated the doc to version $version"
-    git checkout $current_branch || return 1
 
-    if git stash list | grep -q "Stashing for building documentation" ;
-	then git stash pop ; fi
+    # - conclusion -  Back to the work branch
+    git checkout $current_branch || return 1
+    if git stash list | grep "just building doc"; then
+	git stash pop ; fi
+}
+
+update_long_description () {
+
+    python <<EOF
+import re, wordish
+replacement = re.compile('^.. sourcecode:: sh', re.M).sub('::', wordish.__doc__)
+m = re.compile('(?P<before>.*?long_description\W*=\W*""").*?(?P<after>""".*)', re.S
+    ).match( file('setup.py').read() )
+file('setup.py','w').write(m.group('before') + replacement + m.group('after'))
+file('README.txt','w').write(replacement)
+EOF
+
 }
 
 new_version () {
-    echo $1 > version
-    sed -i "s/\(__version__ = \).*/\1'$1'/" wordish.py
-    sed -i "s/\(    version = \).*/\1'$1',/" setup.py
-    git commit -m "Updated version to `cat version`" wordish.py version --no-verify
-}
-
-handle_version () {
 
     unset major minor patch beta
     
@@ -72,62 +78,93 @@ handle_version () {
 
     case "$1" in
 
-	pre_minor  )  new_version $major.$(($minor+1)).0b	        ;; 
-	pre_major  )  new_version $(($major+1)).0.0.0b		        ;; 
+	pre_minor  )  
+	    minor=$(($minor+1)) ; patch=0 ; beta=1 ;; 
 
-	bump_beta  )  new_version $major.$minor.${patch}b$((1+$beta))	;; 
-	bump_patch )  new_version $major.$minor.$(($patch+1))	        ;; 
-	bump_minor )  new_version $major.$(($minor+1)).0	        ;; 
-	
-	stabilize  )  new_version $major.$minor.$patch			;; 
+	pre_major  )  
+	    major=$(($major+1)) ; minor=0 ; patch=0 ; beta=1 ;; 
 
-	* )  ;;
+	bump_beta  )  
+	    beta=$((1+${beta:-0})) ;; 
+
+	bump_patch )  
+	    patch=$(($patch+1)) ; unset beta ;; 
+
+	bump_minor ) 
+	    minor=$(($minor+1)) ; patch=0 ; unset beta ;; 
+
+	stabilize  )  
+	    unset beta ;; 
+
+	# * )  ;;
     esac
+
+    new=$major.$minor.$patch${beta:+b}$beta
+    pynew='('$major','$minor','$patch','${beta:-None}')'
+
+    set -x 
+    echo $new > version
+    sed -i "s/\(__version__ = \).*/\1$pynew/" wordish.py
+    sed -i "s/\(version = \).*/\1'$new'/" doc/conf.py
+    sed -i "s/\(release = \).*/\1'$new'/" doc/conf.py
+    sed -i "s/\(    version = \).*/\1'$new',/" setup.py
+
+    update_long_description
+
+    git commit -m "Updated version to $new" setup.py doc/conf.py wordish.py version README.txt --no-verify
+
 }
 
-# 1. Update the version as requested on the command line
-if [ "$1" != upload ];
-    then handle_version "$@" 
-fi
+die () { echo "$1" >&2 ; exit 1 ;  }
 
-# 1'. Never upload twice the same version: update the version if an
-# upload is requested, and the current version is the last uploaded
-# version (bump the beta if in beta, else bump the patch)
+# 1. Update the version if a version is set on the command line Never
+#    upload twice the same version: increment the version if an upload
+#    is requested, and the current version is the last uploaded
+#    version (bump the beta if in beta, else bump the patch)
 
-if ( [ "$1" = upload -o "$2" = upload ] ) \
-    && [ `cat version` = `cat .last_uploaded` ]; then
+version=`cat version`
+if [ -n "$1" -a "$1" != upload ];
+    then 
+    new_version "$@" 
+    version=`cat version`
+elif ( [ "$1" = upload -o "$2" = upload ] ) \
+    && [ $version = `cat .last_uploaded` ]; then
 
     if [ `expr index $version b` -eq 0 ] ;
-    then handle_version bump_patch
-    else handle_version bump_beta ; fi
+    then new_version bump_patch
+    else new_version bump_beta ; fi
 fi
 
 # 2. Do the tests, build the doc, build the python packaging
+#    bail out if any problem
+
 version=`cat version`
 for f in `ls test_*.py`; do
-    python $f || die "Unit tests failed" ; done
-build_doc || die "Build documentation failed"  
-python setup.py sdist || die "Python package build failed"
+    python $f > /dev/null  || die "Unit tests failed" ; done
+build_doc		   || die "Build documentation failed"  
+python setup.py sdist	   || die "Python package build failed"
+
 
 # 3. If requested, upload to pypi, to gh-pages, to master
 if [ "$1" = upload -o "$2" = upload ]; then
-    if git branch | grep -q '^* master' ; then    
+
+    curbranch=`git branch | awk '/\*/ {print $2}'`
+    test $curbranch == master || \
+	die "Please switch from the current '$curbranch' to the master branch"
 	
-	git status | grep "nothing to commit (working directory clean)" \
-	    || die "release.sh must be called from a commited repository"
-	set -e -x
-	git checkout gh-pages
-	git push origin gh-pages
-	git checkout master
+    git status | grep "nothing to commit (working directory clean)" \
+	|| die "release.sh must be called from a commited repository"
+	
+    set -e -x
+    git checkout gh-pages
+    git push origin gh-pages
+    git checkout master
+    
+    python setup.py sdist upload
+    echo $version > .last_uploaded
 
-	python setup.py sdist  upload
-	echo $version > .last_uploaded
-
-	git commit -a -m "Released v$version" --no-verify
-	git tag v$version
-	git push origin master
-    else 
-	echo "Please release from the master branch,"
-	echo "you are on the `git branch | awk '/\*/ {print $2}'` branch" ; 
-    fi    
+    git tag v$version
+    git commit -a -m "Released v$version" --no-verify
+    git push origin master
 fi
+

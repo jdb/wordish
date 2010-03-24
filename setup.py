@@ -1,24 +1,30 @@
 
-
-from distutils.core import setup
+from setuptools import setup
 
 setup(
 
     py_modules = [ 'wordish' ],
 
     name = 'wordish',
-    version = '1.0.2',
+    version = '1.0.4',
     author = 'Jean Daniel Browne',
     author_email = 'jeandaniel.browne@gmail.com',
     description = ("Parses a shell session, test the "
                    "commands compare the outputs"),
 
-    long_description = """Wordish is a script which executes a shell
-session parsed from a documentation in the restructured text [#]_
-format, then tests and builds a report of the execution. To mark up
-shell code in an article, *wordish* uses the custom directive
-``sourcecode``, with the rquired argument ``sh``. When presented with
-an article:
+    use_2to3 = True,
+    entry_points = { 'console_scripts': [
+            'wordish = wordish:wordish'],},
+
+    license = 'GPL',
+    requires = [ 'docutils (>=0.5)' ],
+
+    long_description = """
+Wordish is a script which executes a shell session parsed from a
+documentation in the restructured text [#]_ format, then tests and builds a
+report of the execution. To mark up shell code in an article,
+*wordish* uses the custom directive ``sourcecode``, with the rquired
+argument ``sh``. When presented with an article:
 
 #. *wordish* filters out the text which is not marked with
    ``sourcecode``,
@@ -180,8 +186,5 @@ article which prompted the need for the development of *wordish*.
                     'Topic :: Documentation',
                     'Topic :: Education',
                     'Topic :: Software Development :: Testing',
-                    'Topic :: Utilities'],
-
-    license = 'GPL',
-    requires = [ 'docutils (>=0.5)' ]
+                    'Topic :: Utilities']
     )
