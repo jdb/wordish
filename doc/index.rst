@@ -27,12 +27,13 @@ command to make sure the documentation is correct.
 Reader's guide
 --------------
 
-- Administrators will find the few rules and installation procedure
+- Admins and users will find the features and installation procedure
   in the page :ref:`write`. The page :ref:`roadmap` shows the
   direction of the project.
 
-- Anyone curious of how *Wordish* is designed may be interested in
-  the :ref:`interfaces`,
+- Anyone curious of how *Wordish* is designed may be interested in the
+  :ref:`interfaces`. :ref:`packaging` gathers the information on how
+  wordish is packaged and deployed.
 
 - For the brave Python developper impatient to propose a feature
   patch, a bug report and a fix, the page describing the

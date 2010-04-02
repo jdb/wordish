@@ -1,20 +1,22 @@
 
 .. _methods:
 
-Organisation
-============
+A few methods
+=============
 
-Some issues are tedious to deal with ona regular basis, for examples:
+Before releasing, some issues are tedious to deal with on a regular
+basis, and our bound to be mishandled, for examples:
 
-- synchronizing the version in multiples files,
+- synchronizing the version in the python module with the version in
+  the documentation,
 
 - ensuring that all tests pass when releasing,
 
-- publishing the software module and documentation where the users
-  expects them,
+- publishing the software module and documentation on the various
+  location where the users expects them,
 
-If handled correctly, the developer can focus on the features, it is
-more fun, and the users gets awesome softwares.
+If handled correctly, the developer focus on the features, it is more
+fun, and the users gets better softwares.
 
 Ressources
 ----------
@@ -22,7 +24,7 @@ Ressources
 The sources are kept in a git repository on github
 (http://github.com/jdb/wordish/), because git is a powerful source
 configuration management that the author wishes to learn. Install the
-``git`` commands on your system (sometimes packaged as ``git-core``)
+``git`` commands on your system (the package is sometimes  as ``git-core``)
 and use the following to retrieve the sources::
 
     git clone git://github.com/jdb/wordish.git
