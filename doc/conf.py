@@ -4,7 +4,7 @@ import sys, os
 
 sys.path.insert(0, '..')
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo']
+extensions = [ 'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo']
 
 templates_path = ['_templates']
 source_suffix = '.rst'
