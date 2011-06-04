@@ -1,48 +1,41 @@
 """
-Wordish is a script which executes a shell session parsed from a
-documentation in the restructured text [#]_ format, then tests and builds a
-report of the execution. To mark up shell code in an article,
-*wordish* uses the custom directive ``sourcecode``, with the rquired
-argument ``sh``. When presented with an article:
+Wordish is executes a shell session parsed from a documentation in the
+restructured text [#]_ format, then compare the documented output
+against the actual output and builds a report of the execution. To
+mark up shell code in an article, *wordish* uses the custom directive
+``sourcecode``, with the rquired argument ``sh``. When presented with
+an article:
 
-#. *wordish* filters out the text which is not marked with
+#. *wordish* filters out the text nods which are not marked with
    ``sourcecode``,
 
-#. then, separates the blocks of shell codes between *commands* and
+#. then, for each sourcecode blocks separates the *commands* and
    *outputs*: 
 
-   #. *wordish* consumes the prompt, parses for the newline which ends
-      command,
+   #. *wordish* looks for the prompt, then a space, then parses up to
+      the newline which ends the command. 
 
-   #. then parses for the prompt which ends the output, 
+   #. then expect an output up to the looks for the prompt right after
+      a newline, which ends the output. By default, Wordish
+      understands two prompts ``~$``, and ``~#``.
 
-Example::
+Example of a source block in an article source::
 
   .. sourcecode:: sh
 
      ~$ echo "hello world"   # Mmmh, insightful comment
      hello world
 
-This simply renders like:
+This simply renders like this when the article is built:
 
 .. sourcecode:: sh
 
    ~$ echo "hello world"   # Mmmh, insightful comment
    hello world
 
-The *command* starts after the prompt ("~$ ") and continues until the
-first newline is found in the source code block. Here, it is just
-after the word ``comment``. The command is ``echo "hello world" # Mmmh,
-insightful comment`` The output is the text block found until the next
-prompt: this is ``hello world``. There are **two** possible prompts:
-``~$``, and ``~#``. Both are required to be followed by a space are are
-treated the same.
-
-Note: the newlines which are nested in curly brackets or parentheses are
-**not** interpreted as an *end of command* character. Shells do the same:
-curly brackets are used to define functions and parentheses makes the
-nested command to be interpreted in a subprocess shell. The two
-following examples from the introduction make it clear:
+Wordish is smart enough to strip the comments, and understands
+commands with brackets and parentheses which can span multiple
+lines. Example:
 
 .. sourcecode:: sh
 
@@ -57,10 +50,9 @@ following examples from the introduction make it clear:
 The first command is ``echo $((1+1))`` in a subproces, and it's output
 is ``2``. The second command is the definition of a function named
 ``sum`` and has no output. Defining functions sometimes clarify the
-intent in subsequent uses of the function. For functions to be re-used,
-the state of the shell must be kept between each snippets. *wordish*
-keep a connection with the same *shell* subprocess (*bash* is used)
-for the duration of the article.
+intent in subsequent uses of the function. For functions to be
+re-used, later in the article, *wordish* keep a child shell opened the
+duration of the article.
 
 .. sourcecode:: sh
 
@@ -72,13 +64,13 @@ is reported.
 
 When the output can not be completely predicted, such as when
 displaying ``$RANDOM``, or displaying the size of a partitions in
-bytes, there is a handy wildcard pattern which can be used:
-``...``. It matches everything like ``.*`` in regexp [#]_.
+bytes, there is a wildcard pattern: ``...``. It matches everything
+like ``.*`` in regexp [#]_.
 
 .. sourcecode:: sh
 
    ~$ echo "a random number: " $RANDOM
-   ...
+   a random number: ...
 
 One last thing, if a command does not exit gracefully, *wordish*
 precautiously aborts, refusing to execute commands on the system under
@@ -93,9 +85,8 @@ unexecuted commands.
    ~$ echo "Bye bye"
    Bye bye
 
-This introduction is embedded in the wordish module as the
-docstring. Just run *wordish* with no argument to get the example
-report of this article:
+This introduction is embedded in the wordish: simply run *wordish*
+with no argument to get the example report of this article:
 
 .. sourcecode:: sh
 
@@ -134,9 +125,8 @@ report of this article:
    6 tests found. 
    4 tests passed, 2 tests failed.
 
-There is another example real world article_ which is also included in
-the sources distribution, and tested before each release. This is the
-article which prompted the need for the development of *wordish*.
+Another example real world article_ which is also included in the
+sources distribution, and tested before each release.
 
 .. _article: http://jdb.github.com/sources/lvm.txt
 
@@ -154,7 +144,36 @@ article which prompted the need for the development of *wordish*.
 
 """
 
-__version__ = '1.0.2'
+# pty have hoodles of termios options
+# expect offers a higher level interface
+# stdin, stdout offers a simpler interface without prompt
+
+# the prompt is a bash/readline addition which appears while you did
+# not typed it: when a command is done (PS1), when there is a (\n or a {\n
+# this is PS2. 
+
+# The prompt might change out of the blue when changing uid or PS1 (=>
+# find clear conditions and mitigate with specific processing for su
+# or by specific parsing)
+
+# Todo: run the lvm article, read getoutputcommand to see how t
+# abuilder is done
+
+__version__ = '1.0.3'
+
+# 1. clarified doc
+# 2. Added docstrings and comment
+# 3. Clarified CommandRunner interfaces and private members
+# 4. Added a runner 
+
+__version__ = '1.1.0'
+
+# 1. use pexpect 
+# 2. interactive:  next, all, quit, interact
+# 3. support multiline " and ', support \" (to test)
+
+# TODO: support tests on stderr too, by using ptys directly
+ 
 
 from subprocess import Popen, STDOUT, PIPE
 from shlex import shlex 
@@ -163,9 +182,22 @@ from StringIO import StringIO
 import re
 from docutils import core
 from docutils.parsers import rst
+import pexpect
+import termios
 
+def getchar(prompt):
+    new = old = termios.tcgetattr(sys.stdin.fileno())
+    new[3] &= ~termios.ICANON
+    termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, new)
+    print prompt,
+    c = sys.stdin.read(1)
+    offset = len(prompt)+3
+    print '\b'*offset+' '*offset+'\b'*offset,
+    termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, old)
+    return c
 
 def trace( decorated ):
+    "Handy debug tool"
     def f( *arg,**kwarg):
         print "%s: %s, %s => " % (decorated.__name__, arg, kwarg),
         ret = decorated( *arg,**kwarg )
@@ -174,7 +206,7 @@ def trace( decorated ):
     return f
 
 
-class ShellSessionParser( object ):
+class ShellSessionParser(object):
     r"""
     An iterator which parses a text file of a shell session and yields
     pairs of commands and outputs
@@ -186,24 +218,17 @@ class ShellSessionParser( object ):
     output  : coucou
     """
 
-    def __init__( self, f, prompts=['~# ', '~$ '], com='', whi='' ):
+    def __init__(self, f, prompts=['~# ', '~$ '], com='', whi=''):
 
         r"""
         The constructor takes a filename or an open file or a string
         as the shell session.
 
-        The constructor sets the :attr:`tokens` member attribute with
-        a shlex token stream initialised with the correct options for
-        parsing comments and whitespace.
-        
-        The token commenters and whitespace are set to the empty string
-        and can be modified with the function arguments 'com' and
-        'whi'. 
-
-        If the argument shlex_object is set to True then it'is not the
-        list of tokens but the shlex object itself so that you can
-        experiment with the :obj:`shlex` and it multiple attribute and
-        method.
+        The constructor sets the :attr:`tokens` member attriibute with
+        a shlex token stream initialised with good options for parsing
+        comments and whitespace. By default, these tokens are set to
+        the empty string and can be modified with the arguments 'com'
+        and 'whi'.
 
         >>> list(ShellSessionParser( "Yozza 1 2" ).tokens)
         ['Yozza', ' ', '1', ' ', '2']
@@ -218,12 +243,12 @@ class ShellSessionParser( object ):
         
         """
         
-        self.tokens = shlex( f if hasattr(f, "read") else StringIO( f )) 
+        self.tokens = shlex(f if hasattr(f, "read") else StringIO(f)) 
         self.tokens.commenters = com 
-        # deactivate shlex comments facility which won't work for us.
-        # The terminating linefeed means two things: end of comment an
-        # end of command. As shlex consume the terminating linefeed,
-        # there is no end of command left.
+        # deactivate shlex comments feature which does not work for
+        # us.  As shlex consumes the terminating linefeed after a
+        # comment in the comment token, there is no linefeed to
+        # signify end of command.
     
         self.tokens.whitespace = whi
         # deactivate shlex whitespace munging. characters cited in
@@ -233,20 +258,28 @@ class ShellSessionParser( object ):
         # output, so we just want to keep them as they are.
 
         self.nested = 0
+        # This a instance member is used to contain the state of how
+        # many opening brackets or parentheses met so far, without
+        # closing counterpart
+
+        self.simple_quote = False
+        self.double_quote = False
+        self.backslash    = False
+        
 
         self.prompts = []
-        for p in prompts:
-            s=shlex(p)
+        for p in prompts:   # Why are the prompts shlexed? it makes no
+            s=shlex(p)      # sense !!
             s.commenters, s.whitespace = com, whi
             self.prompts.append( list( s ) )
 
-        self.max_prompt_len = max([ len(p) for p in self.prompts ])
-
+        self.max_prompt_len = max([len(p) for p in self.prompts])
+        # Why do we ned this attribute?
 
     def _has_token( self ):
-        r"""
-        Returns False if the token list is empty (which usually means
-        the end of file has been reached). Returns True otherwise.
+        r"""Returns False if the token list is empty (which usually
+        means the end of file has been reached). Returns True
+        otherwise.
 
         >>> sess = ShellSessionParser( "~$ env | grep USER\nUSER=jd" )
         >>> sess._has_token()
@@ -256,8 +289,7 @@ class ShellSessionParser( object ):
         False
         """
         t = self.tokens.get_token()
-        return False if t==self.tokens.eof else self.tokens.push_token( t ) or True
-
+        return False if t==self.tokens.eof else self.tokens.push_token(t) or True
     
     def is_output( self, token ):
         r"""
@@ -270,7 +302,7 @@ class ShellSessionParser( object ):
         'youpi'
         >>> sess.is_output( 'youpi' )
         True
-        >>> sess.tokens.next(),sess.tokens.next()
+        >>> sess.tokens.next(), sess.tokens.next()
         ('\n', '~')
         >>> sess.is_output( '~' )
         False
@@ -309,27 +341,46 @@ class ShellSessionParser( object ):
         >>> sess = ShellSessionParser( "(youpi\n)\n" )
         >>> [ sess.is_command( sess.tokens.next()) for i in range(3) ]
         [True, True, True]
-        >>> sess.is_command( sess.tokens.next()); sess.is_command( sess.tokens.next()); 
+        >>> sess.is_command(sess.tokens.next()); sess.is_command(sess.tokens.next()); 
         True
         False
         
         The first linefeed was nested in a subshell, hence was
-        not the end of a command. The second linefedd was.
+        not the end of a command. The second linefeed was.
         """
-        if token == '\n' and self.nested==0:
+        if self.backslash:
+            self.backslash = False
+            return True
+
+        if token == '\n' and not self.nested and not(
+            self.simple_quote or self.double_quote
+            ) and not self.backslash:
             return False
+
+        elif token == '\\':
+            self.quoted = True
 
         elif token in '({': self.nested += 1
         elif token in '})': self.nested -= 1
 
+        elif not self.simple_quote and token == '"': 
+            self.double_quote = not self.double_quote
+
+        elif not self.double_quote and token == "'": 
+            self.simple_quote = not self.simple_quote
+
+        # sum { ( $1 +$2 } ) is a *correct* command, for this function !!
+        # support for the backslash
+
         return True
 
-    def _takewhile( self, is_output=False ):
-        r"""
-        Returns a command or an output depending of the terminator
-        provided. i.e. every token on which the terminator returns
-        False. The terminator is a function which takes a token and
-        returns whether the stream of tokens is terminated or not.
+    def _takewhile(self, is_output=False):
+        r"""Returns a command or an output string depending of the
+        terminator provided i.e. every token on which the terminator
+        returns False, until the terminator returns True. 
+
+        The terminator is a _function_ which takes a token and returns
+        whether the stream of tokens is terminated or not.
 
         >>> session = ShellSessionParser
         >>> session( "cmd" )._takewhile()
@@ -337,11 +388,11 @@ class ShellSessionParser( object ):
         >>> session( "t () {\ncmd\n}\nhello" )._takewhile()
         't () {\ncmd\n}'
         """
-        return ''.join (
-            list( takewhile(
+        return ''.join(
+            list(takewhile(
                     self.is_output if is_output else self.is_command, 
                     self.tokens )
-                 ) ).strip()
+                 )).strip()
 
     def _get_command(self):
         """
@@ -379,19 +430,21 @@ class ShellSessionParser( object ):
         self._get_output()
         while self._has_token() :
             yield self._get_command(), self._get_output()
-
-
     
     def toscript(self):
+        "Returns a bash script with all command found"
         commentize = lambda o: '# %s\n' % o.replace( '\n', '\n# ' )
         return "#!/bin/sh\nset -e  # -x\n\n%s\n" % '\n'.join(  
             chain( *( ( c, commentize(o) ) for c, o in self ) ) )
 
-
             
 class CommandOutput( object ):
 
-    # TODO: docstrings
+    """When the command has been run, this object contains the stdout,
+    stderr output and the return value of the command. 
+
+    An instance of this class can be compared to a reference
+    CommandOutput or a basestring, with wildcard"""
 
     def __init__(self, out=None, err=None, returncode=None, cmd=None, match='ellipsis' ):
         self.out, self.err, self.returncode = out, err, returncode
@@ -444,7 +497,9 @@ class CommandOutput( object ):
             start, end = pattern.split('...')
             return string.startswith(start) and string.endswith(end)
         else:
-            return pattern==string
+            return pattern==string  
+        # the python doctest module has a better one: multiple
+        # ellipsis can be included in the string
 
     def string_match(self,pattern,string):
         return pattern==string
@@ -460,7 +515,7 @@ class CommandOutput( object ):
 
 
 class CommandRunner ( object ):
-    r""" Implements a python "context manager", when entering the
+    r"""Implements a python "context manager", when entering the
     context (the *with* block ), creates a shell in a subprocess,
     right before exiting the context (leaving the block or processing
     an exception), the shell is assured to be terminated.
@@ -478,23 +533,27 @@ class CommandRunner ( object ):
     0
     2, 0
     """
-    separate_stderr = True
+
+    _separate_stderr = True
+    # If false, stderr is redirected into stdout 
 
     def __enter__( self ):
-        if CommandRunner.separate_stderr:
-            self.terminator = '\necho "~$ $?" \n' + 'echo "~$ " >&2 \n' 
-            self.shell = Popen( "/bin/bash", shell=True, 
+        if CommandRunner._separate_stderr:
+            self.terminator = '\necho "~$ $?" \necho "~$ " >&2 \n' 
+            # Why are we writing anything to stderr?
+
+            self._shell = Popen( "/bin/bash", shell=True, 
                                 stdin=PIPE, stdout=PIPE,stderr=PIPE, 
                                 universal_newlines=True)
                                 
-            self.stdout = ShellSessionParser( self.shell.stdout )
-            self.stderr = ShellSessionParser( self.shell.stderr ) 
+            self.stdout = ShellSessionParser( self._shell.stdout )
+            self.stderr = ShellSessionParser( self._shell.stderr ) 
         else:
             self.terminator = '\necho "~$ " \n' 
-            self.shell = Popen( "sh", shell=True, 
+            self._shell = Popen( "sh", shell=True, 
                                 stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 
-            self.stdout = ShellSessionParser( self.shell.stdout )
+            self.stdout = ShellSessionParser( self._shell.stdout )
             self.stderr = None
         return self
 
@@ -504,24 +563,90 @@ class CommandRunner ( object ):
         suppressed and the tokens read are joined and returned as
         the"""
 
-        self.shell.stdin.write( cmd + self.terminator )
+        self._shell.stdin.write( cmd + self.terminator )
         return CommandOutput( *self.read_output(), cmd=cmd )
  
     def read_output(self):
         
-        out =      self.stdout._takewhile( is_output=True )
-        ret = int( self.stdout.tokens.next() )
-        err =      self.stderr._takewhile( True 
-                       ) if CommandRunner.separate_stderr else None 
+        out =     self.stdout._takewhile( is_output=True )
+        ret = int(self.stdout.tokens.next())
+        err =     self.stderr._takewhile( True 
+                     ) if CommandRunner._separate_stderr else None 
 
-        return out,err, ret
+        return out, err, ret
 
     def __exit__( self, *arg):
-        self.shell.terminate()
-        self.shell.wait()
+        self._shell.terminate()
+        self._shell.wait()
         
-        # If the child shell is hanged, maybe 
-        # self.p.send_signal( signal.SIGKILL ) will be needed
+        # If the child shell hanged, maybe self.p.send_signal(
+        # signal.SIGKILL ) will be needed
+
+
+
+
+class ExpectedBash(object):
+    """>>> with ExpectBashRunner() as sh:
+    ...    sh("echo coucou")
+    ...    sh("a=$((1+1))")
+    ...    sh("echo $a")
+    ...
+    coucou, 0
+    0
+    2, 0"""
+
+    def __init__(self, interactive=False):
+        self.prompt = '~$ '
+        self.interactive = interactive
+
+    def __enter__(self):
+        self.child = pexpect.spawn("sh")
+        self.child.expect_exact(['$'])
+        self.child.sendline("PS1='%s'" % self.prompt)
+        self.child.expect_exact([self.prompt])
+        return self
+
+    def __call__(self, cmd):
+        "Returns (stdout, stderr, returncode)"
+
+        if self.interactive:
+            while True:
+                c = getchar("\nExecute (n), (i)nteract, all (!), (q)uit: ")        
+                if c=='n':
+                    break
+                elif c=='!':
+                    self.interactive = False
+                    break
+                elif c=='i':
+                    print '\n' + self.prompt 
+                    self.child.interact()
+                elif c=='q':
+                    sys.exit(0)
+
+        out = self._call(cmd)
+        returncode = int(self._call('echo $?'))
+
+        return CommandOutput(out, None, returncode, cmd=cmd)
+
+    def _call(self, cmd):
+        self.child.sendline(cmd)
+        self.child.expect_exact([cmd.replace('\n', '\r\n> ')+'\r\n'],timeout=0.1)
+        # When you write to a terminal, you can read what you just
+        # typed, this is the echo. If you disable the echo (with
+        # setecho()), then you do not get the prompt anymore, and the
+        # prompt is the signal for bash that the command output is
+        # finished
+
+        self.child.expect([self.prompt.replace('$', '\$')], timeout=0.1)
+        return self.child.before.replace('\r\n','\n').strip()
+
+    def __exit__(self, *arg):
+        self.child.close(force=True)
+
+
+class PtyBashCommandRunner(object):
+    pass # to separate stdout and stderr, either we modify pexpect which seems to harcode the redirection or
+         # we directly use ptys. 
 
 class TestReporter( object):
 
@@ -533,7 +658,7 @@ class TestReporter( object):
 
     def failed( self, output ):
         self.failcount += 1
-        return "Failed, got:\t%s\n" % output 
+        return "Failed, got:\t%s\n" % (output, )
 
     def passed( self, output):
         self.passcount += 1
@@ -541,7 +666,7 @@ class TestReporter( object):
 
     def before( self, cmd, expected ):
         self.last_expected = expected
-        return "Trying:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
+        return "Found:\t\t%s\nExpecting:\t%s" % ( cmd, expected )
 
     def after(self, output ):
         self.last_output = output
@@ -559,7 +684,7 @@ class TestReporter( object):
         return self.failcount
                 
 
-class BlockSelector( object):
+class BlockSelector(object):
     # this object could be a function after all, the prototype would
     # be a little more complex.
 
@@ -572,7 +697,7 @@ class BlockSelector( object):
     # which might not be a problem in our case, but is unneeded in the
     # general case.
 
-    def __init__( self, directive='sourcecode', arg=['sh'] ):
+    def __init__(self, directive='sourcecode', arg=['sh']):
         self.f = StringIO()
 
         class Directive( rst.Directive ):
@@ -605,11 +730,7 @@ class BlockSelector( object):
 
 import sys
 
-def wordish():
-
-    files = sys.argv[1:] if len( sys.argv ) > 1 else (StringIO( __doc__ ),)
-    files = [ f if f!="-" else sys.stdin for f in files ] 
-    files = [ f if hasattr(f, 'read') else file(f) for f in files ]
+def wordish(interactive):
 
     ret = 0
 
@@ -619,7 +740,10 @@ def wordish():
         filter = BlockSelector( directive='sourcecode', arg=['sh'])
         session = iter( ShellSessionParser( filter( f ) ))
 
-        with CommandRunner() as run:
+        # with CommandRunner() as run:
+        with ExpectedBash(interactive) as run:
+
+            # interactive_choices.shell = sh 
             for cmd, expected in session:
 
                 print report.before( cmd, expected )
@@ -654,6 +778,21 @@ def rst2sh():
             ).toscript()
 
 if __name__=='__main__':
-    sys.exit( wordish() )
+
+    import optparse
+    p = optparse.OptionParser()
+
+    p.add_option('-i', '--interactive', default=False, action='store_true',
+                help='Each command run will be validated interactively')
+
+    p.add_option('-s', '--script', default=False, action='store_true',
+                help='Parse the input files and generate a script')
+
+    o, a = p.parse_args()
+
+    files = a if len(a) > 0 else (StringIO( __doc__ ),)
+    files = [f if f!="-" else sys.stdin for f in files] 
+    files = [f if hasattr(f, 'read') else file(f) for f in files]
+    sys.exit(wordish(o.interactive))
     
                     
